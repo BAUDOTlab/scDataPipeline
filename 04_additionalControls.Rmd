@@ -113,6 +113,7 @@ library(knitr)
 library(stringr)
 
 source("./data_management.R")
+source("./plotting_functions.R")
 ```
 
 ```{r load-colors, include = FALSE}
@@ -160,6 +161,7 @@ simply reuse the output from the scenario 1 to perform cell cycle regressions
 # PIPELINE
 STEP_ID <- "1"
 msg <- "before CC regression"
+defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # LOAD DATA
 PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_prepocessed_", DATASET, "_filtered.rds")
@@ -500,7 +502,7 @@ p2 +
 # Call the export functions for the globalReg dataset
 export_metadata(globalReg@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
 export_rds(globalReg, paste0("03_", STEP_ID, "_cellCycleRegr_", DATASET, ".rds"))
-gc()
+invisible(gc())
 ```
 
 
@@ -532,7 +534,7 @@ p3 +
 export_metadata(cyclingReg@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
 export_rds(cyclingReg, paste0("03_", STEP_ID, "_cellCycleRegr_", DATASET, ".rds"))
 rm(singlets)
-gc()
+invisible(gc())
 ```
 
 ## Remove RBCs - scenarios 2 and 3

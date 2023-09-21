@@ -392,13 +392,13 @@ LabelClusters(p, id = "ident",  fontface = "bold", size = 5)
 ### DotPlot of the markers on cluster identity
 
 ```{r cluster-dotPlot-markers}
-dotPlotsMarkers(renamed, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in clusters"))
+create_dot_plot(renamed, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in clusters"))
 ```
 
 ### DotPlot of the genes of interest on cluster identity
 
 ```{r cluster-dotPlot-goi}
-dotPlotsGoi(renamed, goiList, title="Genes of interest in clusters")
+create_dot_plot(renamed, sort(goiList), title="Genes of interest in clusters")
 ```
 
 ### FeaturePlots of the markers {.tabset .tabset-pills .tabset-fade}
@@ -428,7 +428,7 @@ invisible( lapply( names( topMarkers), function(clusterName)
   invisible( lapply( topMarkers[[clusterName]][["gene"]], function(featureName)
   {
     print( FeaturePlot( renamed, features = featureName, reduction = ifelse( exists("useReduction"), useReduction, "umap"), order = TRUE) +
-             theme( axis.title.x = element_blank(),
+            theme( axis.title.x = element_blank(),
                     axis.title.y = element_blank(),
                     legend.position = "none"))
   }))
@@ -442,7 +442,12 @@ invisible( lapply( names( topMarkers), function(clusterName)
 
 ```{r cluster-featurePlot-goi, out.width='20%', fig.align='default'}
 ## FeaturePlot the genes of interest
-doFeaturePlot(renamed, goiList)
+FeaturePlot( renamed,
+    features = goiList, 
+    reduction = ifelse( exists("useReduction"), useReduction, "umap"),
+    min.cutoff = "q01", max.cutoff = "q99",
+    order = TRUE, label = TRUE,
+    combine = FALSE)
 ```
 
 ### ViolinPlots of the markers {.tabset .tabset-pills .tabset-fade}
@@ -521,14 +526,14 @@ invisible(sapply(levels(as.factor(renamed@meta.data$tissue_singleData)), functio
 
 ```{r celltype-dotPlot-markers}
 ## DotPlot the n-top markers of each celltype
-dotPlotsMarkers(renamed, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
+create_dot_plot(renamed, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
 ```
 
 ### DotPlot of the genes of interest on celltype identity
 
 ```{r celltype-dotPlot-goi}
 ## DotPlot the genes of interest
-dotPlotsGoi(renamed, goiList, title="Genes of interest in celltypes")
+create_dot_plot(renamed, sort(goiList), title="Genes of interest in celltypes")
 ```
 
 

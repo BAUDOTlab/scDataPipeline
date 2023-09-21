@@ -1,4 +1,4 @@
-# Function to create a violin plot with threshold lines
+######## Function to create a violin plot with threshold lines
 create_violin_plot <- function(data, feature, threshold_low	= NULL, threshold_high = NULL, title, subtitle) {
 	plot <- VlnPlot(data, features = feature) +
 	ggtitle(title, subtitle = subtitle) +
@@ -25,7 +25,7 @@ create_violin_plot <- function(data, feature, threshold_low	= NULL, threshold_hi
 
 
 
-# Function to generate highlighted outlier plot
+######## Function to generate highlighted outlier plot
 generate_outlier_plot <- function(outlier_type) {
   cellsData <- data.frame(umapCoord, metadata[[outlier_type]])
   colnames(cellsData) <- c(colnames(umapCoord), "Outliers")
@@ -49,7 +49,57 @@ generate_outlier_plot <- function(outlier_type) {
 
 
 
-# DEFAULT THEME
+######## Highlight cells from a specific cluster on a dimreduc plot
+highlightClusterPlot <- function(clusterName, seuratObject, reduction = "umap") {
+  clusterCells = which( Idents( seuratObject) == clusterName)
+  # Create a dimreduc plot with current cluster highlighted (useful for large number of clusters)
+  print( DimPlot( seuratObject, 
+                  reduction = reduction, 
+                  cols="#44444422", 
+                  cells.highlight = clusterCells, 
+                  cols.highlight = "#FF000088", 
+                  sizes.highlight = Seurat:::AutoPointSize(seuratObject)*1.5, 
+                  order = clusterCells,  # Plot highlighted cells last
+                  group.by=NULL) + 
+           ggtitle( paste(clusterName)) +
+           theme( axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  plot.title = element_text( face = "bold",
+                                             size = rel( 16/14), 
+                                             hjust = 0.5,
+                                             vjust = 1, 
+                                             margin = margin( b = 7)),
+                  legend.position = "none"))
+
+}
+
+
+######## Function to create a dot plot for 40 markers, then will create a new dotPlot
+create_dot_plot <- function(SO, geneList, title=NULL) {
+  myPalette <- colorRampPalette(rev(brewer.pal(11, "RdBu")))
+  
+  nbMarkers <- length(geneList)
+  if (nbMarkers %% 40 == 0) {
+    DotPlot(SO, features = geneList) +
+      RotatedAxis() +
+      CenterTitle() +
+      ggtitle(paste0(title, "\n", DATASET)) +
+      scale_colour_gradientn(colours = myPalette(100))
+  } else {
+    nbPlot <- (nbMarkers %/% 40) + 1
+    for (i in seq(1, nbPlot)) {
+      print(DotPlot(SO, features = geneList[seq(1+(i-1)*(ceiling(nbMarkers/nbPlot)), min(i*ceiling(nbMarkers/nbPlot), nbMarkers))]) +
+        RotatedAxis() +
+        CenterTitle() +
+        ggtitle(paste0(title, " - ", i, "/", (nbMarkers %/% 40) + 1, "\n", DATASET)) +
+        scale_colour_gradientn(colours = myPalette(100)))
+    }
+  }
+}
+
+
+
+######## DEFAULT THEME
 defaultTheme <- function() {
     theme_classic() +
     theme(plot.title = element_text(hjust = 0.5, size = 24),
@@ -59,3 +109,68 @@ defaultTheme <- function() {
           line = element_blank(),
           panel.background = element_rect(fill="grey95"))
 }
+
+
+######## Create a violinplot showing feature (gene or metadata) values for each cluster (+ number of 'zero' and 'not zero' cells)
+violinFeatureByCluster = function(currentFeature, seuratObject, slot = "counts", clustersColor = NULL, yLabel = "Counts", addStats = TRUE, addTitle = TRUE, trimTitle = FALSE) 
+{
+    if(length( currentFeature)>1) warning( "Several features in 'currentFeature' argument, corresponding values will be averaged...");
+    
+    # Extract feature values from Seurat object (average if several features given)
+    featureValues = apply( FetchData( object = seuratObject, vars = currentFeature, slot = slot), 1, mean);
+    
+    # Plot expression values of current annotation for each cluster as violin + jitter
+    ggFigure = ggplot( data.frame( Counts = featureValues, Cluster = Idents( seuratObject)), 
+                       aes( x = Cluster, y = Counts)) +
+        geom_jitter( width = 0.2, height = 0.3, size = 0.4, colour = "#44444444") +
+        geom_violin( aes( col = Cluster, fill = Cluster), scale = "width", alpha = 0.4, draw_quantiles = 0.5) +
+        theme_minimal() +
+        ylab( label = yLabel) +
+        theme( legend.position = "None");
+    
+    # Change ggplot default clusters colors ('clustersColor' should be a named vector of colors)
+    if(!is.null(clustersColor))
+    {
+        ggFigure = ggFigure + 
+            scale_color_manual( values = clustersColor) +
+            scale_fill_manual( values = clustersColor);
+    }
+    
+    if(addStats)
+    {
+        # Get the number of cells in which score is zero (or not) for this annotation
+        statsZero = tapply( featureValues, 
+                            Idents( seuratObject), 
+                            function(x) { paste( table( factor( as.logical( x), levels = c( TRUE, FALSE))), collapse="\n") });
+        
+        # Create the text layer with stats to be added
+        ggFigure = ggFigure + geom_text( data = data.frame( Stat = statsZero, Cluster = names( statsZero)), 
+                                         aes( x = Cluster, y = max( featureValues)*1.1, label = Stat), 
+                                         size = 2.5) +
+            geom_text( data = data.frame( text = "Pos.\nNull"), 
+                       aes( label = text), 
+                       x = -0.4, y = max( featureValues)*1.1, hjust = 0, size = 2.5) +
+            coord_cartesian( clip = 'off', xlim = c( 0, length(statsZero))); # Allow drawing outside plot region
+    } 
+    
+    if(addTitle)
+    {
+        # Remove 'trimTitle' number of ending character(s) (module names have a number suffix added automatically)
+        title = if(trimTitle) substr( currentFeature, 1, nchar( currentFeature)-trimTitle) else currentFeature;
+        
+        # Create the title layer to be added (copy 'FeaturePlot' title style from cowplot)
+        ggFigure = ggFigure + ggtitle( label = title) + 
+            theme( plot.title =  element_text( face = "bold",
+                                               size = rel( 16/14), 
+                                               hjust = 0.5,
+                                               vjust = 1, 
+                                               margin = margin( b = 7)));
+    }
+    
+    # Render figure
+    #print( ggFigure)
+    suppressWarnings(print( ggFigure));
+}
+
+
+
