@@ -17,6 +17,6 @@ checkDirHierarchy <- function() {
     
     if (!dir.exists(PATH_OUT_FIG)) { 
         print(paste("Create the figures directory: ", PATH_OUT_FIG))
-        dir.create(PATH_OUT_FIG)
+        dir.create(PATH_OUT_FIG, recursive = TRUE)
     }
 }
