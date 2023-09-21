@@ -505,11 +505,11 @@ defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # Call the functions for the complete dataset
 export_metadata(SO@meta.data, paste0("metadata_", DATASET, "_complete.csv"))
-#export_rds(SO, paste0("01_qc_", DATASET, "_complete.rds"))
+export_rds(SO, paste0("01_qc_", DATASET, "_complete.rds"))
 
 # Call the functions for the filtered dataset
 export_metadata(SO_subset@meta.data, paste0("metadata_", DATASET, "_filtered.csv"))
-#export_rds(SO_subset, paste0("01_qc_", DATASET, "_filtered.rds"))
+export_rds(SO_subset, paste0("01_qc_", DATASET, "_filtered.rds"))
 ```
 
 
