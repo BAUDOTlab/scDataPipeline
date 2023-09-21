@@ -1,0 +1,173 @@
+---
+author: "CC"
+date: "2023-03-27"
+output:
+    html_document:
+        theme:
+            bootswatch: yeti
+        toc: yes
+        toc_float:
+          collapsed: false
+          smooth_scroll: true
+        number_sections: yes
+        df_print: kable
+        code_folding: hide
+    pdf_document:
+        number_sections: yes
+        toc: yes
+        toc_depth: 3
+        keep_tex: no
+title: |
+  | `r DATASET`
+  | Protocole 3: control filtered cells
+---
+
+<!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
+
+<!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
+<!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
+
+<style>
+.zoomDiv {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+  box-shadow: 0px 0px 50px #888888;
+  width: fit-content;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.zoomImg {
+  width: 150%;
+}
+</style>
+
+<script type = "text/javascript">
+  $(document).ready(function() {
+    $("body").prepend("<div class = \"zoomDiv\"><img src = \"\" class = \"zoomImg\"></div>");
+    // onClick for all img except the zoomed one and link ones (filter)
+    // use "img.zoom" and out.extra = "class = \"zoom\"" in chunk to specify manually which chunk images can be zoomed
+    $("img:not(.zoomImg)").filter(":not(a *)").click(function() {
+      $(".zoomImg").attr("src", $(this).attr("src"));
+      $(".zoomDiv").show();
+    })
+    // onClick function for hiding div
+    $("img.zoomImg").click(function() {
+      $(".zoomDiv").hide();
+    })
+  })
+</script>
+
+
+```{r setup, include = FALSE}
+options(knitr.purl.inline = TRUE)
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+
+  # text output
+  echo = TRUE,
+  results = "hold",
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  strip.white = TRUE,
+
+  # code decoration
+  #tidy = TRUE,
+  tidy.opts = list(width.cutoff = 90),
+  comment = "",
+  attr.output = ".numberLines",
+
+  # plots
+  fig.path = paste0(PATH_OUT_FIG, "/03_filtersCheck_"),      # is set later, in chunk setup2
+  fig.show = "asis",         # tuned to "hold" in multiple plots chunk
+  dev = c("png", "pdf"),
+  out.width = "50%",
+  fig.width = 12,
+  fig.height = 12,
+  #fig.asp = 1.3               # fig.height = fig.width * fig.asp
+  #out.extra = "style = "border:5px solid orange""    # orange box arround plots
+  fig.align = "center"   # should be tuned to default in multiple plots chunk
+)
+```
+
+```{r load-libraries, include = FALSE}
+library(kableExtra)
+library(dplyr)
+library(Seurat)
+library(stringr)
+library(ggplot2)
+library(cowplot)
+
+source("./plotting_functions.R")
+```
+
+<!-- # Global settings -->
+
+```{r show-params, eval=FALSE, include=FALSE}
+ul <- unlist(params)
+df <- data.frame(keyName = names(ul), value = ul, row.names = NULL)
+df <- df[! grepl("^PATH|DATASET", df$keyName), ]
+names(df) <- c("Parameters", "Values")
+df1 <- df[1:ceiling(dim(df)[1] / 3), ]
+df1$Parameters <- cell_spec(df1$Parameters, bold = TRUE)
+df2 <- df[(ceiling(dim(df)[1] / 3) + 1) : (2 * ceiling(dim(df)[1] / 3)), ]
+df2$Parameters <- cell_spec(df2$Parameters, bold = TRUE)
+df3 <- df[((2 * ceiling(dim(df)[1] / 3)) + 1):dim(df)[1], ]
+df3$Parameters <- cell_spec(df3$Parameters, bold = TRUE)
+
+
+list(df1, df2, df3) %>%
+  knitr::kable(align = "ll", row.names = FALSE, escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE)
+rm(df)
+```
+
+
+# Load `r DATASET` data
+
+```{r load-data}
+#cplt <- readRDS(paste0(PATH_RDS_OBJECTS, "/02_normANDscaled_", DATASET, "_complete.rds"))
+metadata <- read.table(paste0(PATH_ROOT, "/03_qc/metadata_", DATASET, "_complete.csv"), header = TRUE, sep = ",")
+umapCoord <- read.table(paste0(PATH_ROOT, "/04_process/DR_umap_", DATASET, "_complete.csv"), header = TRUE, sep = ",")
+```
+
+UMAP representation of the complete `r DATASET` dataset.
+
+```{r importClustering}
+knitr::include_graphics(paste0(PATH_OUT_FIG, "/02_process_dimplot-cluster-cplt-1.png"))
+```
+
+# Filtered cells repartition {.tabset .tabset-pills .tabset-fade}
+
+## Mitochondrial outlier cells
+
+```{r repartition-mitoOutliers}
+generate_outlier_plot("outlier.mito")
+```
+
+## Ribosomal outlier cells
+
+```{r repartition-riboOutliers}
+generate_outlier_plot("outlier.ribo")
+```
+
+## UMI read counts outlier cells
+
+```{r repartition-UMIreadCountsOutliers}
+generate_outlier_plot("outlier.nCount")
+```
+
+## Feature counts outlier cells
+
+```{r repartition-featCountsOutliers}
+generate_outlier_plot("outlier.nFeature")
+```

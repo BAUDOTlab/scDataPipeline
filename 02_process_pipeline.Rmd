@@ -1,0 +1,305 @@
+---
+author: "CC"
+date: "2023-03-27"
+output:
+    html_document:
+        theme:
+            bootswatch: yeti
+        toc: yes
+        toc_float:
+          collapsed: false
+          smooth_scroll: true
+        number_sections: yes
+        df_print: kable
+        code_folding: hide
+    pdf_document:
+        number_sections: yes
+        toc: yes
+        toc_depth: 3
+        keep_tex: no
+title: |
+  | `r DATASET`
+  | Protocole 2: Processing
+---
+
+<!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
+
+<!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
+<!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
+
+<style>
+.zoomDiv {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+  box-shadow: 0px 0px 50px #888888;
+  width: fit-content;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.zoomImg {
+  width: 150%;
+}
+</style>
+
+<script type = "text/javascript">
+  $(document).ready(function() {
+    $("body").prepend("<div class = \"zoomDiv\"><img src = \"\" class = \"zoomImg\"></div>");
+    // onClick for all img except the zoomed one and link ones (filter)
+    // use "img.zoom" and out.extra = "class = \"zoom\"" in chunk to specify manually which chunk images can be zoomed
+    $("img:not(.zoomImg)").filter(":not(a *)").click(function() {
+      $(".zoomImg").attr("src", $(this).attr("src"));
+      $(".zoomDiv").show();
+    })
+    // onClick function for hiding div
+    $("img.zoomImg").click(function() {
+      $(".zoomDiv").hide();
+    })
+  })
+</script>
+
+
+```{r setup, include = FALSE}
+options(knitr.purl.inline = TRUE)
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+
+  # text output
+  echo = TRUE,
+  results = "hold",
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  strip.white = TRUE,
+
+  # code decoration
+  tidy.opts = list(width.cutoff = 90),
+  comment = "",
+  attr.output = ".numberLines",
+
+  # plots
+  fig.path = paste0(PATH_OUT_FIG, ifelse(!goodQ, "/02_process_", "/05_process_")),
+  fig.show = "asis",         # tuned to "hold" in multiple plots chunk
+  dev = c("png", "pdf"),
+  out.width = "50%",
+  fig.width = 12,
+  fig.height = 12,
+  #fig.asp = 1.3               # fig.height = fig.width * fig.asp
+  #out.extra = "style = "border:5px solid orange""    # orange box arround plots
+  fig.align = "center"   # should be tuned to default in multiple plots chunk
+)
+```
+
+```{r load-libraries, include = FALSE}
+library(kableExtra)
+library(dplyr)
+library(Seurat)
+library(stringr)
+library(ggplot2)
+
+source("./data_management.R")
+```
+
+```{r get-params, include = FALSE}
+set.seed(general_seed)
+```
+
+```{r dir-managment, include = FALSE}
+# PATHS
+if (goodQ){
+    PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "06_process")
+    if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+} else {
+    PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "04_process")
+    if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+}
+```
+
+# Load `r DATASET` data
+
+```{r load-data-1, eval=!goodQ, echo=!goodQ}
+SO.list <- list(readRDS(paste0(PATH_RDS_OBJECTS, "/01_qc_", DATASET, "_", FILTER, ".rds")))
+names(SO.list) <- FILTER
+```
+
+```{r load-data-2, eval=goodQ, echo=goodQ}
+SO.list <- lapply(c("1", "2", "3"), function(scenario){
+    SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/04_", scenario, "_goodQualityCells_", DATASET, ".rds"))
+})
+names(SO.list) <- c("1", "2", "3")
+```
+
+
+# Preprocessing workflow
+
+The preprocessing workflow consists in the steps of
+
+- data normalization,
+
+- data centering,
+
+- highly variable genes identification,
+
+- principal components analysis (PCA),
+
+- non-linear dimension reduction for visualization, and
+
+- clustering.
+
+```{r preprocess-1, eval=hvg_meth != "mvp", echo=hvg_meth != "mvp", message=TRUE}
+process <- function(SO, scenario) {
+    if (!goodQ) {
+        SO <- NormalizeData(SO, normalization.method = norm_meth, verbose=FALSE)
+        SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
+    }
+
+    SO <- FindVariableFeatures(SO, nfeatures=hvg_num, selection.method = hvg_meth, verbose=FALSE)
+
+    SO <- RunPCA(SO, npcs = pca_npcs, nfeatures.print = pca_print, seed.use = general_seed, verbose=TRUE)
+    SO <- RunUMAP(SO, dims = 1:top_pcs, seed.use = general_seed, verbose = FALSE)
+    
+    if (goodQ) {
+        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("05_prepocessed_", DATASET, "_scenario.", scenario, ".rds")))
+    } else {
+        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("02_prepocessed_", DATASET, "_", FILTER, ".rds")))
+    }
+
+    return(SO)
+}
+
+SO.list <- mapply(process, SO.list, names(SO.list), SIMPLIFY = FALSE)
+var.feats.list <- lapply(SO.list, VariableFeatures)
+```
+
+```{r preprocess-2, eval=hvg_meth == "mvp", echo=hvg_meth == "mvp", message=TRUE}
+process <- function(SO, scenario) {
+    if (!goodQ) {
+        SO <- NormalizeData(SO, normalization.method = norm_meth, verbose=FALSE)
+        SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
+    }
+    
+    SO <- FindVariableFeatures(SO, selection.method = hvg_meth, verbose=FALSE)
+        
+    t(as.data.frame(table(SO@assays[["RNA"]]@meta.features$mvp.variable))) %>%
+        knitr::kable(caption = "Number of features selected as highly variable genes (HVG)",
+                     row.names = FALSE,
+                     escape = F,
+                     align = "cc") %>%
+        kable_styling(bootstrap_options = c("striped", "hover"))
+    
+    SO <- RunPCA(SO, npcs = pca_npcs, nfeatures.print = pca_print, seed.use = general_seed, verbose=TRUE)
+    SO <- RunUMAP(SO, dims = 1:top_pcs, seed.use = general_seed, verbose = FALSE)
+    
+    if (goodQ) {
+        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("05_prepocessed_", DATASET, "_scenario.", scenario, ".rds")))
+    } else {
+        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("02_prepocessed_", DATASET, "_", FILTER, ".rds")))
+    } 
+    return(SO)
+}
+
+SO.list <- mapply(process, SO.list, names(SO.list))
+var.feats.list <- lapply(SO.list, VariableFeatures)
+```
+
+```{r clustering_02process, out.width='50%', results='asis', warning=FALSE}
+# resolutions <- clust_res
+clusterCells <- function(SO, scenario) {
+    SO <- FindNeighbors(SO, dims = 1:top_pcs, verbose=FALSE)
+    SO <- FindClusters(
+        SO,
+        resolution = clust_res,
+        algorithm = clust_meth,
+        random.seed = general_seed,
+        verbose=FALSE
+    )
+    
+    return(SO)
+}
+
+SO.list <- lapply(SO.list, clusterCells)
+```
+
+# Visualization
+
+```{r dimplot-cluster-cplt, eval=FILTER == "complete", echo=FILTER == "complete"}
+invisible(lapply(SO.list, function(SO) {
+    Idents(SO) <- SO$seurat_clusters
+    print(DimPlot(SO))
+}))
+```
+
+```{r dimplot-cluster-fltd, eval=FILTER == "filtered", echo=FILTER == "filtered", fig.align='default', results='asis'}
+plotDimensions <- function(SO, scenario) {
+    Idents(SO) <- SO$seurat_clusters
+    print(DimPlot(SO))
+    
+    if (goodQ & scenario != 1) {
+        Idents(SO) <- SO$Phase
+        print(DimPlot(SO, shuffle = TRUE))
+    }
+}
+
+invisible(mapply(plotDimensions, SO.list, names(SO.list)))
+```
+
+# Exports
+
+We export the list of highly variable features and the PCA and UMAP coordinates
+of the dataset. We also save the clustering information as a csv file.
+
+```{r save4-1}
+# variable features
+saveHVG <- function(var.feats.dataset, scenario) {
+    if (!goodQ) {
+        write.table(
+            var.feats.dataset,
+            file = file.path(
+                PATH_OUT_ANALYSIS,
+                paste0("varFeatures_meth.", hvg_meth, "_nb.", hvg_num, "_", DATASET, "_", ifelse(!goodQ, FILTER, paste0("scenario.", scenario)), ".txt")),
+            row.names = FALSE,
+            col.names = FALSE
+        )
+    }
+}
+
+invisible(mapply(saveHVG, var.feats.list, names(var.feats.list)))
+
+# PCA and UMAP tables
+saveDR <- function(SO, scenario) {
+    invisible(sapply(c("pca", "umap"), function(dr) {
+        export_dimred(SO, dr, paste0("DR_", dr, "_", DATASET, "_", ifelse(!goodQ, FILTER, paste0("scenario.", scenario)), ".csv"))
+    }))
+}
+
+invisible(mapply(saveDR, SO.list, names(SO.list)))
+
+# Clustering
+defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
+if (goodQ) {
+    defaultMDnames <- c(defaultMDnames, "tissue_DF")
+}
+
+saveCluster <- function(SO, scenario) {
+    export_metadata(
+        SO@meta.data,
+        paste0(
+            "clustering_", DATASET, "_",
+            ifelse(!goodQ, FILTER, paste0("scenario.", scenario)),
+            "_meth.", clust_meth,
+            "_res.", clust_res,
+            ".csv"))
+}
+
+invisible(mapply(saveCluster, SO.list, names(SO.list)))
+invisible(mapply(saveCluster, SO.list, names(SO.list)))
+invisible(gc())
+```
+

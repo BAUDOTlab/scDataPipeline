@@ -1,0 +1,590 @@
+---
+title: |
+    | Additional controls: `r DATASET`
+    | doublets removal and cell cycle regression
+author: "Céline Chevalier and Anaı̈s Baudot"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+# bibliography: ../requirements/references.bib
+output:
+    html_document:
+        theme:
+            bootswatch: yeti
+        toc: yes
+        toc_float:
+          collapsed: false
+          smooth_scroll: true
+        number_sections: yes
+        df_print: kable
+        code_folding: hide
+    pdf_document:
+        number_sections: yes
+        toc: yes
+        toc_depth: 3
+        keep_tex: no
+---
+
+
+<!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
+
+<!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
+<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
+
+<style>
+.zoomDiv {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+  box-shadow: 0px 0px 50px #888888;
+  width: fit-content;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.zoomImg {
+  width: 150%;
+}
+</style>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('body').prepend("<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>");
+    // onClick for all img except the zoomed one and link ones (filter)
+    // use 'img.zoom' and out.extra='class=\"zoom\"' in chunk to specify manually which chunk images can be zoomed
+    $('img:not(.zoomImg)').filter(':not(a *)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src'));
+      $('.zoomDiv').show();
+    });
+    // onClick function for hiding div
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').hide();
+    });
+  });
+</script>
+
+<br>
+
+<!-- This report has been created in the context of the single-cell RNA sequencing -->
+<!-- analysis used in the [@Argiro_2023](https://www.biorxiv.org/content/10.1101/2023.05.15.540476v1) article. -->
+
+```{r setup, include=FALSE, eval=TRUE}
+options(knitr.purl.inline = TRUE)
+options(knitr.duplicate.label = "allow") # I can reuse child Rmd with labelled chunks
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+
+  # text output
+  echo = TRUE,
+  results = 'hold',
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  strip.white = TRUE,
+
+  # code decoration
+  tidy.opts = list(width.cutoff = 90),
+  comment = '',
+  attr.output='.numberLines',
+
+  # plots
+  fig.path = paste0(PATH_OUT_FIG, "/04_additionalControls_"),
+  fig.show = "asis",         # tuned to "hold" in multiple plots chunk
+  dev = c('png', 'pdf'),
+  out.width = "50%",
+  fig.width = 12,
+  fig.height = 12,
+  fig.align = "center"       # should be tuned to default in multiple plots chunk
+)
+```
+
+```{r load-libraries, include = FALSE}
+library(kableExtra)
+library(dplyr)
+library(Seurat)
+library(ggplot2)
+library(DoubletFinder)
+library(patchwork)
+library(knitr)
+library(stringr)
+
+source("./data_management.R")
+```
+
+```{r load-colors, include = FALSE}
+# Create color vectors
+colors.table <- read.csv("../00_rawData/Li_et_al_Atlas/colorsSheet.csv", header=T, comment.char="", as.is=T)
+colors.celltype <- setNames(colors.table$tissue_color[!is.na(colors.table$tissue)], colors.table$tissue[!is.na(colors.table$tissue)])
+colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
+```
+
+```{r variableDef1, include=FALSE}
+# PATHS
+PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_filtered_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "05_additionalControls")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+```
+
+# Introduction
+
+After quality control, we still have to perform doublets removal and elucidate
+if we have to regress out the cell cycle effect or not. There are 2 cell cycle
+regression strategies:
+
+1. a regression across all the cell cycle phases, that we further call
+*global regression*, and
+
+2. a regression applied only between cycling cells (ie. G2/M and S phases), what
+results in the conserved signal between cycling and non-cycling cells, called as
+*cycling regression*.
+
+It means that we will go through 3 scenarios
+
+- scenario 1: remove doublets only
+
+- scenario 2: remove doublets and global regression
+
+- scenario 3: remove doublets and cycling regression
+
+As the scenario 1 corresponds to the first step of the scenarios 2 and 3, we
+simply reuse the output from the scenario 1 to perform cell cycle regressions
+(scenarios 2 and 3).
+
+# Remove doublets - scenarios 1, 2 and 3
+
+```{r load-data, include=FALSE}
+# PIPELINE
+STEP_ID <- "1"
+msg <- "before CC regression"
+
+# LOAD DATA
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_prepocessed_", DATASET, "_filtered.rds")
+fltd <- readRDS(PATH_RDS_FILE)
+
+# LOAD CLUSTERING RESULTS
+clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
+clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(clusters), value = TRUE)
+fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.names')
+fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
+```
+
+## Cells annotation through label transfer from the atlas
+
+```{r mapping-atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
+```
+
+## Number of heterotypic doublets estimation (nExp parameter)
+
+```{r homotypic-proportion}
+annotations <- fltd@meta.data[, "tissue_DF"]
+homotypic.prop <- modelHomotypic(annotations)
+nDoublets <- round(ncol(fltd)*doublets_rate/100)
+nDoublets_nonhomo <- round(nDoublets*(1-homotypic.prop))
+```
+
+The estimated percentage of doublets of the sequencing kit is `r doublets_rate`
+\%. Based on that percentage, Doublet Finder estimates that there are
+**`r nDoublets_nonhomo`** cells to consider as doublets.
+
+## Neighborhood size optimization (pK parameter)
+
+```{r generate-pKs, results='hide', fig.show='hide'}
+set.seed(general_seed)
+sweep.res <- paramSweep_v3(fltd, PCs = 1:top_pcs) # as estimated from PC elbowPlot
+sweep.stats_fltd <- summarizeSweep(sweep.res, GT = FALSE)
+Sys.sleep(0.5)
+bcmvn_fltd <- find.pK(sweep.stats_fltd)
+
+rm(annotations, homotypic.prop, nDoublets)
+invisible(gc)
+```
+
+```{r optimize-pK, fig.height=8}
+pK_max <- bcmvn_fltd %>% # select the pK that corresponds to max bcmvn to optimize doublet detection
+    filter(BCmetric == max(BCmetric))
+
+ggplot(bcmvn_fltd, aes(x = pK, y = BCmetric, group = 1)) +
+    geom_line() +
+    geom_point()  +
+    
+    geom_vline(aes(xintercept = pK_max$pK)) +
+    theme(axis.title = element_text(size = 20),
+          axis.text = element_text(size = 14),
+          axis.text.x = element_text(angle = 30, hjust = 1, vjust = 0.5))
+```
+
+According to the above plot, the value of the `pK` parameter is set to
+**`r pK_max$pK`**.
+
+## Doublets identification - DoubletFinder run
+
+It is possible to corroborate the identification of doublets with a high number of UMIs.
+The plots below allow us to compare these 2 information.
+
+```{r runDF, results='hide'}
+# RUN DOUBLET FINDER
+set.seed(general_seed)
+fltd <- doubletFinder_v3(fltd,
+                       PCs = 1:top_pcs,
+                       pN = 0.25,
+                       pK = as.numeric(as.character(pK_max$pK)),
+                       nExp = nDoublets_nonhomo)
+
+# SAVE THE OBJECT
+col_dblts <- grep("DF.classifications", colnames(fltd@meta.data), value=TRUE)
+Idents(fltd) <- col_dblts
+export_rds(fltd, paste0("03_", STEP_ID, "_doubletsIdentification_", DATASET, ".rds"))
+```
+
+```{r plotDF, fig.show='hold', fig.align='default', out.width="33%"}
+# PLOTS
+# SINGLETS
+DimPlot(fltd,
+        cells.highlight = WhichCells(fltd, idents = "Singlet"),
+        order = TRUE,
+        pt.size = 1
+) +
+    ggtitle("Singlets - before CC regression") +
+    defaultTheme() +
+    NoLegend()
+
+# DOUBLETS
+DimPlot(fltd,
+        cells.highlight = WhichCells(fltd, idents = "Doublet"),
+        order = TRUE,
+        pt.size = 1
+) +
+    ggtitle("Doublets - before CC regression") +
+    defaultTheme() +
+    NoLegend()
+
+# UMIs READ COUNTS
+FeaturePlot(fltd, "nCount_RNA",
+            order = TRUE,
+            pt.size = 1
+) +
+    ggtitle("UMIs read counts - before CC regression") +
+    defaultTheme() +
+    theme(legend.position = c(0.94, 0.5),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 12),
+          legend.key.size = unit(0.8, 'cm'))
+```
+
+To explore the repartition of the identified doublets among the dataset, we also
+show the number of doublets within cell types or clusters.
+
+```{r doubletsTable, results='asis'}
+# TABLE FOR CELL TYPES x DF CLASSIF
+celltypeMtx <- table(fltd@meta.data$tissue_DF, Idents(fltd))
+celltypeMtx <- cbind("Cell type" = rownames(celltypeMtx), celltypeMtx)
+rownames(celltypeMtx) <- NULL
+
+k1 <- celltypeMtx %>%
+  knitr::kable(caption = "Doublets repartition over cell types") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+
+# TABLE FOR CLUSTERS x DF CLASSIF
+clusterDF <- table(fltd@meta.data[, clustOfInterest], Idents(fltd))
+clusterDF <- cbind("Cluster" = rownames(clusterDF), clusterDF)
+rownames(clusterDF) <- NULL
+
+# cut the table into 2, for more readability
+rows <- seq_len(ceiling(nrow(clusterDF) / 2))
+
+k2 <- clusterDF[rows,] %>%
+  knitr::kable() %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+
+k3 <- clusterDF[-rows,] %>%
+  knitr::kable() %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+
+# gather the tables of CLUSTERS x DF CLASSIF
+k23 <- knitr::kables(list(k2, k3),
+                     caption = paste0("Doublets repartition over Leiden clusters at resolution ", clust_res)) %>%
+    kable_styling()
+
+# output the 3 tables together
+kables(list(k1, k23)) %>% kable_styling()
+
+
+# SUBSET THE DATASET TO SINGLETS
+# AND CLEANING
+doubletsNb <- as.numeric(table(fltd@meta.data[, col_dblts])["Doublet"])
+singlets <- subset(fltd, idents='Singlet')
+singlets@meta.data[grep("DF.classifications", colnames(singlets@meta.data))] <- NULL
+singlets@meta.data[grep("pANN", colnames(singlets@meta.data))] <- NULL
+singlets@meta.data[clustOfInterest] <- NULL
+``` 
+
+## Remove the red blood cells (RBCs)
+
+```{r filterRBCs}
+# noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = `Hba-a1` > 0, invert = TRUE))
+noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = ENSMUSG00000069919 > 0, invert = TRUE))
+
+export_rds(noRBCs, paste0("04", STEP_ID, " _goodQualityCells_", DATASET, ".rds"))
+```
+
+From the **`r dim(singlets)[2]`** singlet cells,
+**`r length(WhichCells(singlets, expression = ENSMUSG00000069919 > 0))`** RBCs
+have been removed.
+
+## Conclusion - Scenario 1
+
+After removing the **`r doubletsNb`** doublets cells, we also reduced our
+dataset from cells expressing the **Hba-a1** gene, a RBC marker. It is
+equivalent to the removal of
+**`r length(WhichCells(singlets, expression = ENSMUSG00000069919 > 0))`** cells
+from the singlets. Now, the scenario 1 dataset contains **`r dim(noRBCs)[2]`**
+cells. It is ready for the downstream analysis.
+
+```{r cleaning, include=FALSE}
+rm(noRBCs, doubletsNb, fltd)
+invisible(gc())
+```
+
+# Cell cycle regressions - scenarios 2 and 3
+
+We start the scenarios 2 and 3 with the singlet cells, that still contains the
+RBCs. As considered as good quality cells, we want to keep it for the cell cycle
+regression. We will remove the RBCs after the cell cycle regression.
+
+## Cell cycle markers - scenarios 2 and 3
+
+Cell cycle gene list has been updated in 2019 (REF). Cell cycle markers are only
+for the cycling phases, G2/M and S. If cells have few chance to be in those
+cycling phases, they are estimated to be in the G1 phase.
+
+Below, you can see the lists of gene markers for the G2/M and S phases.
+
+```{r loadCellCyclesGenes, results='hold'}
+sPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_sPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
+g2mPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_g2mPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
+
+# map cell cycle genes to ensembl IDs
+s.genes <- sPhase[sPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$s.genes), "Gene.stable.ID"]
+g2m.genes <- g2mPhase[g2mPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$g2m.genes), "Gene.stable.ID"]
+
+cat("
+Genes of S phase:
+")
+sPhase$Gene.name
+
+cat("
+Genes of G2/M phases:
+")
+g2mPhase$Gene.name
+```
+
+## Assign cell-cycle scores - scenarios 2 and 3
+
+```{r tryStopMessage, echo=FALSE, message=TRUE}
+try(if(table(s.genes %in% rownames(singlets))[[1]] != length(s.genes)) stop("s phase genes list is not covered by the data", call. = FALSE))
+try(if(table(g2m.genes %in% rownames(singlets))[[1]] != length(g2m.genes)) stop("g2/m phases genes list is not covered by the data", call. = FALSE))
+```
+
+```{r cellcycleAssign, fig.show='hold'}
+# ASSIGN CELL CYCLE SCORES AND PHASE
+singlets <- CellCycleScoring(singlets, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+FeatureScatter(singlets, "S.Score", "G2M.Score") +
+    ggtitle("CC. phase assignation by Seurat") +
+    theme(plot.title = element_text(hjust = 0.5, size = 24))
+```
+
+The default phase thresholds are set to 0. Any cell having a `S.Score > 0` is
+estimated to be in the S phase. Similarly, cells with a value of `G2M.Score > 0`
+is estimated to be in G2M phase. All the other cells are estimated to be in G1
+phase.  
+However, by looking at the scatter plot, one can identify other gap in the
+scores that should better represent the gap between phases. It is possible to
+set up new thresholds to determine the limit between S and G1 phase and G2M and 
+G1 phase.
+
+```{r cellcycleAssign2, fig.show='hold'}
+# MANUAL PHASE ASSIGNATION BASED ON SCORES THRESHOLDS
+# inspired from https://github.com/satijalab/seurat/issues/2277#issuecomment-1117245430
+if (!(is.null(s_thresh) & is.null(g2m_thresh))) {
+    # STORE OLD PHASE
+    singlets@meta.data$Phase.old <- singlets@meta.data$Phase
+    singlets@meta.data$Phase <- NULL
+    
+    # CREATE NEW PHASE ASSIGNMENTS
+    cc.scores <- singlets@meta.data[, c("S.Score", "G2M.Score")]
+    assignments <- apply(
+        X = cc.scores,
+        MARGIN = 1,
+        FUN = function(scores, first = "S", second = "G2M", null = "G1") {
+            
+            if (scores["S.Score"] <= s_thresh & scores["G2M.Score"] <= g2m_thresh) {
+                return(null)
+            } else {
+                
+                return(c(first, second)[
+                    which(
+                        c(scores["S.Score"] - s_thresh, scores["G2M.Score"] - g2m_thresh) == max(
+                            scores["S.Score"] - s_thresh,
+                            scores["G2M.Score"] - g2m_thresh))]
+                )
+            }
+        }
+    )
+    
+    # MERGE NEW ASSIGNMENTS TO METADATA TABLE
+    cc.scores <- merge(x = cc.scores, y = data.frame(assignments), by = 0)
+    colnames(x = cc.scores) <- c('rownames', 'S.Score', 'G2M.Score', 'Phase')
+    rownames(x = cc.scores) <- cc.scores$rownames
+    cc.scores <- cc.scores[, c('S.Score', 'G2M.Score', 'Phase')]
+    singlets[[colnames(x = cc.scores)]] <- cc.scores
+    
+    # PLOT THE RESULT
+    Idents(singlets) <- "Phase"
+    print(FeatureScatter(singlets, "S.Score", "G2M.Score") +
+              ggtitle("CC. phase manual assignation") +
+              theme(plot.title = element_text(hjust = 0.5, size = 24)))
+}
+```
+
+
+```{r, eval=FALSE, echo=FALSE}
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = FALSE
+)
+```
+
+By performing PCA on the cell cycle genes, cells segregate according to the
+estimated cell cycle phase.
+
+```{r cellcyclePCA}
+singlets <- RunPCA(singlets, features = c(s.genes, g2m.genes), seed.use = general_seed, verbose=TRUE)
+
+p1 <- DimPlot(singlets, reduction = "pca")
+p1 +
+    plot_annotation(
+        title = "Before cell cycle regression",
+        subtitle = "Using cell cycle genes for PCA",
+        theme = theme(plot.title = element_text(hjust = 0.5, size = 24),
+                      plot.subtitle = element_text(hjust = 0.5, size = 20),
+                      axis.title = element_text(size = 20))
+    )
+```
+
+## Global regression - scenario 2
+
+After regression on phases score, we observe mixed cells independently of the
+cell cycle.
+
+```{r global-regression}
+# PIPELINE
+STEP_ID <- "2"
+
+globalReg <- ScaleData(singlets, vars.to.regress = c("S.Score", "G2M.Score"), features = rownames(singlets), do.scale = FALSE)
+globalReg <- RunPCA(globalReg, features = c(s.genes, g2m.genes), seed.use = general_seed, verbose=TRUE)
+
+p2 <- DimPlot(globalReg, reduction = "pca")
+p2 +
+    plot_annotation(
+        title = "After global cell cycle regression",
+        subtitle = "Using cell cycle genes for PCA",
+        theme = theme(plot.title = element_text(hjust = 0.5, size = 24),
+                      plot.subtitle = element_text(hjust = 0.5, size = 20),
+                      axis.title = element_text(size = 20))
+    )
+
+# Call the export functions for the globalReg dataset
+export_metadata(globalReg@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
+export_rds(globalReg, paste0("03_", STEP_ID, "_cellCycleRegr_", DATASET, ".rds"))
+gc()
+```
+
+
+## Cycling regression - scenario 3
+
+After regression on cycling cells, G2/M and S cells mix together, what is not
+the case for the G1 cells.
+
+```{r cycling-regression, fig.show='hold'}
+# PIPELINE
+STEP_ID <- "3"
+
+singlets$cc.difference <- singlets$S.Score - singlets$G2M.Score
+
+cyclingReg <- ScaleData(singlets, vars.to.regress = "cc.difference", features = rownames(singlets), do.scale = FALSE)
+cyclingReg <- RunPCA(cyclingReg, features = c(s.genes, g2m.genes), seed.use = general_seed, verbose=TRUE)
+
+p3 <- DimPlot(cyclingReg, reduction = "pca")
+p3 +
+    plot_annotation(
+        title = "After cycling phases cell cycle regression",
+        subtitle = "Using cell cycle genes for PCA",
+        theme = theme(plot.title = element_text(hjust = 0.5, size = 24),
+                      plot.subtitle = element_text(hjust = 0.5, size = 20),
+                      axis.title = element_text(size = 20))
+    )
+
+# Call the export functions for the cyclingReg dataset
+export_metadata(cyclingReg@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
+export_rds(cyclingReg, paste0("03_", STEP_ID, "_cellCycleRegr_", DATASET, ".rds"))
+rm(singlets)
+gc()
+```
+
+## Remove RBCs - scenarios 2 and 3
+
+```{r removeRBCs, results='asis'}
+# REUSE CHUNK FOR RBCs REMOVAL
+# ON THE 2 DATASETS
+
+# GLOBAL REGRESSION
+singlets <- globalReg
+STEP_ID <- "2"
+<<filterRBCs>>
+cat(paste0("
+On the global cell cycle regressed dataset, we removed ", dim(singlets)[2], " 
+cells, as they were expressing the **Hba-a1** gene marker.  
+The dataset has ", dim(noRBCs)[2], " remaining cells.
+"))
+rm(singlets, globalReg, noRBCs)
+invisible(gc())
+
+
+# CYCLING REGRESSION
+singlets <- cyclingReg
+STEP_ID <- "3"
+<<filterRBCs>>
+cat(paste0("
+On the cycling phases regressed dataset, we removed ", dim(singlets)[2], " 
+cells.  
+The dataset has ", dim(noRBCs)[2], " remaining cells.
+"))
+rm(singlets, cyclingReg, noRBCs)
+invisible(gc())
+```
+
+## Conclusion - scenarios 2 and 3
+
+After deleting the doublets (see scenario 1), we applied 2 cell cycle regression
+strategies. Then, we removed the RBCs cells from the 2 resulting datasets.
+
+# Next step
+
+For a single dataset, we get 3 objects to process:
+
+- object 1, where only doublets were removed,
+
+- object 2, where doublets were removed and a global regression was applied, and
+
+- object 3: where doublets were removed and a regression on cycling cells was
+applied.
+
+We also removed the red blood cells (RBCs) of all these objects, as soon as
+expression of **Hba-a1**, a marker gene, was detected.
+
+Here, we finished the preparation of the dataset. We can go through the standard
+pipeline for single cell RNA-sequencing data analysis.

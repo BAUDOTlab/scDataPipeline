@@ -1,0 +1,518 @@
+---
+author: "CC"
+date: "2023-03-23"
+output:
+    html_document:
+        theme:
+            bootswatch: yeti
+        toc: yes
+        toc_float:
+          collapsed: false
+          smooth_scroll: true
+        number_sections: yes
+        df_print: kable
+        code_folding: hide
+    pdf_document:
+        number_sections: yes
+        toc: yes
+        toc_depth: 3
+        keep_tex: no
+title: |
+  | `r DATASET`
+  | Protocole 1: QC
+---
+
+<!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
+
+<!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
+<!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
+
+<style>
+.zoomDiv {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+  box-shadow: 0px 0px 50px #888888;
+  width: fit-content;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.zoomImg {
+  width: 150%;
+}
+</style>
+
+<script type = "text/javascript">
+  $(document).ready(function() {
+    $("body").prepend("<div class = \"zoomDiv\"><img src = \"\" class = \"zoomImg\"></div>");
+    // onClick for all img except the zoomed one and link ones (filter)
+    // use "img.zoom" and out.extra = "class = \"zoom\"" in chunk to specify manually which chunk images can be zoomed
+    $("img:not(.zoomImg)").filter(":not(a *)").click(function() {
+      $(".zoomImg").attr("src", $(this).attr("src"));
+      $(".zoomDiv").show();
+    })
+    // onClick function for hiding div
+    $("img.zoomImg").click(function() {
+      $(".zoomDiv").hide();
+    })
+  })
+</script>
+
+
+```{r setup, include = FALSE}
+options(knitr.purl.inline = TRUE)
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+
+  # text output
+  echo = TRUE,
+  results = "hold",
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  strip.white = TRUE,
+
+  # code decoration
+  #tidy = TRUE,
+  tidy.opts = list(width.cutoff = 90),
+  comment = "",
+  attr.output = ".numberLines",
+
+  # plots
+  #fig.path = "figure/",      # is set later, in chunk setup2
+  fig.show = "asis",         # tuned to "hold" in multiple plots chunk
+  dev = c("png", "pdf"),
+  fig.width = 12,
+  fig.height = 12,
+  #fig.asp = 1.3               # fig.height = fig.width * fig.asp
+  #out.extra = "style = "border:5px solid orange""    # orange box arround plots
+  fig.align = "center"   # should be tuned to default in multiple plots chunk
+)
+```
+
+```{r load-libraries, include = FALSE}
+library(kableExtra)
+library(dplyr)
+library(Seurat)
+library(stringr)
+library(ggplot2)
+library(scCustomize)
+library(ggside)
+
+source("./data_management.R")
+source("./plotting_functions.R")
+```
+
+<!-- ```{r get-params, include = FALSE} -->
+<!-- bindingIsLocked("params", env = .GlobalEnv) -->
+<!-- unlockBinding("params", env = .GlobalEnv) -->
+<!-- attach(params) -->
+<!-- set.seed(general_seed) -->
+<!-- ``` -->
+
+```{r dir-managment, include = FALSE}
+if (!dir.exists(PATH_ROOT)) { dir.create(PATH_ROOT) }
+if (!dir.exists(PATH_OUT_HTML)) { dir.create(PATH_OUT_HTML) }
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "03_qc")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+if (!dir.exists(PATH_OUT_FIG)) { dir.create(PATH_OUT_FIG, recursive = TRUE) }
+```
+
+```{r otherSettings, include=FALSE}
+options(scipen=999)                 # to prevent scientific notation
+```
+
+<!-- # Global settings -->
+
+```{r show-params, eval=FALSE, include=FALSE}
+ul <- unlist(params)
+df <- data.frame(keyName = names(ul), value = ul, row.names = NULL)
+df <- df[! grepl("^PATH|DATASET", df$keyName), ]
+names(df) <- c("Parameters", "Values")
+df1 <- df[1:ceiling(dim(df)[1] / 3), ]
+df1$Parameters <- cell_spec(df1$Parameters, bold = TRUE)
+df2 <- df[(ceiling(dim(df)[1] / 3) + 1) : (2 * ceiling(dim(df)[1] / 3)), ]
+df2$Parameters <- cell_spec(df2$Parameters, bold = TRUE)
+df3 <- df[((2 * ceiling(dim(df)[1] / 3)) + 1):dim(df)[1], ]
+df3$Parameters <- cell_spec(df3$Parameters, bold = TRUE)
+
+
+list(df1, df2, df3) %>%
+  knitr::kable(align = "ll", row.names = FALSE, escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE)
+rm(df)
+```
+
+```{r setup2, eval = TRUE, include = FALSE}
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+
+  # figures
+  fig.path = paste0(PATH_OUT_FIG, "/01_qc_")
+)
+```
+
+# Load `r DATASET` data
+
+```{r load-data}
+raw_data <- Read10X(data.dir = PATH_INPUT_LABDATA, gene.column = 1)
+SO <- CreateSeuratObject(counts = raw_data, project = DATASET)
+SO
+```
+
+# Add metadata
+
+```{r add-metadata}
+if (grepl("fibro", DATASET)) {
+    localization <- "Fibroblast"
+} else {
+    localization <- "Cardiomyocyte"
+}
+
+if (grepl("KO", DATASET)) {
+    condition <- "mutant"
+} else {
+    condition <- "control"
+}
+
+SO <- AddMetaData(object = SO, metadata = DATASET,   col.name = "sample")
+SO <- AddMetaData(object = SO, metadata = localization,    col.name = "localization")
+SO <- AddMetaData(object = SO, metadata = condition, col.name = "condition")
+
+data.frame(head(SO@meta.data)) %>%
+  knitr::kable(align = "lrrrrrr",
+               caption = paste0(
+                   "6 first lines of the ",
+                   DATASET,
+                   " metadata table"
+               )
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(width = "100%", height = "300px")
+```
+
+## Nomenclature for cell names
+
+```{r renaming_cells}
+cell_ids <- colnames(SO)
+UMIs <- str_extract(cell_ids, "[A-Z]*")
+cellnames <- paste(localization, condition, UMIs, sep = "_")
+
+SO <- RenameCells(SO, new.names = cellnames)
+
+head(colnames(SO), 4)
+```
+
+Below, we can see that there are as many unique cell identifiers as the number of cells.
+
+Number of cells in the dataset: `r dim(SO)[2]`
+
+Number of unique cell identifiers: `r length(unique(colnames(SO)))`
+
+- - -
+
+\clearpage
+
+# Quality control
+
+## Percentage of mitochondrial reads & threshold
+
+```{r vln-mitoPercentage, fig.align = "default", out.width = "35%", fig.show = "hold"}
+SO <- Add_Mito_Ribo_Seurat(SO, species = "mouse", mito_name = "percent.mito", ribo_name = "percent.ribo", ensembl_ids = TRUE)
+SO@meta.data$percent_mito_ribo <- NULL
+
+SO@meta.data[, "outlier.mito"] <- FALSE
+SO@meta.data[SO@meta.data$percent.mito > mito_high |
+    SO@meta.data$percent.mito < mito_low, "outlier.mito" ] <- TRUE
+
+plot1 <- create_violin_plot(
+    data = SO,
+    feature = "percent.mito",
+    threshold_low = mito_low,
+    threshold_high = mito_high,
+    title = "Mitochondrial expression\npercentage",
+    subtitle = paste0("thresholds at ", mito_low, "% and ", mito_high, "%")
+)
+
+plot2 <- plot1 +
+    ggtitle("Zoom in", subtitle = paste0("thresholds at ", mito_low, "% and ", mito_high, "%")) +
+    coord_cartesian(ylim = c(0, mito_high+2))
+
+plot1
+plot2
+
+write.table(
+    rownames(SO@meta.data[which(SO@meta.data$outlier.mito == TRUE), ]), 
+    file = file.path(
+        PATH_OUT_ANALYSIS, 
+        paste0("cellsList_filteredOut_", DATASET, "_mitoLow.", mito_low, "_mitoHigh.", mito_high, ".txt")), 
+    row.names = FALSE, 
+    col.names = FALSE
+)
+```
+
+Only cells with mitochondrial gene expression between `r mito_low`% and
+`r mito_high`% are retained.  
+We will remove `r table(SO$outlier.mito)["TRUE"]` cells identified having a too 
+low or too high mitochondrial gene expression.
+
+
+## Percentage of ribosomal reads & threshold
+
+```{r vln-riboPercentage, fig.align = "center", out.width = "35%"}
+SO@meta.data[SO@meta.data$percent.ribo > ribo_low, "outlier.ribo"] <- FALSE
+SO@meta.data[SO@meta.data$percent.ribo < ribo_low, "outlier.ribo"] <- TRUE
+
+create_violin_plot(
+    data = SO,
+    feature = "percent.ribo",
+    threshold_low = ribo_low,
+    #theshold_high = NULL,
+    title = "Ribosomal expression\npercentage", 
+    subtitle = paste0("threshold at ", ribo_low, "%"))
+
+write.table(
+    rownames(SO@meta.data[which(SO@meta.data$outlier.ribo ==  TRUE), ]),
+    file = file.path(
+        PATH_OUT_ANALYSIS,
+        paste0("cellsList_filteredOut_", DATASET, "_ribo.", ribo_low, ".txt")),
+    row.names = FALSE, 
+    col.names = FALSE
+)
+```
+
+We will remove `r table(SO$outlier.ribo)["TRUE"]` cells identified having a high
+ribosomal gene expression.  
+The threshold upon the ribosomal gene expression is set at `r ribo_low`%.
+
+
+## UMI read counts thresholds
+
+```{r vln-countRNA, fig.align = "default", out.width = "35%", fig.show = "hold"}
+SO@meta.data[, "outlier.nCount"] <- FALSE
+SO@meta.data[SO@meta.data$nCount_RNA > max_counts | SO@meta.data$nCount_RNA < min_counts, "outlier.nCount"] <- TRUE
+
+plot1 <- create_violin_plot(
+    data = SO,
+    feature = "nCount_RNA",
+    threshold_low = min_counts,
+    threshold_high = max_counts,
+    title = "UMI counts per cell",
+    subtitle = paste0("thresholds at ", min_counts, " and ", max_counts)
+)
+
+plot2 <- plot1 +
+    ylim(0, 25000) +
+    ggtitle("Zoom in", subtitle = paste0("thresholds at ", min_counts, " and ", max_counts))
+
+plot1
+plot2
+
+write.table(
+    rownames(SO@meta.data[which(SO@meta.data$outlier.nCount ==  TRUE), ]),
+    file = file.path(
+        PATH_OUT_ANALYSIS,
+        paste0("cellsList_filteredOut_", DATASET, "_UMIcounts_l.", min_counts, "_h.", max_counts, ".txt")),
+    row.names = FALSE,
+    col.names = FALSE
+)
+```
+
+We will remove `r table(SO$outlier.nCount)["TRUE"]` cells identified having an
+UMI read counts out of a range.  
+The range upon the UMI read counts is set at `r min_counts` minimum UMI read 
+counts and `r as.character(max_counts)` maximum UMI read counts.
+
+## Feature counts threshold
+
+```{r vln-featureRNA, out.width = "35%"}
+SO@meta.data[SO@meta.data$nFeature_RNA > min_feat, "outlier.nFeature"] <- FALSE
+SO@meta.data[SO@meta.data$nFeature_RNA < min_feat, "outlier.nFeature"] <- TRUE
+
+
+create_violin_plot(
+    data = SO,
+    feature = "nFeature_RNA",
+    threshold_low = min_feat,
+    title = "Number of detected features per cell",
+    subtitle = paste0("threshold at ", min_feat, " counts")
+)
+
+write.table(
+    rownames(SO@meta.data[which(SO@meta.data$outlier.nFeature ==  TRUE), ]),
+    file = file.path(
+        PATH_OUT_ANALYSIS,
+        paste0("cellsList_filteredOut_", DATASET, "_featureCounts.", min_feat, ".txt")),
+    row.names = FALSE,
+    col.names = FALSE
+)
+```
+
+We will remove `r table(SO$outlier.nFeature)["TRUE"]` cells identified having a
+low number of feature counts.  
+The threshold upon the feature counts is set at `r min_feat`.
+
+
+## Repartition of detected features
+
+Features that are detected in `r min_cells` cells or fewer will be removed from the analysis.
+Among the `r dim(SO[1])` features mentioned after loading, some of them were never detected.
+
+```{r histo-geneRepartition}
+# Create dataframe
+df <- data.frame(rowSums(SO@assays$RNA@counts !=  0))
+df$features <- rownames(df)
+colnames(df) <- c("Nbr_of_cells", "features")
+rownames(df) <- NULL
+df_non0 <- df[df$Nbr_of_cells > 0, ]
+
+## Plot gene expression repartition
+ggplot(df_non0[c("Nbr_of_cells", "features")], aes(x = Nbr_of_cells)) +
+  geom_histogram(bins = 50) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 20)) +
+  ylab("Number of features") +
+  xlab("Number of cells") +
+  scale_x_continuous(trans = "log10") +
+  expand_limits(x = c(0, 10500), y = c(0, 2000)) +
+  geom_vline(aes(xintercept = min_cells), color = "green", size = 1) +
+  ggtitle(paste0("Repartition of detected features\n", DATASET)) +
+  geom_text(aes(x = min_cells, label = paste0("\n", min_cells), y = 1800, hjust = 1.5))
+
+write.table(
+    df[which(df$Nbr_of_cells <=  min_cells), c("features", "Nbr_of_cells")],
+    file = file.path(
+        PATH_OUT_ANALYSIS,
+        paste0("featuresList_filteredOut_", DATASET, "_featureInNCells.", min_cells, ".txt")),
+    row.names = FALSE,
+    col.names = FALSE
+)
+```
+
+The number of features that have never been detected is `r table(df$Nbr_of_cells ==  0)["TRUE"]`.
+In addition, features that have been detected in `r min_cells` or less will also be removed.
+It involves `r table(df_non0$Nbr_of_cells <=  min_cells)["TRUE"]`.
+
+In total, `r table(df$Nbr_of_cells <=  min_cells)["TRUE"]` features will be removed when the quality control is applied.
+
+## Quality control application
+
+```{r scatter-filtering, fig.align = "default", out.width = "50%", fig.show = "hold"}
+outliers <- grep("^outlier.", colnames(SO@meta.data), value = TRUE)
+qc_param <- c("nCount_RNA", "nFeature_RNA", "percent.mito", "percent.ribo")
+val <- c("nCount", "nFeature", "mito", "ribo")
+
+plotCols <- list()
+for (aValue in val) {
+  name <- grep(aValue, qc_param, value = TRUE)
+  tmp <- grep(aValue, outliers, value = TRUE)
+  plotCols[[name]] <- tmp
+}
+
+invisible(apply(combn(qc_param, 2), 2, function(x) {
+  do.call("<-", list(x[1], SO@meta.data[, x[1]]))
+  do.call("<-", list(x[2], SO@meta.data[, x[2]]))
+    print(
+        ggplot(SO@meta.data, # Plot FALSE first and TRUE after
+                aes( x = SO@meta.data[, x[1]], 
+                     y = SO@meta.data[, x[2]], 
+                    color = SO@meta.data[, plotCols[[x[1]]]] | SO@meta.data[, plotCols[[x[2]]]]
+               )) +
+          geom_point( size = 0.5) +
+          labs( x = x[1], y = x[2], color = "Outliers") +
+          scale_color_manual( values = c( "TRUE" = "#FF0000AA", "FALSE" = "#44444444")) +
+            theme(legend.key.size = unit(1, "cm"),
+                  legend.background = element_rect(colour = NA, fill = NA),
+                  legend.text = element_text(size = 10),
+                  legend.title = element_text(size = 14),
+                  legend.position = c(.9, .7),
+                  axis.title = element_text(size = 16),
+                  axis.text = element_text(size = 14)) +
+            guides(color = guide_legend(override.aes = list(size = 4))) +
+            geom_ysidedensity(
+                aes(x = after_stat(density),
+                    orientation = "y")) +
+            geom_xsidedensity(
+                aes(y = after_stat(density),
+                    orientation = "x")) +
+            scale_ysidex_continuous(guide = guide_axis(angle = 90))
+        )
+}))
+```
+
+The number of cells removed by the application of all the filters is `r dim(SO@meta.data[SO@meta.data$percent.mito > mito_high | SO@meta.data$percent.mito < mito_low | SO@meta.data$percent.ribo < ribo_low | SO@meta.data$nCount_RNA < min_counts | SO@meta.data$nCount_RNA > max_counts | SO@meta.data$nFeature_RNA < min_feat, ])[1]`.
+
+```{r filterQC, results='asis'}
+write.table(
+    rownames(SO@meta.data[SO@meta.data$percent.mito > mito_high |
+                              SO@meta.data$percent.mito < mito_low |
+                              SO@meta.data$percent.ribo < ribo_low |
+                              SO@meta.data$nCount_RNA < min_counts |
+                              SO@meta.data$nCount_RNA > max_counts |
+                              SO@meta.data$nFeature_RNA < min_feat, ]
+    ), 
+    file.path(
+        PATH_OUT_ANALYSIS, 
+        paste0("cellsList_filteredOut_", DATASET, "_all.txt")),
+    row.names = FALSE,
+    col.names = FALSE
+)
+
+SO_subset <- subset(SO, 
+             features = which(df$Nbr_of_cells > min_cells), 
+             subset = percent.mito < mito_high &
+                 percent.mito > mito_low &
+                 percent.ribo > ribo_low &
+                 nCount_RNA > min_counts &
+                 nCount_RNA < max_counts &
+                 nFeature_RNA > min_feat
+)
+```
+
+Before filtering, the datasets is as follows:  
+
+```{r, echo=FALSE}
+SO
+```
+
+After filtering, the dataset cleaned from the low quality cells is as follows:  
+
+```{r, echo=FALSE}
+SO_subset
+```
+
+
+# Exports
+
+We export the *cellIDs*, *sample*, *localization*, *condition*, *percent.mito*,
+*outlier.mito*, *percent.ribo*, *outlier.ribo*, *outlier.nCount* and
+*outlier.nFeature* metadata for the filtered and complete dataset. We then
+reduce the metadata table to the *orig.ident*, *nCount_RNA* and *nFeature_RNA*
+metadata and save the filtered and complete objects.
+
+```{r exports, eval=TRUE}
+defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
+
+# Call the functions for the complete dataset
+export_metadata(SO@meta.data, paste0("metadata_", DATASET, "_complete.csv"))
+#export_rds(SO, paste0("01_qc_", DATASET, "_complete.rds"))
+
+# Call the functions for the filtered dataset
+export_metadata(SO_subset@meta.data, paste0("metadata_", DATASET, "_filtered.csv"))
+#export_rds(SO_subset, paste0("01_qc_", DATASET, "_filtered.rds"))
+```
+
+
+```{r garbage-collec1, include = FALSE}
+invisible(gc())
+```

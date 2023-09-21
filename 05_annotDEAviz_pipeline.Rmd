@@ -1,0 +1,557 @@
+---
+author: "Céline Chevalier and Anaı̈s Baudot"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+    html_document:
+        theme:
+            bootswatch: yeti
+        toc: yes
+        toc_float:
+          collapsed: false
+          smooth_scroll: true
+        number_sections: yes
+        df_print: kable
+        code_folding: hide
+    pdf_document:
+        number_sections: yes
+        toc: yes
+        toc_depth: 3
+        keep_tex: no
+# title: |
+#   | Doublets removal
+#   | Step {{STEP_ID}}
+---
+
+<!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
+
+<!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
+<!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
+
+<style>
+.zoomDiv {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+  box-shadow: 0px 0px 50px #888888;
+  width: fit-content;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.zoomImg {
+  width: 150%;
+}
+</style>
+
+<script type = "text/javascript">
+  $(document).ready(function() {
+    $("body").prepend("<div class = \"zoomDiv\"><img src = \"\" class = \"zoomImg\"></div>");
+    // onClick for all img except the zoomed one and link ones (filter)
+    // use "img.zoom" and out.extra = "class = \"zoom\"" in chunk to specify manually which chunk images can be zoomed
+    $("img:not(.zoomImg)").filter(":not(a *)").click(function() {
+      $(".zoomImg").attr("src", $(this).attr("src"));
+      $(".zoomDiv").show();
+    })
+    // onClick function for hiding div
+    $("img.zoomImg").click(function() {
+      $(".zoomDiv").hide();
+    })
+  })
+</script>
+
+
+```{r setup04-1, include = FALSE}
+options(knitr.purl.inline = TRUE)
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+
+  # text output
+  echo = TRUE,
+  results = "hold",
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  strip.white = TRUE,
+
+  # code decoration
+  tidy.opts = list(width.cutoff = 90),
+  comment = "",
+  attr.output = ".numberLines",
+
+  # plots
+  fig.path = paste0(PATH_OUT_FIG, "/06_annotDEAviz_"),
+  fig.show = "asis",         # tuned to "hold" in multiple plots chunk
+  dev = c("png", "pdf"),
+  out.width = "50%",
+  fig.width = 12,
+  fig.height = 12,
+  fig.align = "center"   # should be tuned to default in multiple plots chunk
+)
+```
+
+```{r load_lib}
+library(Seurat)
+library(ggplot2)
+library(biomaRt)
+library(tidyr)
+library(Matrix)
+library(dplyr)
+library(kableExtra)
+library(stringr)
+library(DT)
+library(scales)
+library(RColorBrewer)
+library(grDevices)
+
+
+# source("./extract_topn.R")
+# source("./highlightClusterPlot.R")
+# source("./additionalPlots.R")
+source("./plotting_functions.R")
+source("./data_management.R")
+```
+
+```{r load-colors, include = FALSE}
+# Create color vectors
+colors.table <- read.csv("../00_rawData/Li_et_al_Atlas/colorsSheet.csv", header=T, comment.char="", as.is=T)
+colors.celltype <- setNames(colors.table$tissue_color[!is.na(colors.table$tissue)], colors.table$tissue[!is.na(colors.table$tissue)])
+colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
+```
+
+```{r variableDef1, include=FALSE}
+# PATHS
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_prepocessed_", DATASET, "_scenario.", scenario, ".rds")
+PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "07_annotDEAviz")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+```
+
+```{r load-data, include=FALSE}
+# LOAD DATA
+fltd <- readRDS(PATH_RDS_FILE)
+
+# LOAD CLUSTERING RESULTS
+clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
+clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(clusters), value = TRUE)
+fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.names')
+fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
+```
+
+# Cells annotation through label transfer from the atlas
+
+```{r mapping-atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
+```
+
+<!-- ## Impact of the additional controls on the annotation transfer -->
+
+<!-- ```{r heatmap-afterDF} -->
+<!-- Idents(fltd) <- fltd@meta.data$tissue_DF -->
+<!-- transition <- table(fltd@meta.data$tissue_DF, fltd@meta.data$tissue_singleData) -->
+<!-- dt <- as.data.frame(transition, row.names = names(fltd@meta.data$tissue_singleData)) -->
+<!-- dt[dt == 0] <- NA -->
+<!-- names(dt) <- c("beforeDF", "afterDF", "counts") -->
+
+
+<!-- ggplot(dt, aes(beforeDF, afterDF, fill = counts)) + # nolint -->
+<!--     geom_tile() + -->
+<!--     geom_text(aes(label = counts), color = "black", size = 2.5, fontface = "bold") + -->
+<!--     #scale_color_manual(values = c(NA, "black"), na.value = NA) + -->
+<!--     coord_fixed() + -->
+<!--     scale_fill_gradient(low = "white", high = "pink", na.value="white") + -->
+<!--     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + -->
+<!--     guides(fill = guide_colourbar(barwidth = 0.5, -->
+<!--                                   barheight = 10, -->
+<!--                                   title = "Counts")) + -->
+<!--     ggtitle(paste0(DATASET, " : impact of doublets removal on the label transfer")) + -->
+<!--     CenterTitle() + -->
+<!--     labs(x = "Cell type annotation before additional controls", y = paste0("Cell type annotation after additional controls")) -->
+<!-- ``` -->
+
+
+# Map ensembl IDs to gene names
+
+Presentation of Biomart, selection of the reference genome
+
+```{r, results='asis'}
+ensembl.ids <- rownames(fltd)
+
+# # explore the biomart database
+# listEnsembl()
+# ensembl <- useEnsembl(biomart = "genes")
+# datasets <- listDatasets(ensembl)
+# listEnsemblArchives() # useful to retrieve an old annotation
+
+# selection of the reference genome for annotation
+mm10 <- useEnsembl(biomart = 'genes', 
+                   dataset = 'mmusculus_gene_ensembl',
+                   version = 108) # ==> GRCm38.p3 reference genome
+
+geneNames108 <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"), #, "external_transcript_name"),
+                     filters = "ensembl_gene_id",
+                     values = ensembl.ids,
+                     mart = mm10)
+
+# Check for manually inserted genes
+manInsert <- grep("ENS", ensembl.ids, value = TRUE, invert = TRUE)
+geneNames108 <- rbind(geneNames108, as.data.frame(cbind(ensembl_gene_id = manInsert, external_gene_name = manInsert)))
+
+write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, "correspondanceENSid_GeneName_V108.csv"), col.names = TRUE, row.names = FALSE, sep = ",")
+
+duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
+```
+
+The `r DATASET` dataset has **`r length(ensembl.ids)`** different feature genes
+comprising `r length(manInsert)` manually inserted genes:  
+`r manInsert`
+
+***
+
+Number of unique retrieved ensembl gene IDs: 
+**`r length(unique(geneNames108$ensembl_gene_id))`**  
+*(the manually inserted genes are already added to the retrieved data)*
+
+List of the **`r length(setdiff(ensembl.ids, geneNames108$ensembl_gene_id))`**
+not found ensembl gene IDs:  
+`r setdiff(ensembl.ids, geneNames108$ensembl_gene_id)`
+
+***
+
+Number of unique retrieved gene names: **`r length(unique(geneNames108$external_gene_name))`**
+
+Some gene names fit multiple ensembl gene IDs. Below you can see the table of
+the redundant gene names and the corresponding ensembl gene IDs.
+
+```{r echo=FALSE}
+# datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
+duplicatesGN %>%
+    rename(gene_names = external_gene_name) %>%
+    arrange(gene_names) %>%
+    knitr::kable(row.names = FALSE, align = "ll") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE, position = "center") %>%
+  column_spec(1, width = "12em") %>%
+  column_spec(2, width = "12em")
+```
+
+<br>
+
+We removed all ensembl gene IDs mapped to multiple gene names. We reduce the
+feature list to the remaining ensembl gene IDs.
+
+
+```{r RenameGenesSeurat}
+# Remove ensembl gene IDs with multiple match to gene names
+geneNamesUniq <- geneNames108[-which(geneNames108$ensembl_gene_id %in% duplicatesGN$ensembl_gene_id),]
+
+SOsubset <- subset(fltd, features = geneNamesUniq$ensembl_gene_id)
+
+RenameGenesSeurat <- function(obj = NULL, newnames = NULL) {
+    # Replace gene names in different slots of a Seurat object. Run this before
+    # integration. Run this before integration. It only changes
+    # obj@assays$RNA@counts, @data and @scale.data.
+    
+    if (!(exists("newnames")&&is.data.frame(get("newnames")))) {
+        print("Please provide a vector of new names.")
+    }
+    
+    # print("Run this before integration. It only changes obj@assays$RNA@counts,
+    #       @data, @scale.data and @var.features."
+    # )
+    
+    RNA <- obj@assays$RNA
+    # RNA <- SOsubset@assays$RNA
+    # newnames <- geneNames80
+    
+    # Replacement labels must have the same length with the data
+    if (nrow(RNA) == length(newnames$external_gene_name)) {
+        
+        # print("Changes obj@assays$RNA@counts and @data")
+        if (length(RNA@counts)) RNA@counts@Dimnames[[1]]    <- newnames$external_gene_name
+        if (length(RNA@data)) RNA@data@Dimnames[[1]]        <- newnames$external_gene_name
+        
+        # print("Changes obj@assays$RNA@scale.data")
+        if (length(RNA@scale.data)) {
+            
+            tmp.scale.data <- as.data.frame(RNA@scale.data) %>%
+                tibble::rownames_to_column("ensembl_gene_id") %>%
+                right_join(newnames, ., by = "ensembl_gene_id") %>%
+                tibble::column_to_rownames("external_gene_name") %>%
+                select(-(ensembl_gene_id))
+            RNA@scale.data <- as.matrix(tmp.scale.data)
+            
+            
+            # variable features
+            # wonder if the broken link with meta.features is a problem
+            # print("Changes obj@assays$RNA@var.features")
+            if (length(RNA@var.features) > 0) {
+                
+                # rename variable features with gene names
+                ensemblFeat <- data.frame(hvg = RNA@var.features)
+                geneFeat <- ensemblFeat %>%
+                    left_join(newnames, by = join_by(hvg == ensembl_gene_id))
+                RNA@var.features <- geneFeat$external_gene_name
+                
+                
+                # change rownames of the variable features meta data table
+                # NOT WORKING AS DUPLICATE ROW.NAMES ARE NOT ALLOWED
+                # WORKS AS DUPLICATES ARE REMOVED
+                tmp.meta.features <- RNA@meta.features %>%
+                    tibble::rownames_to_column("ensembl_gene_id") %>%
+                    right_join(newnames, ., by = "ensembl_gene_id") %>%
+                    tibble::column_to_rownames("external_gene_name") %>%
+                    select(-(ensembl_gene_id))
+                RNA@meta.features <- tmp.meta.features
+            }
+            
+        }
+    } else {"Unequal gene sets: nrow(RNA) != nrow(newnames)"}
+    obj@assays$RNA <- RNA
+    return(obj)
+}
+
+renamed <- RenameGenesSeurat(obj = SOsubset, newnames = geneNamesUniq)
+renamed
+```
+
+
+# Perform differential expression analysis
+
+```{r}
+clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(renamed@meta.data), value = TRUE)
+Idents(renamed) <- clustOfInterest
+
+DefaultAssay(renamed) <- 'RNA'
+
+markers <- FindAllMarkers(renamed, only.pos = TRUE)
+#markers.sign <- markers[markers$p_val_adj < 0.001 & markers$avg_logFC > log(1.5), ]
+markers.sign <- markers[order(-markers$avg_log2FC), ]
+markers.sign$cluster <- factor(markers.sign$cluster, levels = as.character(sort(as.numeric(levels(markers.sign$cluster)))))
+markers.sign <- markers.sign[order(markers.sign$cluster), ]
+markers.sign <- markers.sign[ , c(6, 7, 2:4, 1, 5)]
+write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
+                                               paste0("markers_min.pct_logFC_default_", 
+                                                      DATASET, ".integ.res_", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+
+topNmarkers <- extract_topn(markers.sign, topn = top_markers)
+
+
+write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
+                                              paste0("top_", top_markers, "_markers_", DATASET, "_filtered.csv")), sep = ",", row.names = F, col.names = T)
+
+datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
+```
+
+
+# Additional Plots
+
+```{r addPlots-1}
+# Load list of genes of interest
+goi <- read.table(file.path(PATH_REQUIREMENTS, "genesOfInterest_2023-04-13.tsv"))
+goiList <- goi$V1
+
+# Parameters
+ntop <- 5
+
+
+DefaultAssay(renamed) <- "RNA"
+topNmarkers <- extract_topn(markers.sign, topn = ntop)
+topNgenes <- unique(topNmarkers$gene)
+
+
+genesToRemove <- goiList[!(goiList %in% rownames(renamed))]
+if (length(genesToRemove) >= 1){
+  cat(paste0("One or more genes of interest are not in the dataset (maybe because of the case):\n\t",
+             paste(genesToRemove, collapse = ", "), "\nThe listed genes will not be plotted"))
+}
+
+goiList <- goiList[goiList %in% rownames(renamed)] # remove the unknown genes
+```
+
+## Cluster identity {.tabset .tabset-pills .tabset-fade}
+
+```{r addPlots-3}
+Idents(renamed) <- factor(renamed@meta.data[,clustOfInterest], levels = sort(as.numeric(levels(as.factor(renamed@meta.data[,clustOfInterest])))))
+```
+
+### DimPlot of the cluster identity
+```{r cluster-dimplot, out.width="50%"}
+p <- DimPlot(renamed, reduction = "umap", pt.size = 0.8,
+             label = FALSE) +
+  ggtitle(paste0("Clusters at resolution ", clust_res, "\n", DATASET)) +
+  CenterTitle() +
+  NoAxes()
+LabelClusters(p, id = "ident",  fontface = "bold", size = 5)
+```
+
+### DotPlot of the markers on cluster identity
+
+```{r cluster-dotPlot-markers}
+dotPlotsMarkers(renamed, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in clusters"))
+```
+
+### DotPlot of the genes of interest on cluster identity
+
+```{r cluster-dotPlot-goi}
+dotPlotsGoi(renamed, goiList, title="Genes of interest in clusters")
+```
+
+### FeaturePlots of the markers {.tabset .tabset-pills .tabset-fade}
+
+```{r featurePlots-markers, results='asis', out.width='20%', fig.align='default'}
+# code with the courtesy of Lionel Spinelli and Romain Fenouil
+topMarkers = by( markers.sign, markers.sign[["cluster"]], function(x)
+{
+  # Filter markers based on adjusted PValue
+  x = x[ x[["p_val_adj"]] < 0.005, , drop = FALSE]
+  # Sort by decreasing logFC
+  x = x[ order(abs(x[["avg_log2FC"]]), decreasing = TRUE), , drop = FALSE ]
+  # Return top ones
+  return( if(is.null(  top_markers )) head( x, n =  10 ) else head( x, n =  min(top_markers, 10) ))
+})
+
+clustersColor <- setNames(hue_pal()(length(names(topMarkers))), names(topMarkers))
+
+invisible( lapply( names( topMarkers), function(clusterName)
+{
+  cat("#### Cl. <span style='border-radius: 3px border: 3px solid ", clustersColor[clusterName], " padding:0px 2px'>", clusterName, "</span>\n")
+  
+  # Highlight cells of current cluster on a dimreduc plot
+  highlightClusterPlot(clusterName, seuratObject = renamed, reduction = ifelse( exists("useReduction"), useReduction, "umap"))
+  
+  # Plots expression on projected cells
+  invisible( lapply( topMarkers[[clusterName]][["gene"]], function(featureName)
+  {
+    print( FeaturePlot( renamed, features = featureName, reduction = ifelse( exists("useReduction"), useReduction, "umap"), order = TRUE) +
+             theme( axis.title.x = element_blank(),
+                    axis.title.y = element_blank(),
+                    legend.position = "none"))
+  }))
+  
+  cat(" \n \n") # Required for '.tabset'
+}))
+```
+
+
+### FeaturePlots of the genes of interest with cluster labels
+
+```{r cluster-featurePlot-goi, out.width='20%', fig.align='default'}
+## FeaturePlot the genes of interest
+doFeaturePlot(renamed, goiList)
+```
+
+### ViolinPlots of the markers {.tabset .tabset-pills .tabset-fade}
+
+```{r violinPlots-markers, results='asis', out.width='20%', fig.align='default'}
+# with courtesy of Lionel Spinelli and Romain Fenouil
+invisible( lapply( names( topMarkers), function(clusterName)
+{
+  cat("#### Cl. <span style='border-radius: 3px border: 3px solid ", clustersColor[clusterName], " padding:0px 2px'>", clusterName, "</span>\n")
+  
+  # Remind cluster name in an empty figure to keep consistent alignment of panels between tabs
+  plot( c( 0, 1), c( 0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+  text( x = 0.5, y = 0.5, paste( "Cluster", clusterName), cex = 2, col = clustersColor[clusterName])
+  
+  # Violinplot for expression value of marker genes by cluster (+ number of 'zero' and 'not zero' cells)
+  invisible( lapply( topMarkers[[clusterName]][["gene"]], violinFeatureByCluster, seuratObject = renamed, clustersColor = clustersColor))
+  
+  cat(" \n \n") # Required for '.tabset'
+}))
+```
+
+## Celltype identity {.tabset .tabset-pills .tabset-fade}
+
+```{r addPlots-4}
+Idents(renamed) <- factor(renamed@meta.data$tissue_singleData, levels = sort(levels(as.factor(renamed@meta.data$tissue_singleData))))
+```
+
+### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}
+
+```{r celltype-dimplot, results='asis', out.width="50%"}
+## DimPlot the celltype
+DimPlot(renamed,
+        reduction = "umap",
+        pt.size = 1,
+        repel = TRUE,
+        label = TRUE,
+        label.size = 6,
+        cols = colors.celltype[levels(Idents(renamed))]) +
+  ggtitle(paste0(DATASET, " : cell identities")) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_blank(),
+        line = element_blank()) +
+        NoLegend()
+
+cellsData <- data.frame(renamed@reductions[["umap"]]@cell.embeddings, renamed@meta.data$tissue_singleData)
+colnames(cellsData) <- c(colnames(renamed@reductions[["umap"]]@cell.embeddings), "celltype")
+
+invisible(sapply(levels(as.factor(renamed@meta.data$tissue_singleData)), function(act)
+{
+    cat("#### ", act, "\n")
+        
+    print(ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+         aes( x = UMAP_1,
+              y = UMAP_2)) +
+    geom_point( alpha = .4,
+                size  = 1,
+                color = "grey") +
+    geom_point( data = cellsData[cellsData$celltype == act,], # Now provide data including column for facetting
+                aes(color = celltype),
+                alpha = .5,
+                size  = 3.5) +
+    theme_void() +
+    scale_fill_manual(values = colors.celltype[renamed@meta.data$tissue_singleData], aesthetics = "color") +
+    NoLegend() +
+    ggtitle(paste0(act)) +
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text = element_blank(),
+          line = element_blank())
+    )
+
+    cat(" \n \n") # Required for '.tabset'
+}))
+```
+
+### DotPlot of the markers on celltype identity
+
+```{r celltype-dotPlot-markers}
+## DotPlot the n-top markers of each celltype
+dotPlotsMarkers(renamed, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
+```
+
+### DotPlot of the genes of interest on celltype identity
+
+```{r celltype-dotPlot-goi}
+## DotPlot the genes of interest
+dotPlotsGoi(renamed, goiList, title="Genes of interest in celltypes")
+```
+
+
+<!-- ## Personal exploration -->
+
+<!-- List of genes obtained from the CHD-RF-KB (A knowledgebase for non-syndromic -->
+<!-- congenital heart disease associated risk factors). -->
+
+<!-- ```{r} -->
+<!-- # Load list of genes of interest -->
+<!-- goi <- read.table(file.path(PATH_REQUIREMENTS, "geneList_CHD-RF-KB.txt")) -->
+<!-- goiList <- goi$V1 -->
+<!-- goiList <- str_to_title(goiList) -->
+
+<!-- genesToRemove <- goiList[!(goiList %in% rownames(renamed))] -->
+<!-- if (length(genesToRemove) >= 1){ -->
+<!--   cat(paste0("One or more genes of interest are not in the dataset (maybe because of the case):\n\t", -->
+<!--              paste(genesToRemove, collapse = ", "), "\nThe listed genes will not be plotted")) -->
+<!-- } -->
+
+<!-- goiList <- goiList[goiList %in% rownames(renamed)] # remove the unknown genes -->
+
+<!-- Idents(renamed) <- factor(renamed@meta.data[,clustOfInterest], levels = sort(as.numeric(levels(as.factor(renamed@meta.data[,clustOfInterest]))))) -->
+<!-- dotPlotsGoi(renamed, goiList, title="Genes of CHD-RF-KB database") -->
+<!-- ``` -->
+
