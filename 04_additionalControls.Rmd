@@ -330,7 +330,7 @@ singlets@meta.data[clustOfInterest] <- NULL
 # noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = `Hba-a1` > 0, invert = TRUE))
 noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = ENSMUSG00000069919 > 0, invert = TRUE))
 
-export_rds(noRBCs, paste0("04", STEP_ID, " _goodQualityCells_", DATASET, ".rds"))
+export_rds(noRBCs, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 ```
 
 From the **`r dim(singlets)[2]`** singlet cells,
