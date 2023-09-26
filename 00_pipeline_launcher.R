@@ -438,7 +438,7 @@ switch(args[1],
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "testCardioKO"
+# opt$options$input_dataset <- "cardioKO"
 PATH_REQUIREMENTS <- "../01_requirements/"
 load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
 

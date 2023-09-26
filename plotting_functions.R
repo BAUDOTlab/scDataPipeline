@@ -105,7 +105,7 @@ defaultTheme <- function() {
           plot.subtitle = element_text(hjust = 0.5, size = 20),
           axis.title = element_text(size = 20),
           axis.text = element_blank(),
-          line = element_blank(),
+          line = element_blank())
 }
 
 ######## BLANK THEME

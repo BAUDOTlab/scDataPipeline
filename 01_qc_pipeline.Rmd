@@ -86,7 +86,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  #fig.path = "figure/",      # is set later, in chunk setup2
+  fig.path = paste0(PATH_OUT_FIG, "/03_qc_"),
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   fig.width = 12,
@@ -151,15 +151,6 @@ list(df1, df2, df3) %>%
 rm(df)
 ```
 
-```{r setup2, eval = TRUE, include = FALSE}
-knitr::opts_chunk$set(
-  # code evaluation
-  eval = TRUE,
-
-  # figures
-  fig.path = paste0(PATH_OUT_FIG, "/01_qc_")
-)
-```
 
 # Load `r DATASET` data
 
@@ -172,21 +163,22 @@ SO
 # Add metadata
 
 ```{r add-metadata}
-if (grepl("fibro", DATASET)) {
-    localization <- "Fibroblast"
-} else {
-    localization <- "Cardiomyocyte"
-}
-
-if (grepl("KO", DATASET)) {
-    condition <- "mutant"
-} else {
-    condition <- "control"
-}
-
 SO <- AddMetaData(object = SO, metadata = DATASET,   col.name = "sample")
-SO <- AddMetaData(object = SO, metadata = localization,    col.name = "localization")
-SO <- AddMetaData(object = SO, metadata = condition, col.name = "condition")
+
+## Check if the CONDITION string contains "_" and split it into parts to add to different metadata columns.
+# If not, add the entire CONDITION string to a single metadata column if it is not empty or NA.
+
+if (!is.na(CONDITION)) {
+    if (str_detect(CONDITION, "_")) {
+        conditions <- strsplit(CONDITION, "_")[[1]]
+    } else if (CONDITION != "") {
+        conditions <- c(CONDITION)
+    }
+    for (i in seq_along(conditions)) {
+        col_name <- paste0("condition_", i)
+        SO <- AddMetaData(object = SO, metadata = conditions[i], col.name = col_name)
+    }
+}
 
 data.frame(head(SO@meta.data)) %>%
   knitr::kable(align = "lrrrrrr",
@@ -205,7 +197,12 @@ data.frame(head(SO@meta.data)) %>%
 ```{r renaming_cells}
 cell_ids <- colnames(SO)
 UMIs <- str_extract(cell_ids, "[A-Z]*")
-cellnames <- paste(localization, condition, UMIs, sep = "_")
+conditionName <-grep("condition", names(SO@meta.data), value = TRUE)
+
+cellnames <- paste0(SO@meta.data[[conditionName[1]]],
+                    if(length(conditionName) > 1) paste0("_", SO@meta.data[[conditionName[2]]]),
+                    sep = "_",
+                    UMIs)
 
 SO <- RenameCells(SO, new.names = cellnames)
 
