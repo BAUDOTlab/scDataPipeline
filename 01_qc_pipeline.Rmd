@@ -164,7 +164,7 @@ knitr::opts_chunk$set(
 # Load `r DATASET` data
 
 ```{r load-data}
-raw_data <- Read10X(data.dir = PATH_INPUT_LABDATA, gene.column = 1)
+raw_data <- Read10X(data.dir = PATH_INPUT_LABDATA, gene.column = gn_col)
 SO <- CreateSeuratObject(counts = raw_data, project = DATASET)
 SO
 ```
@@ -227,7 +227,8 @@ Number of unique cell identifiers: `r length(unique(colnames(SO)))`
 ## Percentage of mitochondrial reads & threshold
 
 ```{r vln-mitoPercentage, fig.align = "default", out.width = "35%", fig.show = "hold"}
-SO <- Add_Mito_Ribo_Seurat(SO, species = "mouse", mito_name = "percent.mito", ribo_name = "percent.ribo", ensembl_ids = TRUE)
+use_ensembl_ids = if(gn_col == 1) TRUE else FALSE
+SO <- Add_Mito_Ribo_Seurat(SO, species = "mouse", mito_name = "percent.mito", ribo_name = "percent.ribo", ensembl_ids = use_ensembl_ids)
 SO@meta.data$percent_mito_ribo <- NULL
 
 SO@meta.data[, "outlier.mito"] <- FALSE
