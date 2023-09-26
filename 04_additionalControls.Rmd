@@ -98,7 +98,7 @@ knitr::opts_chunk$set(
   out.width = "50%",
   fig.width = 12,
   fig.height = 12,
-  fig.align = "center"       # should be tuned to default in multiple plots chunk
+  fig.align = "center"       # should be tuned to grey in multiple plots chunk
 )
 ```
 
@@ -161,7 +161,7 @@ simply reuse the output from the scenario 1 to perform cell cycle regressions
 # PIPELINE
 STEP_ID <- "1"
 msg <- "before CC regression"
-defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
+greyMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # LOAD DATA
 PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_prepocessed_", DATASET, "_filtered.rds")
@@ -242,7 +242,7 @@ Idents(fltd) <- col_dblts
 export_rds(fltd, paste0("03_", STEP_ID, "_doubletsIdentification_", DATASET, ".rds"))
 ```
 
-```{r plotDF, fig.show='hold', fig.align='default', out.width="33%"}
+```{r plotDF, fig.show='hold', fig.align='grey', out.width="33%"}
 # PLOTS
 # SINGLETS
 DimPlot(fltd,
@@ -251,7 +251,7 @@ DimPlot(fltd,
         pt.size = 1
 ) +
     ggtitle("Singlets - before CC regression") +
-    defaultTheme() +
+    greyTheme() +
     NoLegend()
 
 # DOUBLETS
@@ -261,7 +261,7 @@ DimPlot(fltd,
         pt.size = 1
 ) +
     ggtitle("Doublets - before CC regression") +
-    defaultTheme() +
+    greyTheme() +
     NoLegend()
 
 # UMIs READ COUNTS
@@ -270,7 +270,7 @@ FeaturePlot(fltd, "nCount_RNA",
             pt.size = 1
 ) +
     ggtitle("UMIs read counts - before CC regression") +
-    defaultTheme() +
+    greyTheme() +
     theme(legend.position = c(0.94, 0.5),
           legend.title = element_text(size = 12),
           legend.text = element_text(size = 12),
@@ -399,7 +399,7 @@ FeatureScatter(singlets, "S.Score", "G2M.Score") +
     theme(plot.title = element_text(hjust = 0.5, size = 24))
 ```
 
-The default phase thresholds are set to 0. Any cell having a `S.Score > 0` is
+The grey phase thresholds are set to 0. Any cell having a `S.Score > 0` is
 estimated to be in the S phase. Similarly, cells with a value of `G2M.Score > 0`
 is estimated to be in G2M phase. All the other cells are estimated to be in G1
 phase.  

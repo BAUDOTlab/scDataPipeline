@@ -480,17 +480,15 @@ Idents(renamed) <- factor(renamed@meta.data$tissue_singleData, levels = sort(lev
 ```{r celltype-dimplot, results='asis', out.width="50%"}
 ## DimPlot the celltype
 DimPlot(renamed,
-        reduction = "umap",
+		reduction = "umap",
         pt.size = 1,
         repel = TRUE,
         label = TRUE,
         label.size = 6,
         cols = colors.celltype[levels(Idents(renamed))]) +
-  ggtitle(paste0(DATASET, " : cell identities")) +
-  theme(plot.title = element_text(hjust = 0.5),
-        axis.text = element_blank(),
-        line = element_blank()) +
-        NoLegend()
+		ggtitle(paste0(DATASET, " : cell identities")) +
+		defaultTheme() +
+		NoLegend()
 
 cellsData <- data.frame(renamed@reductions[["umap"]]@cell.embeddings, renamed@meta.data$tissue_singleData)
 colnames(cellsData) <- c(colnames(renamed@reductions[["umap"]]@cell.embeddings), "celltype")
@@ -509,13 +507,10 @@ invisible(sapply(levels(as.factor(renamed@meta.data$tissue_singleData)), functio
                 aes(color = celltype),
                 alpha = .5,
                 size  = 3.5) +
-    theme_void() +
+    blankTheme() +
     scale_fill_manual(values = colors.celltype[renamed@meta.data$tissue_singleData], aesthetics = "color") +
     NoLegend() +
-    ggtitle(paste0(act)) +
-    theme(plot.title = element_text(hjust = 0.5),
-          axis.text = element_blank(),
-          line = element_blank())
+    ggtitle(paste0(act))
     )
 
     cat(" \n \n") # Required for '.tabset'

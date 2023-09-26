@@ -98,7 +98,6 @@ create_dot_plot <- function(SO, geneList, title=NULL) {
 }
 
 
-
 ######## DEFAULT THEME
 defaultTheme <- function() {
     theme_classic() +
@@ -107,7 +106,18 @@ defaultTheme <- function() {
           axis.title = element_text(size = 20),
           axis.text = element_blank(),
           line = element_blank(),
-          panel.background = element_rect(fill="grey95"))
+}
+
+######## BLANK THEME
+blankTheme <- function() {
+	theme_void() +
+    defaultTheme()
+}
+
+######## GREY THEME
+greyTheme <- function() {
+    defaultTheme() +
+    theme(panel.background = element_rect(fill="grey95"))
 }
 
 
