@@ -118,7 +118,7 @@ source("./plotting_functions.R")
 
 ```{r load-colors, include = FALSE}
 # Create color vectors
-colors.table <- read.csv("../00_rawData/Li_et_al_Atlas/colorsSheet.csv", header=T, comment.char="", as.is=T)
+colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
 colors.celltype <- setNames(colors.table$tissue_color[!is.na(colors.table$tissue)], colors.table$tissue[!is.na(colors.table$tissue)])
 colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
 ```
