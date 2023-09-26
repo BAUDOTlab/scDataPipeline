@@ -205,7 +205,7 @@ switch(args[1],
         c("-s", "--selected_resolution"),
         action = "store",
         default = 1,
-        type = "double",
+        type = "integer",
         help = "value of the resolution for the Seurat function FindClusters"
       ),
       make_option(
@@ -311,7 +311,7 @@ switch(args[1],
         c("-s", "--selected_resolution"),
         action = "store",
         default = 1,
-        type = "double",
+        type = "integer",
         help = "value of the resolution for the Seurat function FindClusters"
       ),
       make_option(
@@ -369,7 +369,7 @@ switch(args[1],
               c("-s", "--selected_resolution"),
               action = "store",
               default = 1,
-              type = "double",
+              type = "integer",
               help = "value of the resolution for the Seurat function FindClusters.
                 To retrieve the clustering, enter the same value as for the
                 process pipeline"
@@ -389,7 +389,7 @@ switch(args[1],
               c("-S", "--s_phase"),
               action = "store",
               # default = NA,
-              # type = "integer",
+              type = "numeric",
               help = "threshold to adapt in order to correct the cell cycle
                 scoring. By default, the threshold is set to 0. Vizualisation
                 is needed to adjust the value"
@@ -398,7 +398,7 @@ switch(args[1],
               c("-G", "--g2m_phase"),
               action = "store",
               # default = NA,
-              # type = "integer",
+              type = "numeric",
               help = "threshold to adapt in order to correct the cell cycle
                 scoring. By default, the threshold is set to 0. Vizualisation
                 is needed to adjust the value"
@@ -465,7 +465,6 @@ switch(args[1],
        "qc" = {
            rmarkdown::render(
                "01_qc_pipeline.Rmd",
-               #params = param_list,
                output_file = paste0(PATH_OUT_HTML, "01_qc_", DATASET, "_", Sys.Date(), ".html")
            )
        },
@@ -473,13 +472,11 @@ switch(args[1],
            if (opt$options$good_quality) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   #params = param_list,
                    output_file = paste0(PATH_OUT_HTML, "05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html")
                )
            } else {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   #params = param_list,
                    output_file = paste0(PATH_OUT_HTML, "02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html")
                )
            }
@@ -488,13 +485,11 @@ switch(args[1],
            if (opt$options$manual) {
                rmarkdown::render(
                    paste0("03_1_manualControls_", DATASET, "_pipeline.Rmd"),
-                   #params = param_list,
                    output_file = paste0(PATH_OUT_HTML, "03_1_manualControls_", DATASET, "_", Sys.Date(), ".html")
                )
            } else {
                rmarkdown::render(
                    "03_filtersControls_pipeline.Rmd",
-                   #params = param_list,
                    output_file = paste0(PATH_OUT_HTML, "03_filtersControls_", DATASET, "_", Sys.Date(), ".html")
                )   
            }
@@ -503,13 +498,11 @@ switch(args[1],
            if (FILTER == "filtered") {
                rmarkdown::render(
                    "05_annotDEAviz_pipeline.Rmd",
-                   #params = param_list,
                    output_file = paste0(PATH_OUT_HTML, "06_annotDEAviz_", DATASET, "_scenario_", opt$options$scenario, "_", Sys.Date(), ".html")
                )
            } else if (FILTER == "complete") {
                rmarkdown::render(
                    "04_1_deg_pipeline.Rmd",
-                   #params = param_list,
                    output_file = paste0(PATH_OUT_HTML, "04_1_deg_", DATASET, "_", Sys.Date(), ".html")
                )   
            }
@@ -517,7 +510,6 @@ switch(args[1],
        "ctrl++" = {
            rmarkdown::render(
                "04_additionalControls.Rmd",
-               #params = param_list,
                output_file = paste0(PATH_OUT_HTML, "04_additionalControls_", DATASET, "_", Sys.Date(), ".html")
            )
        }
