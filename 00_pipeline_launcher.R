@@ -8,9 +8,18 @@ source("checkDirHierarchy.R")
 args <- commandArgs(trailingOnly = TRUE)
 # args <- "dea"
 
+# Main help message
 main_help <- "
 Usage:
 Rscript 00_pipeline_launcher.R <pipelineName> [--flag <flag_arg>]
+
+Pipeline Order:
+1) qc
+2) process
+3) filters
+4) ctrl++
+5) process (again)
+6) dea
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the
@@ -21,8 +30,9 @@ Flag Argument:
                         argument
 
 Example:
-# For more details to each pipeline
+# For more details on each pipeline step
 Rscript pipeline_launcher.R <pipelineName> --help
+
 "
 
 # make the call to the main help working:
@@ -57,63 +67,74 @@ switch(args[1],
             action = "store",
             default = NA,
             type = "character",
-            help = ""
+            help = "Name of the dataset to process
+				(required)."
         ),
         make_option(
         c("-m", "--mito_high"),
         action = "store",
         default = 10,
         type = "numeric",
-        help = "", metavar = "[1:100]"
+        help = "Threshold for high mitochondrial gene expression,
+			(default: 10).",
+		metavar = "[1:100]"
       ),
       make_option(
           c("-n", "--mito_low"),
           action = "store",
           default = 1,
           type = "numeric",
-          help = "", metavar = "[1:100]"
+          help = "Threshold for low mitochondrial gene expression
+		  	(default: 1).",
+		metavar = "[1:100]"
       ),
       make_option(
         c("-q", "--ribo_low"),
         action = "store",
         default = 25,
         type = "numeric",
-        help = ""
+        help = "Threshold for low ribosomal gene expression
+			(default: 25).",
+		metavar = "[1:100]"
       ),
       make_option(
         c("-f", "--min_feat"),
         action = "store",
         default = 200,
         type = "integer",
-        help = "minimum number of features detected in every cells"
+        help = "Minimum number of features detected in every cell
+			(default: 200)."
       ),
       make_option(
         c("-c", "--min_cells"),
         action = "store",
         default = 3,
         type = "integer",
-        help = "minimum number in which a feature must be detected"
+		help = "Minimum number in which a feature must be detected
+			(default: 3)."
       ),
       make_option(
         c("--min_counts"),
         action = "store",
         default = 1500,
         type = "integer",
-        help = ""
+        help = "Minimum number of UMI counts per cell
+			(default: 1500)."
       ),
       make_option(
         c("--max_counts"),
         action = "store",
         default = 150000,
         type = "integer",
-        help = ""
+        help = "Maximum number of UMI counts per cell
+			(default: 150000)."
       )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog qc [--flag <flag_arg>]",
       option_list = option_list1,
       add_help_option = TRUE,
-      description = "\nMay add description here",
+      description = "\nPerform quality control for single-cell RNA sequencing data.",
       epilogue = "Add some details, examples, ...",
       formatter = IndentedHelpFormatter # TitleHelpFormatter
     )
@@ -125,140 +146,137 @@ switch(args[1],
             action = "store",
             default = NA,
             type = "character",
-            help = ""
+            help = "Name of the dataset to process
+				(required)."
         ),
         make_option(
             c("-f", "--filter"),
             action = "store",
-            default = "filtered",
+            default = "complete",
             type = "character",
-            help = "indicate whether to use complete or filtered dataset.
-                Default value is 'filtered'. Set to 'complete' to study the whole
-                dataset."
+            help = "Dataset type, 'filtered' or 'complete'
+				(default: 'complete')."
         ),
       make_option(
         c("-n", "--norm_method"),
         action = "store",
         default = "LogNormalize",
         type = "character",
-        help = "normalization method. Imply to not use the same Seurat function in the pipeline.
-                The choice is between:
-                \t- NormalizeData, with the parameter normalization.method = \"LogNormalize\"
-                \t- SCTransform"
+        help = "Normalization method: 'NormalizeData' or 'SCTransform'
+			(default: 'LogNormalize')."
       ),
       make_option(
         c("-v", "--hvg_method"),
         action = "store",
         default = "mvp",
         type = "character",
-        help = "FindVariableFeatures method. The choice is given between:
-                \t- vst, what requires to set the number of features to select --hvg_number
-                \t- mvp, where the --hvg_number is useless
-                \t- disp, that also requires --hvg_number to be set"
+        help = "FindVariableFeatures method: 'vst', 'mvp', or 'disp'
+			'vst' and 'disp' must be used with the option --hvg_number
+			(default: 'mvp')."
       ),
       make_option(
         c("-w", "--hvg_number"),
         action = "store",
         default = FALSE,
         type = "integer",
-        help = "number of highly variable genes to use for the downstream analysis.
-                Useful when --hvg_method is set to \"vst\" or \"disp\""
+        help = "Number of highly variable genes
+			required with the option --hvg_method 'vst' or 'disp'
+			(default: FALSE)."
       ),
       make_option(
         c("-d", "--do_scaling"),
         action = "store_true",
         default = FALSE,
         type = "logical",
-        help = "whether to compute scaling or not. If not mentionned in the command line,
-                it will not be done"
+        help = "Compute scaling
+			(default: FALSE)."
       ),
       make_option(
         c("-p", "--pca_npcs"),
         action = "store",
         default = 50,
         type = "integer",
-        help = "number of PCs to compute for the Seurat function RunPCA"
-      ),
-      make_option(
-        c("--pca_print"),
-        action = "store",
-        default = 20,
-        type = "integer",
-        help = "number of features to print from the top of each PC"
+        help = "Number of PCs to compute for RunPCA
+			(default: 50)."
       ),
       make_option(
         c("-t", "--top_pcs"),
         action = "store",
         default = 30,
         type = "integer",
-        help = "number of PCs to select for the downstream analysis"
+        help = "Number of PCs to select for downstream analysis
+			(default: 30)."
       ),
       make_option(
-        c("-o", "--doublet_rate"),
+        c("--pca_print"),
         action = "store",
-        default = 8,
+        default = 20,
         type = "integer",
-        help = "fraction of doublets estimated by 10XGenomics,
-                according to the technical specifiactions"
+        help = "Number of features to print from the top of each PC
+			(default: 20)."
       ),
       make_option(
         c("-s", "--selected_resolution"),
         action = "store",
         default = 1,
-        type = "integer",
-        help = "value of the resolution for the Seurat function FindClusters"
+        type = "numeric",
+        help = "Value of the resolution for FindClusters
+			(default: 1)."
       ),
       make_option(
         c("-a", "--algo_clustering"),
         action = "store",
         default = 4,
         type = "integer",
-        help = "select the algorithm to run the Seurat function FindClusters
+        help = "Select the clustering algorithm for FindClusters
                 1 = original Louvain algorithm; 2 = Louvain algorithm with multilevel refinement;
-                3 = SLM algorithm; 4 = Leiden algorithm (recommended)"
+                3 = SLM algorithm; 4 = Leiden algorithm (recommended)
+				(default: 4)."
       ),
       make_option(
           c("--good_quality"),
           action = "store_true",
           default = FALSE,
           type = "logical",
-          help = "allow the program to look for the good quality cells data,
-          after the doublet removal"
+          help = "Process the dataset only with good quality cells, after the
+		  ctrl++ pipeline
+		  	(default: FALSE)."
       )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog process [--flag <flag_arg>]",
       option_list = option_list2,
       add_help_option = TRUE,
-      description = "\nMay add description here",
+      description = "\nProcess and normalize single-cell RNA sequencing data.",
       epilogue = "Add some details, examples, ...",
       formatter = IndentedHelpFormatter # TitleHelpFormatter
     )
   },
   "filters" = {
       option_list3 <- list(
-          make_option(
-              c("-i", "--input_dataset"),
-              action = "store",
-              default = NA,
-              type = "character",
-              help = ""
-          ),
+        make_option(
+            c("-i", "--input_dataset"),
+            action = "store",
+            default = NA,
+            type = "character",
+            help = "Name of the dataset to process
+				(required)."
+        ),
           make_option(
               c("--manual"),
               action = "store_true",
               default = FALSE,
               type = "logical",
-              help = "create automatically plots. If 'TRUE',
-              the user has to play with the scripts
-              03_1_manualControls_<INPUT_DATASET>_pipeline.Rmd"
+              help = "Generate plots automatically if 'FALSE'. Otherwise, the
+			  user needs to interact with 03_1_manualControls_<INPUT_DATASET>_pipeline.Rmd
+			  	(default: FALSE)"
           )
       )
       parsed <- OptionParser(
           usage = "Usage: \n\t%prog filter? [--flag <flag_arg>]",
           option_list = option_list3,
           add_help_option = TRUE,
-          description = "\nMay add description here",
+          description = "\nVisualize filtered cells on the UMAP plot of the complete dataset.",
           epilogue = "Add some details, examples, ...",
           formatter = IndentedHelpFormatter # TitleHelpFormatter
       )
@@ -270,145 +288,148 @@ switch(args[1],
             action = "store",
             default = NA,
             type = "character",
-            help = ""
+            help = "Name of the dataset to process
+				(required)."
         ),
       make_option(
         c("-k", "--markers_number"),
         action = "store",
         default = 20,
         type = "integer",
-        help = "reduce the list of markers to the top [-k] for each cluster at the
-				[--selected_resolution]"
+        help = "Reduce the list of markers to the top [-k] for each cluster at
+		the selected resolution [-s]
+			default: 20)."
       ),
       make_option(
           c("-S", "--scenario"),
           action = "store",
           default = 1,
           type = "integer",
-          help = "select the scenario value based on the following list:
+          help = "Select the scenario to run:
                 1 - no regression on cell cycle
                 2 - global cell cycle regression, all phases are regressed
-                3 - cycling cell cycle regression, G2M and S phases are regressed"
+                3 - cycling cell cycle regression, G2M and S phases are regressed
+				(default: 1)."
       ),
       make_option(
           c("-t", "--top_pcs"),
           action = "store",
           default = 30,
           type = "integer",
-          help = "number of PCs to select for the downstream analysis.
-                Must be the same as for the preprocess step"
+          help = "Number of PCs to select for downstream analysis
+			(default: 30)"
       ),
       make_option(
           c("-f", "--filter"),
           action = "store",
           default = "filtered",
           type = "character",
-          help = "indicate whether to use complete or filtered dataset.
-                Default value is 'filtered'. Set to 'complete' to study the whole
-                dataset."
+          help = "Dataset type, 'filtered' or 'complete'
+				(default: 'complete')."
       ),
       make_option(
         c("-s", "--selected_resolution"),
         action = "store",
         default = 1,
-        type = "integer",
-        help = "value of the resolution for the Seurat function FindClusters"
+        type = "numeric",
+        help = "Value of the resolution for FindClusters
+			(default: 1)."
       ),
       make_option(
         c("-a", "--algo_clustering"),
         action = "store",
         default = 4,
         type = "integer",
-        help = "select the algorithm to run the Seurat function FindClusters
+        help = "Select the clustering algorithm for FindClusters
                 1 = original Louvain algorithm; 2 = Louvain algorithm with multilevel refinement;
-                3 = SLM algorithm; 4 = Leiden algorithm (recommended)"
+                3 = SLM algorithm; 4 = Leiden algorithm (recommended)
+				(default: 4)."
       )
     )
     parsed <- OptionParser(
-      usage = "Usage: \n\t%prog deg [--flag <flag_arg>]",
+      usage = "Usage: \n\t%prog dea [--flag <flag_arg>]",
       option_list = option_list4,
       add_help_option = TRUE,
-      description = "\nMay add description here",
+      description = "\nPerform differential expression analysis (DEA) on single-cell RNA sequencing data.",
       epilogue = "Add some details, examples, ...",
       formatter = IndentedHelpFormatter # TitleHelpFormatter
     )
   },
   "ctrl++" = {
-      option_list5 <- list(
-          make_option(
-              c("-i", "--input_dataset"),
-              action = "store",
-              default = NA,
-              type = "character",
-              help = ""
-          ),
+    option_list5 <- list(
+        make_option(
+            c("-i", "--input_dataset"),
+            action = "store",
+            default = NA,
+            type = "character",
+            help = "Name of the dataset to process
+				(required)."
+        ),
           make_option(
               c("-d", "--doublets_rate"),
               action = "store",
               default = 8,
               type = "integer",
-              help = "rate of doublets formation.
-                Information available in the manual of the sequencing kit"
+              help = "Rate of doublets formation. Information available in the
+			  sequencing kit manual
+			  	(default: 8)."
           ),
           make_option(
             c("-p", "--pca_npcs"),
             action = "store",
             default = 50,
             type = "integer",
-            help = "number of PCs to compute for the Seurat function RunPCA"
+            help = "Number of PCs to compute for RunPCA
+				(default: 50)."
           ),
           make_option(
               c("-t", "--top_pcs"),
               action = "store",
               default = 30,
               type = "integer",
-              help = "number of PCs to select for the downstream analysis.
-                Must be the same as for the preprocess step"
+              help = "Number of PCs to select for downstream analysis
+			(default: 30)"
           ),
           make_option(
               c("-s", "--selected_resolution"),
               action = "store",
               default = 1,
-              type = "integer",
-              help = "value of the resolution for the Seurat function FindClusters.
-                To retrieve the clustering, enter the same value as for the
-                process pipeline"
+              type = "numeric",
+              help = "Value of the resolution for FindClusters
+			  	(default: 1)."
           ),
           make_option(
               c("-a", "--algo_clustering"),
               action = "store",
               default = 4,
               type = "integer",
-              help = "select the algorithm to run the Seurat function FindClusters
+              help = "Select the clustering algorithm for FindClusters
                 1 = original Louvain algorithm; 2 = Louvain algorithm with multilevel refinement;
-                3 = SLM algorithm; 4 = Leiden algorithm (recommended).
-                To retrieve the clustering, enter the same value as for the
-                process pipeline"
+                3 = SLM algorithm; 4 = Leiden algorithm (recommended)
+				(default: 4)."
           ),
           make_option(
               c("-S", "--s_phase"),
               action = "store",
               # default = NA,
               type = "numeric",
-              help = "threshold to adapt in order to correct the cell cycle
-                scoring. By default, the threshold is set to 0. Vizualisation
-                is needed to adjust the value"
+              help = "Threshold to adjust cell cycle scoring for S phase
+			  	(default: 0)."
           ),
           make_option(
               c("-G", "--g2m_phase"),
               action = "store",
               # default = NA,
               type = "numeric",
-              help = "threshold to adapt in order to correct the cell cycle
-                scoring. By default, the threshold is set to 0. Vizualisation
-                is needed to adjust the value"
+              help = "Threshold to adjust cell cycle scoring for G2M phase
+			  	(default: 0)."
           )
       )
       parsed <- OptionParser(
           usage = "Usage: \n\t%prog ctrl++ [--flag <flag_arg>]",
           option_list = option_list5,
           add_help_option = TRUE,
-          description = "\nMay add description here",
+          description = "\nControl and adjust single-cell RNA sequencing data for doublets and cell cycle effects.",
           epilogue = "Add some details, examples, ...",
           formatter = IndentedHelpFormatter # TitleHelpFormatter
       )
@@ -435,13 +456,13 @@ if (TRUE){
     FILTER = if (exists("FILTER")) FILTER else opt$options$filter
     norm_meth = if (exists("NORM_METH")) NORM_METH else opt$options$norm_method
     hvg_meth = if (exists("HVG_METH")) HVG_METH else opt$options$hvg_method
-    hvg_num = if (exists("HVG_NUM")) as.numeric(HVG_NUM) else opt$options$hvg_number
+    hvg_num = if (exists("HVG_NUM")) as.integer(HVG_NUM) else opt$options$hvg_number
     do_scale = if (exists("DO_SCALE")) as.logical(DO_SCALE) else opt$options$do_scaling
-    pca_npcs = if (exists("PCA_NPCS")) as.numeric(PCA_NPCS) else opt$options$pca_npcs
-    pca_print = if (exists("PCA_PRINT")) as.numeric(PCA_PRINT) else opt$options$pca_print
-    top_pcs = if (exists("TOP_PCS")) as.numeric(TOP_PCS) else opt$options$top_pcs
+    pca_npcs = if (exists("PCA_NPCS")) as.integer(PCA_NPCS) else opt$options$pca_npcs
+    pca_print = if (exists("PCA_PRINT")) as.integer(PCA_PRINT) else opt$options$pca_print
+    top_pcs = if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs
     clust_res = if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution
-    clust_meth = if (exists("CLUST_METH")) as.numeric(CLUST_METH) else opt$options$algo_clustering
+    clust_meth = if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering
     # deg pipeline variables ---------------------
     top_markers = opt$options$markers_number
     # doublets removal ---------------------------
