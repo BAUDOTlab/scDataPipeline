@@ -128,6 +128,14 @@ switch(args[1],
         type = "integer",
         help = "Maximum number of UMI counts per cell
 			(default: 150000)."
+      ),
+      make_option(
+        c("-g", "--gene_name_col"),
+        action = "store",
+        default = 2,
+        type = "integer",
+        help = "Columns to use to get gene names. In 10X Genomics, 1 is the Ensembl ID column, 2 is the gene names column
+        (default: 2)."
       )
     )
     parsed <- OptionParser(
@@ -477,6 +485,7 @@ if (TRUE){
     combine_meth = opt$options$combine_meth
     manual = opt$options$manual
     goodQ = opt$options$good_quality
+    gn_col = opt$options$gene_name_col
 }
 
 

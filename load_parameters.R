@@ -9,7 +9,7 @@ load_parameters <- function(config_file) {
   list_filtered <- strsplit(list_filtered, "\\s*=\\s*")
 
   for (index in seq(1, length(list_filtered))) {
-    # get left and rigth part of the lines
+    # get left and right part of the lines
     key_str <- list_filtered[[index]][1]
     var_value <- list_filtered[[index]][2]
 
@@ -36,4 +36,3 @@ load_parameters <- function(config_file) {
     assign(key_str, var_value, envir = parent.frame())
   }
 }
-
