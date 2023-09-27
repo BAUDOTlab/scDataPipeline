@@ -239,7 +239,8 @@ plot1 <- create_violin_plot(
     threshold_high = mito_high,
     title = "Mitochondrial expression\npercentage",
     subtitle = paste0("thresholds at ", mito_low, "% and ", mito_high, "%")
-)
+)  +
+	scale_y_continuous(labels = scales::percent_format(scale = 1))
 
 plot2 <- plot1 +
     ggtitle("Zoom in", subtitle = paste0("thresholds at ", mito_low, "% and ", mito_high, "%")) +
@@ -276,7 +277,8 @@ create_violin_plot(
     threshold_low = ribo_low,
     #theshold_high = NULL,
     title = "Ribosomal expression\npercentage", 
-    subtitle = paste0("threshold at ", ribo_low, "%"))
+    subtitle = paste0("threshold at ", ribo_low, "%")) +
+	scale_y_continuous(labels = scales::percent_format(scale = 1))
 
 write.table(
     rownames(SO@meta.data[which(SO@meta.data$outlier.ribo ==  TRUE), ]),
