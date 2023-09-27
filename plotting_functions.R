@@ -45,9 +45,23 @@ generate_outlier_plot <- function(outlier_type) {
           legend.text = element_text(size = 14),
           legend.title = element_text(size = 18)) +
     guides(color = guide_legend(override.aes = list(size = 4)))
+
+  clusterdf <- data.frame(row.names = c("Outliers","Normal", "Outlier %"), col.names = unique(clusters[["seurat_clusters"]]))
+  merged_df <- metadata %>%
+  inner_join(clusters, by = "cellIDs")
+
+# Calculate the count of outliers and normal cells for each cluster
+  cluster_summary <- merged_df %>%
+    group_by(cluster) %>%
+    summarize(
+      outliers = sum(outlier_type == TRUE),
+      normal = sum(outlier_type == FALSE),
+      total_cells = n()
+    ) %>%
+    mutate(percentage_outliers = (outliers / total_cells) * 100)
+
+  kable(cluster_summary)
 }
-
-
 
 ######## Highlight cells from a specific cluster on a dimreduc plot
 highlightClusterPlot <- function(clusterName, seuratObject, reduction = "umap") {
@@ -105,7 +119,7 @@ defaultTheme <- function() {
           plot.subtitle = element_text(hjust = 0.5, size = 20),
           axis.title = element_text(size = 20),
           axis.text = element_blank(),
-          line = element_blank(),
+          line = element_blank())
 }
 
 ######## BLANK THEME
