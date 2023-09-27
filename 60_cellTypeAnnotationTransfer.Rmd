@@ -12,7 +12,7 @@ colname <- ifelse(args[1] != "dea", "tissue_DF", "tissue_singleData")
 anchors <- FindTransferAnchors(reference = atlas.subset, query = fltd,
                                dims = 1:top_pcs, reference.reduction = "pca",
                                k.anchor = 5, k.filter = 200)
-predictions <- TransferData(anchorset = anchors, refdata = atlas.subset$tissue,
+predictions <- TransferData(anchorset = anchors, refdata = atlas.subset$celltype,
                             dims = 1:top_pcs)
 fltd <- AddMetaData(fltd, metadata = predictions[,"predicted.id"], col.name = colname)
 
