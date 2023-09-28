@@ -45,23 +45,30 @@ generate_outlier_plot <- function(outlier_type) {
           legend.text = element_text(size = 14),
           legend.title = element_text(size = 18)) +
     guides(color = guide_legend(override.aes = list(size = 4)))
-
-  clusterdf <- data.frame(row.names = c("Outliers","Normal", "Outlier %"), col.names = unique(clusters[["seurat_clusters"]]))
-  merged_df <- metadata %>%
-  inner_join(clusters, by = "cellIDs")
-
-# Calculate the count of outliers and normal cells for each cluster
-  cluster_summary <- merged_df %>%
-    group_by(cluster) %>%
-    summarize(
-      outliers = sum(outlier_type == TRUE),
-      normal = sum(outlier_type == FALSE),
-      total_cells = n()
-    ) %>%
-    mutate(percentage_outliers = (outliers / total_cells) * 100)
-
-  kable(cluster_summary)
 }
+
+  generate_outlier_table <- function(outlier_type) {
+    merged_df <- metadata %>%
+    full_join(clusters, by = "cellIDs")
+# Calculate the count of outliers and normal cells for each cluster
+    cluster_summary <- merged_df %>%
+      group_by(seurat_clusters) %>%
+      summarize(
+        outliers = sum( !!sym(outlier_type) == TRUE),
+        normal = as.character(sum( !!sym(outlier_type) == FALSE)),
+        total_cells = n()
+      ) %>%
+      mutate(percentage_outliers = format(round((outliers / total_cells) * 100,2), nsmall=2),
+            outliers = as.character(outliers),
+            total_cells = as.character(total_cells),
+            seurat_clusters = as.character(seurat_clusters))
+      
+      
+      t(cluster_summary) %>%
+        knitr::kable(escape = FALSE) %>%
+          kable_styling(bootstrap_options = c("striped", "hover"),
+                  full_width = FALSE)
+  }
 
 ######## Highlight cells from a specific cluster on a dimreduc plot
 highlightClusterPlot <- function(clusterName, seuratObject, reduction = "umap") {
