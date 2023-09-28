@@ -270,7 +270,7 @@ low or too high mitochondrial gene expression.
 ## Percentage of ribosomal reads & threshold
 
 ```{r vln-riboPercentage, fig.align = "center", out.width = "35%"}
-SO@meta.data[SO@meta.data$percent.ribo >= ribo_low, "outlier.ribo"] <- FALSE
+SO@meta.data[, "outlier.ribo"] <- FALSE
 SO@meta.data[SO@meta.data$percent.ribo < ribo_low, "outlier.ribo"] <- TRUE
 
 create_violin_plot(
@@ -336,7 +336,7 @@ counts and `r as.character(max_counts)` maximum UMI read counts.
 ## Feature counts threshold
 
 ```{r vln-featureRNA, out.width = "35%"}
-SO@meta.data[SO@meta.data$nFeature_RNA >= min_feat, "outlier.nFeature"] <- FALSE
+SO@meta.data[, "outlier.nFeature"] <- FALSE
 SO@meta.data[SO@meta.data$nFeature_RNA < min_feat, "outlier.nFeature"] <- TRUE
 
 
