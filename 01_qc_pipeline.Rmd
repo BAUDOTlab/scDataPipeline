@@ -86,7 +86,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  #fig.path = "figure/",      # is set later, in chunk setup2
+  fig.path = paste0(PATH_OUT_FIG, "/03_qc_"),
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   fig.width = 12,
@@ -151,15 +151,6 @@ list(df1, df2, df3) %>%
 rm(df)
 ```
 
-```{r setup2, eval = TRUE, include = FALSE}
-knitr::opts_chunk$set(
-  # code evaluation
-  eval = TRUE,
-
-  # figures
-  fig.path = paste0(PATH_OUT_FIG, "/01_qc_")
-)
-```
 
 # Load `r DATASET` data
 
@@ -172,21 +163,22 @@ SO
 # Add metadata
 
 ```{r add-metadata}
-if (grepl("fibro", DATASET)) {
-    localization <- "Fibroblast"
-} else {
-    localization <- "Cardiomyocyte"
-}
-
-if (grepl("KO", DATASET)) {
-    condition <- "mutant"
-} else {
-    condition <- "control"
-}
-
 SO <- AddMetaData(object = SO, metadata = DATASET,   col.name = "sample")
-SO <- AddMetaData(object = SO, metadata = localization,    col.name = "localization")
-SO <- AddMetaData(object = SO, metadata = condition, col.name = "condition")
+
+## Check if the CONDITION string contains "_" and split it into parts to add to different metadata columns.
+# If not, add the entire CONDITION string to a single metadata column if it is not empty or NA.
+
+if (!is.na(CONDITION)) {
+    if (str_detect(CONDITION, "_")) {
+        conditions <- strsplit(CONDITION, "_")[[1]]
+    } else if (CONDITION != "") {
+        conditions <- c(CONDITION)
+    }
+    for (i in seq_along(conditions)) {
+        col_name <- paste0("condition_", i)
+        SO <- AddMetaData(object = SO, metadata = conditions[i], col.name = col_name)
+    }
+}
 
 data.frame(head(SO@meta.data)) %>%
   knitr::kable(align = "lrrrrrr",
@@ -205,7 +197,12 @@ data.frame(head(SO@meta.data)) %>%
 ```{r renaming_cells}
 cell_ids <- colnames(SO)
 UMIs <- str_extract(cell_ids, "[A-Z]*")
-cellnames <- paste(localization, condition, UMIs, sep = "_")
+conditionName <-grep("condition", names(SO@meta.data), value = TRUE)
+
+cellnames <- paste0(SO@meta.data[[conditionName[1]]],
+                    if(length(conditionName) > 1) paste0("_", SO@meta.data[[conditionName[2]]]),
+                    sep = "_",
+                    UMIs)
 
 SO <- RenameCells(SO, new.names = cellnames)
 
@@ -242,7 +239,8 @@ plot1 <- create_violin_plot(
     threshold_high = mito_high,
     title = "Mitochondrial expression\npercentage",
     subtitle = paste0("thresholds at ", mito_low, "% and ", mito_high, "%")
-)
+)  +
+	scale_y_continuous(labels = scales::percent_format(scale = 1))
 
 plot2 <- plot1 +
     ggtitle("Zoom in", subtitle = paste0("thresholds at ", mito_low, "% and ", mito_high, "%")) +
@@ -255,7 +253,7 @@ write.table(
     rownames(SO@meta.data[which(SO@meta.data$outlier.mito == TRUE), ]), 
     file = file.path(
         PATH_OUT_ANALYSIS, 
-        paste0("cellsList_filteredOut_", DATASET, "_mitoLow.", mito_low, "_mitoHigh.", mito_high, ".txt")), 
+        paste0("cellsList_outliers_", DATASET, "_mitoLow.", mito_low, "_mitoHigh.", mito_high, ".txt")), 
     row.names = FALSE, 
     col.names = FALSE
 )
@@ -279,13 +277,14 @@ create_violin_plot(
     threshold_low = ribo_low,
     #theshold_high = NULL,
     title = "Ribosomal expression\npercentage", 
-    subtitle = paste0("threshold at ", ribo_low, "%"))
+    subtitle = paste0("threshold at ", ribo_low, "%")) +
+	scale_y_continuous(labels = scales::percent_format(scale = 1))
 
 write.table(
     rownames(SO@meta.data[which(SO@meta.data$outlier.ribo ==  TRUE), ]),
     file = file.path(
         PATH_OUT_ANALYSIS,
-        paste0("cellsList_filteredOut_", DATASET, "_ribo.", ribo_low, ".txt")),
+        paste0("cellsList_outliers_", DATASET, "_ribo.", ribo_low, ".txt")),
     row.names = FALSE, 
     col.names = FALSE
 )
@@ -322,7 +321,7 @@ write.table(
     rownames(SO@meta.data[which(SO@meta.data$outlier.nCount ==  TRUE), ]),
     file = file.path(
         PATH_OUT_ANALYSIS,
-        paste0("cellsList_filteredOut_", DATASET, "_UMIcounts_l.", min_counts, "_h.", max_counts, ".txt")),
+        paste0("cellsList_outliers_", DATASET, "_UMIcounts_l.", min_counts, "_h.", max_counts, ".txt")),
     row.names = FALSE,
     col.names = FALSE
 )
@@ -352,7 +351,7 @@ write.table(
     rownames(SO@meta.data[which(SO@meta.data$outlier.nFeature ==  TRUE), ]),
     file = file.path(
         PATH_OUT_ANALYSIS,
-        paste0("cellsList_filteredOut_", DATASET, "_featureCounts.", min_feat, ".txt")),
+        paste0("cellsList_outliers_", DATASET, "_featureCounts.", min_feat, ".txt")),
     row.names = FALSE,
     col.names = FALSE
 )
@@ -366,7 +365,7 @@ The threshold upon the feature counts is set at `r min_feat`.
 ## Repartition of detected features
 
 Features that are detected in `r min_cells` cells or fewer will be removed from the analysis.
-Among the `r dim(SO[1])` features mentioned after loading, some of them were never detected.
+Among the `r dim(SO)[1]` features mentioned after loading, some of them were never detected.
 
 ```{r histo-geneRepartition}
 # Create dataframe
@@ -400,11 +399,16 @@ write.table(
 )
 ```
 
-The number of features that have never been detected is `r table(df$Nbr_of_cells ==  0)["TRUE"]`.
-In addition, features that have been detected in `r min_cells` or less will also be removed.
-It involves `r table(df_non0$Nbr_of_cells <=  min_cells)["TRUE"]`.
+The reference genome used for the sequencing alignment has `r dim(SO)[1]`
+different feature genes. However, some of them were never detected. They are
+many as `r table(df$Nbr_of_cells ==  0)["TRUE"]`.
 
-In total, `r table(df$Nbr_of_cells <=  min_cells)["TRUE"]` features will be removed when the quality control is applied.
+In addition, some feature genes were too fewly detected. Those feature genes
+detected in `r min_cells` or less will also be removed. It involves
+`r table(df_non0$Nbr_of_cells <=  min_cells)["TRUE"]` feature genes.
+
+In total, `r table(df$Nbr_of_cells <=  min_cells)["TRUE"]` feature genes will be
+removed.
 
 ## Quality control application
 
@@ -436,7 +440,7 @@ invisible(apply(combn(qc_param, 2), 2, function(x) {
                   legend.background = element_rect(colour = NA, fill = NA),
                   legend.text = element_text(size = 10),
                   legend.title = element_text(size = 14),
-                  legend.position = c(.9, .7),
+                  legend.position = c(.8, .4),
                   axis.title = element_text(size = 16),
                   axis.text = element_text(size = 14)) +
             guides(color = guide_legend(override.aes = list(size = 4))) +
@@ -464,7 +468,7 @@ write.table(
     ), 
     file.path(
         PATH_OUT_ANALYSIS, 
-        paste0("cellsList_filteredOut_", DATASET, "_all.txt")),
+        paste0("cellsList_outliers_", DATASET, "_all.txt")),
     row.names = FALSE,
     col.names = FALSE
 )
@@ -495,11 +499,12 @@ SO_subset
 
 # Exports
 
-We export the *cellIDs*, *sample*, *localization*, *condition*, *percent.mito*,
-*outlier.mito*, *percent.ribo*, *outlier.ribo*, *outlier.nCount* and
-*outlier.nFeature* metadata for the filtered and complete dataset. We then
-reduce the metadata table to the *orig.ident*, *nCount_RNA* and *nFeature_RNA*
-metadata and save the filtered and complete objects.
+We save all the metadata information in a .csv file for the complete dataset and
+the filtered dataset as well. The metadata dataframe contains information about
+the cells with their percentage of mitochondrial and ribosomal expressions, and
+also their outlier statues regarding the different estimated caracteristics.  
+
+2 .rds files are saved for the complete and the filtered datasets.
 
 ```{r exports, eval=TRUE}
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")

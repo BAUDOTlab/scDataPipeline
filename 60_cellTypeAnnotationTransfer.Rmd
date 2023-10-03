@@ -33,16 +33,16 @@ write.table(
 rm(predictions)
 invisible(gc())
 
+Idents(fltd) <- colname
+
 if (args[1] != "dea"){
-    Idents(fltd) <- "celltype_DF"
     plotTitle <- paste0(DATASET, if (exists("msg")) {paste0(" - ", msg)} , "\ncell type repartition to perform DoubletFinder")
 } else {
-    Idents(fltd) <- "celltype_singleData"
     plotTitle <- paste0(DATASET, "\ncell type repartition")
 }
 
 # PLOT
-ggplot(fltd@meta.data, aes(x = celltype_DF, fill = celltype_DF)) +
+ggplot(fltd@meta.data, aes(x = .data[[colname]], fill = .data[[colname]])) +
     geom_point(stat = "count", aes(y = after_stat(count + (count*10)/100)), color = "transparent") +
     geom_bar(stat = "count") +
     scale_fill_manual(values = colors.celltype[levels(Idents(fltd))]) +

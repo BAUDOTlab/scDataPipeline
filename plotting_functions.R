@@ -7,8 +7,7 @@ create_violin_plot <- function(data, feature, threshold_low	= NULL, threshold_hi
 		axis.text.x = element_text(angle = 0, size = 24, hjust = 0.5, face = "bold"),
 		text = element_text(size = 24),
 		plot.subtitle = element_text(hjust = 0.5)) +
-	NoLegend() +
-	scale_y_continuous(labels = scales::percent_format(scale = 1))
+	NoLegend()
 
 	# Add threshold lines if threshold_low is not NULL
 	if (!is.null(threshold_low)) {
