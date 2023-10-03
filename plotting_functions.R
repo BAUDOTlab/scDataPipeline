@@ -64,7 +64,7 @@ generate_outlier_plot <- function(outlier_type) {
             seurat_clusters = as.character(seurat_clusters))
       
       
-      t(cluster_summary) %>%
+      cluster_summary %>%
         knitr::kable(escape = FALSE) %>%
           kable_styling(bootstrap_options = c("striped", "hover"),
                   full_width = FALSE)
