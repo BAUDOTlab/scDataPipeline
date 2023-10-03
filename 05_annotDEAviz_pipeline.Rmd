@@ -120,7 +120,7 @@ source("./data_management.R")
 ```{r load-colors, include = FALSE}
 # Create color vectors
 colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
-colors.celltype <- setNames(colors.table$tissue_color[!is.na(colors.table$tissue)], colors.table$tissue[!is.na(colors.table$tissue)])
+colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$celltype)], colors.table$celltype[!is.na(colors.table$celltype)])
 colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
 ```
 
@@ -151,9 +151,9 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 <!-- ## Impact of the additional controls on the annotation transfer -->
 
 <!-- ```{r heatmap-afterDF} -->
-<!-- Idents(fltd) <- fltd@meta.data$tissue_DF -->
-<!-- transition <- table(fltd@meta.data$tissue_DF, fltd@meta.data$tissue_singleData) -->
-<!-- dt <- as.data.frame(transition, row.names = names(fltd@meta.data$tissue_singleData)) -->
+<!-- Idents(fltd) <- fltd@meta.data$celltype_DF -->
+<!-- transition <- table(fltd@meta.data$celltype_DF, fltd@meta.data$celltype_singleData) -->
+<!-- dt <- as.data.frame(transition, row.names = names(fltd@meta.data$celltype_singleData)) -->
 <!-- dt[dt == 0] <- NA -->
 <!-- names(dt) <- c("beforeDF", "afterDF", "counts") -->
 
@@ -472,7 +472,7 @@ invisible( lapply( names( topMarkers), function(clusterName)
 ## Celltype identity {.tabset .tabset-pills .tabset-fade}
 
 ```{r addPlots-4}
-Idents(renamed) <- factor(renamed@meta.data$tissue_singleData, levels = sort(levels(as.factor(renamed@meta.data$tissue_singleData))))
+Idents(renamed) <- factor(renamed@meta.data$celltype_singleData, levels = sort(levels(as.factor(renamed@meta.data$celltype_singleData))))
 ```
 
 ### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}
@@ -490,10 +490,10 @@ DimPlot(renamed,
 		defaultTheme() +
 		NoLegend()
 
-cellsData <- data.frame(renamed@reductions[["umap"]]@cell.embeddings, renamed@meta.data$tissue_singleData)
+cellsData <- data.frame(renamed@reductions[["umap"]]@cell.embeddings, renamed@meta.data$celltype_singleData)
 colnames(cellsData) <- c(colnames(renamed@reductions[["umap"]]@cell.embeddings), "celltype")
 
-invisible(sapply(levels(as.factor(renamed@meta.data$tissue_singleData)), function(act)
+invisible(sapply(levels(as.factor(renamed@meta.data$celltype_singleData)), function(act)
 {
     cat("#### ", act, "\n")
         
@@ -508,7 +508,7 @@ invisible(sapply(levels(as.factor(renamed@meta.data$tissue_singleData)), functio
                 alpha = .5,
                 size  = 3.5) +
     blankTheme() +
-    scale_fill_manual(values = colors.celltype[renamed@meta.data$tissue_singleData], aesthetics = "color") +
+    scale_fill_manual(values = colors.celltype[renamed@meta.data$celltype_singleData], aesthetics = "color") +
     NoLegend() +
     ggtitle(paste0(act))
     )

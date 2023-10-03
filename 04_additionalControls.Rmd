@@ -119,7 +119,7 @@ source("./plotting_functions.R")
 ```{r load-colors, include = FALSE}
 # Create color vectors
 colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
-colors.celltype <- setNames(colors.table$tissue_color[!is.na(colors.table$tissue)], colors.table$tissue[!is.na(colors.table$tissue)])
+colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$celltype)], colors.table$celltype[!is.na(colors.table$celltype)])
 colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
 ```
 
@@ -182,7 +182,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ## Number of heterotypic doublets estimation (nExp parameter)
 
 ```{r homotypic-proportion}
-annotations <- fltd@meta.data[, "tissue_DF"]
+annotations <- fltd@meta.data[, "celltype_DF"]
 homotypic.prop <- modelHomotypic(annotations)
 nDoublets <- round(ncol(fltd)*doublets_rate/100)
 nDoublets_nonhomo <- round(nDoublets*(1-homotypic.prop))
@@ -282,7 +282,7 @@ show the number of doublets within cell types or clusters.
 
 ```{r doubletsTable, results='asis'}
 # TABLE FOR CELL TYPES x DF CLASSIF
-celltypeMtx <- table(fltd@meta.data$tissue_DF, Idents(fltd))
+celltypeMtx <- table(fltd@meta.data$celltype_DF, Idents(fltd))
 celltypeMtx <- cbind("Cell type" = rownames(celltypeMtx), celltypeMtx)
 rownames(celltypeMtx) <- NULL
 
