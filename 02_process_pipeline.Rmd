@@ -103,6 +103,7 @@ library(dplyr)
 library(Seurat)
 library(stringr)
 library(ggplot2)
+library(tibble)
 
 source("./data_management.R")
 ```
@@ -241,8 +242,16 @@ plotDimensions <- function(SO, scenario) {
     Idents(SO) <- SO$seurat_clusters
     print(DimPlot(SO))
     
-    if (goodQ & scenario != 1) {
-        Idents(SO) <- SO$Phase
+    if (goodQ & scenario != "1") {
+        # Load cell cycle scores and phase table
+        phaseTable <- read.table(paste0("../05_additionalControls/cellCycleScoresAssignation_", DATASET, "_scenario_", scenario, ".csv"), sep = ",", header = TRUE)
+        phaseTable <- column_to_rownames(phaseTable, var = "cellIDs")
+        
+        # merge phase column of cell cycle scores to the SO metadata table according to the cellnames
+        SO@meta.data <- merge(SO@meta.data, phaseTable["Phase"], by = "row.names", all.y = FALSE)
+        SO@meta.data <- column_to_rownames(SO@meta.data, var = "Row.names")
+
+        Idents(SO) <- SO@meta.data$Phase
         print(DimPlot(SO, shuffle = TRUE))
     }
 }
