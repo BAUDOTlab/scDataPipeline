@@ -1,0 +1,274 @@
+---
+author: "Céline Chevalier and Anaı̈s Baudot"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+    html_document:
+        theme:
+            bootswatch: yeti
+        toc: yes
+        toc_float:
+          collapsed: false
+          smooth_scroll: true
+        number_sections: yes
+        df_print: kable
+        code_folding: hide
+    pdf_document:
+        number_sections: yes
+        toc: yes
+        toc_depth: 3
+        keep_tex: no
+# title: |
+#   | Doublets removal
+#   | Step {{STEP_ID}}
+---
+
+<!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
+
+<!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
+<!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
+
+<style>
+.zoomDiv {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+  box-shadow: 0px 0px 50px #888888;
+  width: fit-content;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.zoomImg {
+  width: 150%;
+}
+</style>
+
+<script type = "text/javascript">
+  $(document).ready(function() {
+    $("body").prepend("<div class = \"zoomDiv\"><img src = \"\" class = \"zoomImg\"></div>");
+    // onClick for all img except the zoomed one and link ones (filter)
+    // use "img.zoom" and out.extra = "class = \"zoom\"" in chunk to specify manually which chunk images can be zoomed
+    $("img:not(.zoomImg)").filter(":not(a *)").click(function() {
+      $(".zoomImg").attr("src", $(this).attr("src"));
+      $(".zoomDiv").show();
+    })
+    // onClick function for hiding div
+    $("img.zoomImg").click(function() {
+      $(".zoomDiv").hide();
+    })
+  })
+</script>
+
+
+```{r setup04-1, include = FALSE}
+options(knitr.purl.inline = TRUE)
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+
+  # text output
+  echo = TRUE,
+  results = "hold",
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  strip.white = TRUE,
+
+  # code decoration
+  tidy.opts = list(width.cutoff = 90),
+  comment = "",
+  attr.output = ".numberLines",
+
+  # plots
+  fig.path = paste0(PATH_OUT_FIG, "/07_combine_ata_"),
+  fig.show = "asis",         # tuned to "hold" in multiple plots chunk
+  dev = c("png", "pdf"),
+  out.width = "50%",
+  fig.width = 12,
+  fig.height = 12,
+  fig.align = "center"   # should be tuned to default in multiple plots chunk
+)
+```
+
+```{r load_lib}
+library(Seurat)
+library(ggplot2)
+
+source("./plotting_functions.R")
+source("./data_management.R")
+```
+
+```{r load-colors, include = FALSE}
+# Create color vectors
+colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
+colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$celltype)], colors.table$celltype[!is.na(colors.table$celltype)])
+colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
+```
+
+```{r variableDef1, include=FALSE}
+# Split comma separated input files into a list
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "07_annotDEAviz")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+```
+
+```{r load-data, include=FALSE}
+# Load data
+data_load <- function(DATASET) {
+    # PATHS
+    PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_prepocessed_", DATASET, "_scenario.", scenario, ".rds")
+    # PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+    
+    data <- readRDS(PATH_RDS_FILE)
+}
+
+SO.list <- lapply(input_datasets, data_load)
+names(SO.list) <- input_datasets
+```
+
+```{r integrate-sep-data, eval=combine_meth!="merge", echo=combine_meth!="merge"}
+set.seed(general_seed)
+
+if (combine_meth == "blkH"){
+    SO <- merge(x = SO.list[[1]], y = SO.list[2:length(SO.list)], merge.data = TRUE)
+    
+} else if (combine_meth == "blkS"){
+    features <- SelectIntegrationFeatures(object.list = SO.list)
+    anchors <- FindIntegrationAnchors(object.list = SO.list, anchor.features = features)
+    SO <- IntegrateData(anchorset = anchors)
+    
+} else if (combine_meth == "seqS"){
+    SO <- SO.list[[1]]
+    names(SO.list) <- 
+    for (a_day in names(SO.list)[2:length(SO.list)]){
+        integ.list <- list(SO, SO.list[[a_day]])
+        features <- SelectIntegrationFeatures(integ.list)
+        anchors <- FindIntegrationAnchors(object.list = integ.list,
+                                          anchor.features = features)
+        SO <- IntegrateData(anchorset = anchors)
+    } 
+}
+
+rm(SO.list)
+invisible(gc())
+```
+
+
+```{r merge-sep-data, eval=combine_meth=="merge", echo=combine_meth=="merge"}
+SO <- merge(x = SO.list[[1]], y = SO.list[2:length(SO.list)], merge.data = T)
+SO
+
+rm(SO.list)
+invisible(gc())
+```
+
+
+SHOW THE TABLE OF SO$ORIG.IDENT TO CHECK THE NUMBER OF CELLS FROM EACH DATASET
+
+# Preprocessing workflow
+
+The preprocessing workflow consists in the steps of
+
+- data normalization,
+
+- data centering,
+
+- highly variable genes identification,
+
+- principal components analysis (PCA),
+
+- non-linear dimension reduction for visualization, and
+
+- clustering.
+
+```{r preprocess-1, eval=hvg_meth != "mvp", echo=hvg_meth != "mvp", message=TRUE}
+SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
+SO <- FindVariableFeatures(SO, nfeatures=hvg_num, selection.method = hvg_meth, verbose=FALSE)
+var.feats.dataset <- VariableFeatures(SO)
+#saveRDS(var.feats.dataset, file=file.path(rdsObjects, paste0("var.feats.dataset_", dataset, "_", combine_meth, ".rds")))
+
+SO <- RunPCA(SO,
+             npcs = pca_npcs,
+             nfeatures.print = pca_print,
+             seed.use = general_seed,
+             verbose=TRUE)
+
+if (combine_meth == "blkH"){
+   	SO <- RunHarmony(SO, "orig.ident", plot_convergence = FALSE)
+}
+
+SO <- RunUMAP(SO,
+              reduction = ifelse( combine_meth == "blkH", "harmony", "pca"),
+              dims = 1:top_pcs,
+              seed.use = general_seed,
+              verbose = FALSE)
+SO <- FindNeighbors(SO,
+                    reduction = ifelse( combine_meth == "blkH", "harmony", "pca"),
+                    dims = 1:top_pcs,
+                    verbose=FALSE)
+SO <- FindClusters(SO,
+                   resolution = clust_res,
+                   algorithm = clust_meth,
+                   random.seed = general_seed,
+                   verbose=FALSE)
+```
+
+
+```{r hvg-mvp2, eval=hvg.meth == "mvp", echo=hvg.meth == "mvp", message=TRUE}
+SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale.scale, verbose=FALSE)
+
+SO <- FindVariableFeatures(SO, selection.method = hvg.hvg_meth, verbose=FALSE)
+head(SO@assays[[DefaultAssay(SO)]]@meta.features) %>%
+  knitr::kable(caption = "Example of HVG selection output") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+t(as.data.frame(table(SO@assays[[DefaultAssay(SO)]]@meta.features$mvp.variable))) %>%
+  knitr::kable(caption = "Number of features selected as highly variable genes (HVG)",
+               row.names = FALSE,
+               escape = F,
+               align = "cc") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+var.feats.dataset <- VariableFeatures(SO)
+#saveRDS(var.feats.dataset, file=file.path(rdsObjects, paste0("var.feats.dataset_", dataset, "_", combine_meth, ".rds")))
+
+SO <- RunPCA(SO, npcs = pca.pca_npcs, nfeatures.print = pca.pca_print, seed.use = general_seed, verbose=TRUE)
+
+if (combine_meth == "blkH"){
+    SO <- RunHarmony(SO, "orig.ident", plot_convergence = FALSE)
+}
+
+SO <- RunUMAP(SO,
+              reduction = ifelse( combine_meth == "blkH", "harmony", "pca"),
+              dims = 1:top_pcs,
+              seed.use = general_seed,
+              verbose = FALSE)
+SO <- FindNeighbors(SO,
+                    reduction = ifelse( combine_meth == "blkH", "harmony", "pca"),
+                    dims = 1:top_pcs,
+                    verbose=FALSE)
+SO <- FindClusters(SO,
+                   resolution = clust_res,
+                   algorithm = clust_meth,
+                   random.seed = general_seed,
+                   verbose=FALSE)
+```
+
+```{r save2}
+saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("06_combine_", DATASET, "_scenario.", scenario, "_method.", combine_meth, ".rds")))
+invisible(gc())
+```
+
+
+```{r callAtlas}
+fltd <- SO
+rm(SO)
+invisible(gc())
+```
+
+```{r mapping-atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
+```
