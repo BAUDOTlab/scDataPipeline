@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(optparse)
+library(stringr)
 
 source("load_parameters.R")
 source("checkDirHierarchy.R")
@@ -20,10 +21,11 @@ Pipeline Order:
 4) ctrl++
 5) process (again)
 6) dea
+7) combine
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the
-                        following: qc, process, filters, ctrl++, dea
+                        following: qc, process, filters, ctrl++, dea, combine
 
 Flag Argument:
     --flag <flag_arg>   There are optional arguments according to the required
@@ -49,7 +51,7 @@ if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl++")) {
+if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl++", "combine")) {
   cat(main_help)
   quit(status = 1)
 }
@@ -473,14 +475,124 @@ switch(args[1],
           epilogue = "Add some details, examples, ...",
           formatter = IndentedHelpFormatter # TitleHelpFormatter
       )
+  },
+  "combine" = {
+      option_list6 <- list(
+          make_option(
+              c("-I", "--input_list"),
+              action = "store",
+              default = NA,
+              type = "character",
+              help = "Comma separated list of input datasets
+				(required)."
+          ),
+          make_option(
+              c("-S", "--scenario"),
+              action = "store",
+              default = 1,
+              type = "integer",
+              help = "Select the scenario to run:
+                1 - no regression on cell cycle
+                2 - global cell cycle regression, all phases are regressed
+                3 - cycling cell cycle regression, G2M and S phases are regressed
+				(default: 1)."
+          ),
+          make_option(
+              c("-c", "--combineMethod"),
+              action = "store",
+              default = NA,
+              type = "character",
+              help = "Select how to combine the datasets:
+              - 'merge' will simply merge the datasets
+              - 'blkS' performs the block-wise CCA integration from Seurat
+              - 'seqS' performs the sequential CCA integration from Seurat
+              - 'blkH' performs the block-wise Harmony integration
+            (required)."
+          ),
+    	  make_option(
+    	    c("-v", "--hvg_method"),
+    	    action = "store",
+    	    default = "mvp",
+    	    type = "character",
+    	    help = "FindVariableFeatures method: 'vst', 'mvp', or 'disp'
+				'vst' and 'disp' must be used with the option --hvg_number
+				(default: 'mvp')."
+    	  ),
+    	  make_option(
+    	    c("-w", "--hvg_number"),
+    	    action = "store",
+    	    default = FALSE,
+    	    type = "integer",
+    	    help = "Number of highly variable genes
+				required with the option --hvg_method 'vst' or 'disp'
+				(default: FALSE)."
+    	  ),
+    	  make_option(
+    	    c("-d", "--do_scaling"),
+    	    action = "store_true",
+    	    default = FALSE,
+    	    type = "logical",
+    	    help = "Compute scaling
+				(default: FALSE)."
+    	  ),
+    	  make_option(
+    	    c("-p", "--pca_npcs"),
+    	    action = "store",
+    	    default = 50,
+    	    type = "integer",
+    	    help = "Number of PCs to compute for RunPCA
+				(default: 50)."
+    	  ),
+    	  make_option(
+    	    c("-t", "--top_pcs"),
+    	    action = "store",
+    	    default = 30,
+    	    type = "integer",
+    	    help = "Number of PCs to select for downstream analysis
+				(default: 30)."
+    	  ),
+    	  make_option(
+    	    c("--pca_print"),
+    	    action = "store",
+    	    default = 20,
+    	    type = "integer",
+    	    help = "Number of features to print from the top of each PC
+				(default: 20)."
+    	  )
+      )
+      parsed <- OptionParser(
+          usage = "Usage: \n\t%prog filter? [--flag <flag_arg>]",
+          option_list = option_list6,
+          add_help_option = TRUE,
+          description = "\nVisualize filtered cells on the UMAP plot of the complete dataset.",
+          epilogue = "Add some details, examples, ...",
+          formatter = IndentedHelpFormatter # TitleHelpFormatter
+      )
   }
 )
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "cardioKO"
+# opt$options$input_dataset <- "cardioWT,cardioKO"
 PATH_REQUIREMENTS <- "../01_requirements/"
-load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
+if (!str_detect(opt$options$input_dataset, ",")) {
+    load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
+} else {
+	# 1) Split input_dataset based on comma(s)
+	input_datasets <- strsplit(opt$options$input_dataset, ",")[[1]]
+	
+	# 2) Get the list of files present in the PATH_REQUIREMENTS directory
+	file_list <- list.files(PATH_REQUIREMENTS)
+	
+	# 3) Match multiple patterns using grepl and &
+	matching_element <- Reduce(`&`, lapply(input_datasets, grepl, file_list))
+	
+	# 4) Get the file that contains all the names in input_datasets
+	matching_file <- file_list[matching_element]
+    
+	load_parameters(paste0(PATH_REQUIREMENTS, matching_file))
+	# DATASET <- paste0(input_datasets, collapse = "_") # don't know if I need to keep it ???
+}
 
 if (TRUE){
     general_seed = as.numeric(general_seed)
@@ -516,10 +628,9 @@ if (TRUE){
     s_thresh = if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase
     g2m_thresh = if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase
     scenario = opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl++ if set to 1 (ie not interested in CC regression)
+    # combining multiple datasets
+    combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
-    do_integ = opt$options$do_integ
-    do_merge = opt$options$do_merge
-    combine_meth = opt$options$combine_meth
     manual = opt$options$manual
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
