@@ -328,26 +328,30 @@ singlets@meta.data[clustOfInterest] <- NULL
 
 ```{r filterRBCs}
 # noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = `Hba-a1` > 0, invert = TRUE))
-noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = ENSMUSG00000069919 > 0, invert = TRUE))
+#noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = ENSMUSG00000069919 > 0, invert = TRUE))
+filtered_list <- singlets
+for(feature in ff_list){
+  filtered_list <- subset(singlets, cells = WhichCells(singlets, expression = `!!sym(feature)` > 0, invert = TRUE))
+}
 
-export_rds(noRBCs, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 ```
 
 From the **`r dim(singlets)[2]`** singlet cells,
-**`r length(WhichCells(singlets, expression = ENSMUSG00000069919 > 0))`** RBCs
+**`r length(singlets) - length(filtered_list)`** unwanted cells
 have been removed.
 
 ## Conclusion - Scenario 1
 
 After removing the **`r doubletsNb`** doublets cells, we also reduced our
-dataset from cells expressing the **Hba-a1** gene, a RBC marker. It is
+dataset from cells expressing the **`r paste( unlist(l), collapse='', sep=",")`** genes, a RBC marker. It is
 equivalent to the removal of
-**`r length(WhichCells(singlets, expression = ENSMUSG00000069919 > 0))`** cells
-from the singlets. Now, the scenario 1 dataset contains **`r dim(noRBCs)[2]`**
+**`r length(singlets) - length(filtered_list)`** unwanted cells
+from the singlets. Now, the scenario 1 dataset contains **`r dim(filtered_list)[2]`**
 cells. It is ready for the downstream analysis.
 
 ```{r cleaning, include=FALSE}
-rm(noRBCs, doubletsNb, fltd)
+rm(filtered_list, doubletsNb, fltd)
 invisible(gc())
 ```
 
@@ -550,9 +554,9 @@ STEP_ID <- "2"
 cat(paste0("
 On the global cell cycle regressed dataset, we removed ", dim(singlets)[2], " 
 cells, as they were expressing the **Hba-a1** gene marker.  
-The dataset has ", dim(noRBCs)[2], " remaining cells.
+The dataset has ", dim(filtered_list)[2], " remaining cells.
 "))
-rm(singlets, globalReg, noRBCs)
+rm(singlets, globalReg, filtered_list)
 invisible(gc())
 
 
@@ -563,9 +567,9 @@ STEP_ID <- "3"
 cat(paste0("
 On the cycling phases regressed dataset, we removed ", dim(singlets)[2], " 
 cells.  
-The dataset has ", dim(noRBCs)[2], " remaining cells.
+The dataset has ", dim(filtered_list)[2], " remaining cells.
 "))
-rm(singlets, cyclingReg, noRBCs)
+rm(singlets, cyclingReg, filtered_list)
 invisible(gc())
 ```
 

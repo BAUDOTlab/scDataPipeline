@@ -431,6 +431,14 @@ switch(args[1],
               type = "numeric",
               help = "Threshold to adjust cell cycle scoring for G2M phase
 			  	(default: 0)."
+          ),
+          make_option(
+            c("-f", "--filter_features"),
+            action = "store",
+            type = "character",
+            help = "The list of features used to filter out unwanted cells. 
+            For example, filtering out the HBA1 gene will remove all red blood cells, as it is a gene specifically expressed by such cells.
+            The list should be in quotes and each feature must be separated by a colon."
           )
       )
       parsed <- OptionParser(
@@ -486,6 +494,8 @@ if (TRUE){
     manual = opt$options$manual
     goodQ = opt$options$good_quality
     gn_col = opt$options$gene_name_col
+
+    ff_list = strsplit(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features, ",")
 }
 
 
