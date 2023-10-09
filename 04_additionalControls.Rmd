@@ -330,8 +330,13 @@ singlets@meta.data[clustOfInterest] <- NULL
 # noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = `Hba-a1` > 0, invert = TRUE))
 #noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = ENSMUSG00000069919 > 0, invert = TRUE))
 filtered_list <- singlets
-for(feature in ff_list){
-  filtered_list <- subset(singlets, cells = WhichCells(singlets, expression = `!!sym(feature)` > 0, invert = TRUE))
+for(i in 1:length(ff_list)){
+  if(!ff_list[[i]] %in% singlets@assays[["RNA"]]@var.features){
+    cat(paste0("No gene named ", ff_list[[i]], " found, skipping...\n"))
+    next
+  }
+  expr <- FetchData(object = singlets, vars = ff_list[[i]])
+  filtered_list <- singlets[, which(FALSE == (expr > 0))]
 }
 
 export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
