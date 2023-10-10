@@ -164,7 +164,7 @@ msg <- "before CC regression"
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # LOAD DATA
-PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_prepocessed_", DATASET, "_filtered.rds")
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_preprocessed_", DATASET, "_filtered.rds")
 fltd <- readRDS(PATH_RDS_FILE)
 
 # LOAD CLUSTERING RESULTS
