@@ -328,26 +328,37 @@ singlets@meta.data[clustOfInterest] <- NULL
 
 ```{r filterRBCs}
 # noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = `Hba-a1` > 0, invert = TRUE))
-noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = ENSMUSG00000069919 > 0, invert = TRUE))
+#noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = ENSMUSG00000069919 > 0, invert = TRUE))
+filtered_list <- singlets
+for(i in 1:length(ff_list)){
+  if(!ff_list[[i]] %in% singlets@assays[["RNA"]]@var.features){
+    cat(paste0("No gene named ", ff_list[[i]], " found, skipping...\n"))
+    next
+  }
+}
+# WhichCells is for interactive use only, this is inspired by https://github.com/satijalab/seurat/issues/1053#issuecomment-454512002 
+expr <- FetchData(object = singlets, vars = ff_list)
+filtered_list <- singlets[, which(FALSE == (expr > 0))]
 
-export_rds(noRBCs, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+
+export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 ```
 
 From the **`r dim(singlets)[2]`** singlet cells,
-**`r length(WhichCells(singlets, expression = ENSMUSG00000069919 > 0))`** RBCs
+**`r length(singlets) - length(filtered_list)`** unwanted cells
 have been removed.
 
 ## Conclusion - Scenario 1
 
 After removing the **`r doubletsNb`** doublets cells, we also reduced our
-dataset from cells expressing the **Hba-a1** gene, a RBC marker. It is
+dataset from cells expressing the **`r paste( unlist(ff_list), collapse='', sep=",")`** genes, a RBC marker. It is
 equivalent to the removal of
-**`r length(WhichCells(singlets, expression = ENSMUSG00000069919 > 0))`** cells
-from the singlets. Now, the scenario 1 dataset contains **`r dim(noRBCs)[2]`**
+**`r length(singlets) - length(filtered_list)`** unwanted cells
+from the singlets. Now, the scenario 1 dataset contains **`r dim(filtered_list)[2]`**
 cells. It is ready for the downstream analysis.
 
 ```{r cleaning, include=FALSE}
-rm(noRBCs, doubletsNb, fltd)
+rm(filtered_list, doubletsNb, fltd)
 invisible(gc())
 ```
 
@@ -366,22 +377,28 @@ cycling phases, they are estimated to be in the G1 phase.
 Below, you can see the lists of gene markers for the G2/M and S phases.
 
 ```{r loadCellCyclesGenes, results='hold'}
-sPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_sPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
-g2mPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_g2mPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
+if(gn_col == 1){
+  sPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_sPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
+  g2mPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_g2mPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
 
-# map cell cycle genes to ensembl IDs
-s.genes <- sPhase[sPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$s.genes), "Gene.stable.ID"]
-g2m.genes <- g2mPhase[g2mPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$g2m.genes), "Gene.stable.ID"]
+  # map cell cycle genes to ensembl IDs
+  s.genes <- sPhase[sPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$s.genes), "Gene.stable.ID"]
+  g2m.genes <- g2mPhase[g2mPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$g2m.genes), "Gene.stable.ID"]
 
-cat("
-Genes of S phase:
-")
-sPhase$Gene.name
+  cat("
+  Genes of S phase:
+  ")
+  sPhase$Gene.name
 
-cat("
-Genes of G2/M phases:
-")
-g2mPhase$Gene.name
+  cat("
+  Genes of G2/M phases:
+  ")
+  g2mPhase$Gene.name
+}
+else{
+  s.genes <- cc.genes.updated.2019$s.genes
+  g2m.genes <- cc.genes.updated.2019$g2m.genes
+}
 ```
 
 ## Assign cell-cycle scores - scenarios 2 and 3
@@ -550,9 +567,9 @@ STEP_ID <- "2"
 cat(paste0("
 On the global cell cycle regressed dataset, we removed ", dim(singlets)[2], " 
 cells, as they were expressing the **Hba-a1** gene marker.  
-The dataset has ", dim(noRBCs)[2], " remaining cells.
+The dataset has ", dim(filtered_list)[2], " remaining cells.
 "))
-rm(singlets, globalReg, noRBCs)
+rm(singlets, globalReg, filtered_list)
 invisible(gc())
 
 
@@ -563,9 +580,9 @@ STEP_ID <- "3"
 cat(paste0("
 On the cycling phases regressed dataset, we removed ", dim(singlets)[2], " 
 cells.  
-The dataset has ", dim(noRBCs)[2], " remaining cells.
+The dataset has ", dim(filtered_list)[2], " remaining cells.
 "))
-rm(singlets, cyclingReg, noRBCs)
+rm(singlets, cyclingReg, filtered_list)
 invisible(gc())
 ```
 
