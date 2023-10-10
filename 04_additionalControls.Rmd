@@ -335,9 +335,11 @@ for(i in 1:length(ff_list)){
     cat(paste0("No gene named ", ff_list[[i]], " found, skipping...\n"))
     next
   }
-  expr <- FetchData(object = singlets, vars = ff_list[[i]])
-  filtered_list <- singlets[, which(FALSE == (expr > 0))]
 }
+# WhichCells is for interactive use only, this is inspired by https://github.com/satijalab/seurat/issues/1053#issuecomment-454512002 
+expr <- FetchData(object = singlets, vars = ff_list)
+filtered_list <- singlets[, which(FALSE == (expr > 0))]
+
 
 export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 ```
@@ -349,7 +351,7 @@ have been removed.
 ## Conclusion - Scenario 1
 
 After removing the **`r doubletsNb`** doublets cells, we also reduced our
-dataset from cells expressing the **`r paste( unlist(l), collapse='', sep=",")`** genes, a RBC marker. It is
+dataset from cells expressing the **`r paste( unlist(ff_list), collapse='', sep=",")`** genes, a RBC marker. It is
 equivalent to the removal of
 **`r length(singlets) - length(filtered_list)`** unwanted cells
 from the singlets. Now, the scenario 1 dataset contains **`r dim(filtered_list)[2]`**
@@ -375,22 +377,28 @@ cycling phases, they are estimated to be in the G1 phase.
 Below, you can see the lists of gene markers for the G2/M and S phases.
 
 ```{r loadCellCyclesGenes, results='hold'}
-sPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_sPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
-g2mPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_g2mPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
+if(gn_col == 1){
+  sPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_sPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
+  g2mPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_g2mPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
 
-# map cell cycle genes to ensembl IDs
-s.genes <- sPhase[sPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$s.genes), "Gene.stable.ID"]
-g2m.genes <- g2mPhase[g2mPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$g2m.genes), "Gene.stable.ID"]
+  # map cell cycle genes to ensembl IDs
+  s.genes <- sPhase[sPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$s.genes), "Gene.stable.ID"]
+  g2m.genes <- g2mPhase[g2mPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$g2m.genes), "Gene.stable.ID"]
 
-cat("
-Genes of S phase:
-")
-sPhase$Gene.name
+  cat("
+  Genes of S phase:
+  ")
+  sPhase$Gene.name
 
-cat("
-Genes of G2/M phases:
-")
-g2mPhase$Gene.name
+  cat("
+  Genes of G2/M phases:
+  ")
+  g2mPhase$Gene.name
+}
+else{
+  s.genes <- cc.genes.updated.2019$s.genes
+  g2m.genes <- cc.genes.updated.2019$g2m.genes
+}
 ```
 
 ## Assign cell-cycle scores - scenarios 2 and 3
