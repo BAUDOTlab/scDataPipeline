@@ -9,28 +9,32 @@ output:
 
 
 atlas.subset <- readRDS(file.path(PATH_ATLAS, "atlas_preprocessed.rds"))
-colname <- ifelse(args[1] != "dea", "tissue_DF", "tissue_singleData")
+colname <- ifelse(args[1] != "dea", "celltype_DF", "celltype_singleData")
+prediction_file <- file.path(PATH_OUT_ANALYSIS, paste0("transferAnnotation_", ifelse(args[1] != "dea", "DF_", "singleData_"), DATASET, ".csv"))
 
-anchors <- FindTransferAnchors(reference = atlas.subset, query = fltd,
-                               dims = 1:top_pcs, reference.reduction = "pca",
-                               k.anchor = 5, k.filter = 200)
-predictions <- TransferData(anchorset = anchors, refdata = atlas.subset$celltype,
-                            dims = 1:top_pcs)
+if(!file.exists(prediction_file)){
+    anchors <- FindTransferAnchors(reference = atlas.subset, query = fltd,
+                                dims = 1:top_pcs, reference.reduction = "pca",
+                                k.anchor = 5, k.filter = 200)
+    predictions <- TransferData(anchorset = anchors, refdata = atlas.subset$celltype,
+                                dims = 1:top_pcs)
+
+    predictions <- cbind(cellIDs = rownames(predictions), predictions)
+    write.table(
+        predictions,
+        file = prediction_file,
+        sep = ",",
+        row.names = FALSE,
+        col.names = TRUE
+    )
+} else {
+    predictions <- read.table(prediction_file, sep=",", header=T)
+}
+
 fltd <- AddMetaData(fltd, metadata = predictions[,"predicted.id"], col.name = colname)
 
 # Exports predictions
 filename <- paste0("transferAnnotation_", ifelse(args[1] != "dea", "DF_", "singleData_"), DATASET, ".csv")
-predictions <- cbind(cellIDs = rownames(predictions), predictions)
-write.table
-    predictions,
-    file = file.path(
-        PATH_OUT_ANALYSIS,
-        filename),
-    sep = ",",
-    row.names = FALSE,
-    col.names = TRUE
-)
-
 
 rm(predictions)
 invisible(gc())
