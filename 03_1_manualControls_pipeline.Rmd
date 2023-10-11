@@ -168,13 +168,13 @@ cplt <- AddMetaData(object = cplt, metadata = metadata$percent.ribo,   col.name 
 # Mitochondrial exploration 
 
 ```{r defineGroupsMito, out.width="50%"}
-pmt = c(0.8,5,15,70)
+mito_thresholds = c(0.8,5,15,70)
 # Créez un vecteur de noms de groupe
 
-cplt@meta.data[,"mito_groups"] <- set_thresh(pmt, cplt@meta.data$percent.mito, "mito")
-
+cplt@meta.data[,"mito_groups"] <- set_thresh(mito_thresholds, cplt@meta.data$percent.mito, "mito")
+mito_thresholds = append(mito_thresholds, 100)
 VlnPlot(cplt, features = c("percent.mito")) +
-  lapply(pmt, threshline) +
+  lapply(mito_thresholds, threshline) +
   ggtitle("Mitochondrial expression\npercentage") +
   theme(axis.title.x = element_blank(),
         axis.text = element_text(size = 16),
@@ -184,7 +184,7 @@ VlnPlot(cplt, features = c("percent.mito")) +
   NoLegend() +
   scale_y_continuous(labels = scales::percent_format(scale = 1)) +
   coord_cartesian(ylim = c(0, 100)) +
-  mapply(threshtext, pmt, seq_along(pmt), "mito")
+  mapply(threshtext, mito_thresholds, seq_along(mito_thresholds), "mito")
 ```
 
 Groups' size:
@@ -210,7 +210,7 @@ ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to
     theme(legend.text = element_text(size = 10),
           legend.title = element_text(size = 14))
 
-mito_labels <- threshlabel(pmt)
+mito_labels <- threshlabel(mito_thresholds)
 
 ggplot(data = cellsData,
     aes(x = UMAP_1,
@@ -236,12 +236,12 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-riboPercentage-1.png"))
 ```
 
 ```{r defineGroupsRibo, out.width="50%"}
-prb <- c(12,35)
+ribo_thresholds <- c(12,35)
 
-cplt@meta.data[, "ribo_groups"] <- set_thresh(prb, cplt@meta.data$percent.ribo, "ribo")
+cplt@meta.data[, "ribo_groups"] <- set_thresh(ribo_thresholds, cplt@meta.data$percent.ribo, "ribo")
 
 VlnPlot(cplt, features = c("percent.ribo")) +
-    lapply(prb, threshline) +
+    lapply(ribo_thresholds, threshline) +
     ggtitle("Ribosomal expression\npercentage") +
     theme(axis.title.x = element_blank(),
           axis.text = element_text(size = 16),
@@ -250,7 +250,7 @@ VlnPlot(cplt, features = c("percent.ribo")) +
           plot.subtitle = element_text(hjust = 0.5)) +
     NoLegend() +
     scale_y_continuous(labels = scales::percent_format(scale = 1)) +
-    mapply(threshtext, prb, seq_along(prb), "ribo")
+    mapply(threshtext, ribo_thresholds, seq_along(ribo_thresholds), "ribo")
 ```
 
 Groups' size:
@@ -276,7 +276,7 @@ ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to
   theme(legend.text = element_text(size = 10),
         legend.title = element_text(size = 14))
 
-ribo_labels <- threshlabel(prb)
+ribo_labels <- threshlabel(ribo_thresholds)
 
 ggplot(data = cellsData,
        aes(x = UMAP_1,
@@ -304,12 +304,12 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-countRNA-1.png"))
 ```
 
 ```{r defineGroupsUMI, out.width="50%"}
-umit <- c(7000,55000)
+umi_thresholds <- c(7000,55000)
 
-cplt@meta.data[, "umi_groups"] <- set_thresh(umit, cplt@meta.data$nCount_RNA, "umi")
+cplt@meta.data[, "umi_groups"] <- set_thresh(umi_thresholds, cplt@meta.data$nCount_RNA, "umi")
 
 VlnPlot(cplt, features = c("nCount_RNA")) +
-  lapply(umit, threshline) +
+  lapply(umi_thresholds, threshline) +
   ggtitle("UMI read counts") +
   theme(axis.title.x = element_blank(),
         axis.text = element_text(size = 16),
@@ -317,7 +317,7 @@ VlnPlot(cplt, features = c("nCount_RNA")) +
         text = element_text(size = 24),
         plot.subtitle = element_text(hjust = 0.5)) +
   NoLegend() +
-  mapply(threshtext, umit, seq_along(umit), "umi")
+  mapply(threshtext, umi_thresholds, seq_along(umi_thresholds), "umi")
 ```
 
 Groups' size:
@@ -343,7 +343,7 @@ ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to
     theme(legend.text = element_text(size = 10),
           legend.title = element_text(size = 14))
 
-umi_labels <- threshlabel(umit)
+umi_labels <- threshlabel(umi_thresholds)
 
 ggplot(data = cellsData,
     aes(x = UMAP_1,
@@ -372,11 +372,11 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-featureRNA-1.png"))
 ```
 
 ```{r defineGroupsfeature, out.width="50%"}
-ft <- c(2000,6500)
-cplt@meta.data[, "feature_groups"] <- set_thresh(ft, cplt@meta.data$nFeature_RNA, "feature")
+feature_thresholds <- c(2000,6500)
+cplt@meta.data[, "feature_groups"] <- set_thresh(feature_thresholds, cplt@meta.data$nFeature_RNA, "feature")
 
 VlnPlot(cplt, features = c("nFeature_RNA")) +
-    lapply(ft, threshline) +
+    lapply(feature_thresholds, threshline) +
     ggtitle("feature read counts") +
     theme(axis.title.x = element_blank(),
           axis.text = element_text(size = 16),
@@ -384,7 +384,7 @@ VlnPlot(cplt, features = c("nFeature_RNA")) +
           text = element_text(size = 24),
           plot.subtitle = element_text(hjust = 0.5)) +
     NoLegend() +
-    mapply(threshtext, ft, seq_along(ft), "feature")
+    mapply(threshtext, feature_thresholds, seq_along(feature_thresholds), "feature")
 ```
 
 Groups' size:
@@ -410,7 +410,7 @@ ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to
   theme(legend.text = element_text(size = 10),
         legend.title = element_text(size = 14))
 
-feature_labels <- threshlabel(ft)
+feature_labels <- threshlabel(feature_thresholds)
 
 ggplot(data = cellsData,
        aes(x = UMAP_1,
