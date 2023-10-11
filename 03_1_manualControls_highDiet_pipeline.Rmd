@@ -3,19 +3,20 @@ author: "CC"
 date: "2023-03-27"
 output:
   html_document:
-  theme:
-  bootswatch: yeti
-toc: yes
-toc_float:
-  collapsed: false
-smooth_scroll: true
-number_sections: yes
-df_print: kable
-code_folding: hide
-pdf_document:
-  number_sections: yes
-toc_depth: 3
-keep_tex: no
+    theme:
+      bootswatch: yeti
+    toc: yes
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    number_sections: yes
+    df_print: kable
+    code_folding: hide
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    keep_tex: no
 title: |
   | `r DATASET`
   | Protocole 3.1: manual controls
@@ -168,9 +169,9 @@ cplt <- AddMetaData(object = cplt, metadata = metadata$percent.ribo,   col.name 
 
 ```{r defineGroupsMito, out.width="50%"}
 pmt = c(0.8,5,15,70)
-cplt@meta.data[, "mito_groups"] <- "gp1_mito"
-invisible(mapply(set_thresh, pmt, seq(2:length(pmt)), cplt@meta.data$percent.mito, "mito"))
+# Créez un vecteur de noms de groupe
 
+cplt@meta.data[,"mito_groups"] <- set_thresh(pmt, cplt@meta.data$percent.mito, "mito")
 
 VlnPlot(cplt, features = c("percent.mito")) +
   lapply(pmt, threshline) +
@@ -205,12 +206,11 @@ ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to
                 size  = 1.2) +
     NoLegend() +
     ggtitle(paste0(DATASET, "\nmitochondrial gene expression level")) +
-    theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5, size = 30),
-          axis.text = element_blank(),
-          line = element_blank(),
-          legend.text = element_text(size = 10),
+    defaultTheme() +
+    theme(legend.text = element_text(size = 10),
           legend.title = element_text(size = 14))
+
+mito_labels <- threshlabel(pmt)
 
 ggplot(data = cellsData,
     aes(x = UMAP_1,
@@ -220,13 +220,10 @@ ggplot(data = cellsData,
     gghighlight::gghighlight() +
     facet_wrap(vars(group_mito)) +
     ggtitle(paste0(DATASET, "\nmitochondrial gene expression groups")) +
-    theme_minimal() +
+    defaultTheme() +
     scale_color_discrete(name = "percent.mito (%)",
-                      labels = threshlabel(pmt)) +
-    theme(plot.title = element_text(hjust = 0.5, size = 30),
-          strip.text.x = element_text(size = 20),
-          axis.text = element_blank(),
-          line = element_blank(),
+                      labels = mito_labels) +
+    theme(strip.text.x = element_text(size = 20),
           legend.text = element_text(size = 20),
           legend.title = element_text(size = 28),
           legend.position = c(0.85, 0.2))
@@ -239,14 +236,12 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-riboPercentage-1.png"))
 ```
 
 ```{r defineGroupsRibo, out.width="50%"}
-cplt@meta.data[, "ribo_groups"] <- "gp1_ribo"
-cplt@meta.data[cplt@meta.data$percent.ribo > 12, "ribo_groups"] <- "gp2_ribo"
-cplt@meta.data[cplt@meta.data$percent.ribo > 35, "ribo_groups"] <- "gp3_ribo"
+prb <- c(12,35)
+
+cplt@meta.data[, "ribo_groups"] <- set_thresh(prb, cplt@meta.data$percent.ribo, "ribo")
 
 VlnPlot(cplt, features = c("percent.ribo")) +
-    geom_hline(aes(yintercept = 12), color = "#FF0000AA", size = 1.5) +
-    geom_hline(aes(yintercept = 35), color = "#FF0000AA", size = 1.5) +
-    # geom_hline(aes(yintercept = 25), color = "#FF0000AA", size = 1.5) +
+    lapply(prb, threshline) +
     ggtitle("Ribosomal expression\npercentage") +
     theme(axis.title.x = element_blank(),
           axis.text = element_text(size = 16),
@@ -255,9 +250,7 @@ VlnPlot(cplt, features = c("percent.ribo")) +
           plot.subtitle = element_text(hjust = 0.5)) +
     NoLegend() +
     scale_y_continuous(labels = scales::percent_format(scale = 1)) +
-    geom_text(aes(x= 0.5, y=4, label = "gp1_ribo")) +
-    geom_text(aes(x= 0.5, y=16, label = "gp2_ribo")) +
-    geom_text(aes(x= 0.5, y=42, label = "gp3_ribo"))
+    mapply(threshtext, prb, seq_along(prb), "ribo")
 ```
 
 Groups' size:
@@ -279,12 +272,11 @@ ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to
               size  = 1.2) +
   NoLegend() +
   ggtitle(paste0(DATASET, "\nribosomal gene expression level")) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5, size = 30),
-        axis.text = element_blank(),
-        line = element_blank(),
-        legend.text = element_text(size = 10),
+  defaultTheme() +
+  theme(legend.text = element_text(size = 10),
         legend.title = element_text(size = 14))
+
+ribo_labels <- threshlabel(prb)
 
 ggplot(data = cellsData,
        aes(x = UMAP_1,
@@ -295,17 +287,10 @@ ggplot(data = cellsData,
   facet_wrap(vars(group_ribo),
              ncol = 2) +
   ggtitle(paste0(DATASET, "\nribosomal gene expression groups")) +
-  theme_minimal() +
+  defaultTheme() +
   scale_color_discrete(name = "percent.ribo (%)",
-                       labels = c(
-                         " 0 < x < 8",
-                         " 8 < x < 22",
-                         "22 < x < 100"
-                       )) +
-  theme(plot.title = element_text(hjust = 0.5, size = 30),
-        strip.text.x = element_text(size = 20),
-        axis.text = element_blank(),
-        line = element_blank(),
+                       labels = ribo_labels) +
+  theme(strip.text.x = element_text(size = 20),
         legend.text = element_text(size = 20),
         legend.title = element_text(size = 28),
         legend.position = c(0.85, 0.2))
@@ -319,14 +304,12 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-countRNA-1.png"))
 ```
 
 ```{r defineGroupsUMI, out.width="50%"}
-cplt@meta.data[, "umi_groups"] <- "gp1_umi"
-cplt@meta.data[cplt@meta.data$nCount_RNA > 7000, "umi_groups"] <- "gp2_umi"
-cplt@meta.data[cplt@meta.data$nCount_RNA > 55000, "umi_groups"] <- "gp3_umi"
+umit <- c(7000,55000)
+
+cplt@meta.data[, "umi_groups"] <- set_thresh(umit, cplt@meta.data$nCount_RNA, "umi")
 
 VlnPlot(cplt, features = c("nCount_RNA")) +
-  geom_hline(aes(yintercept = 7000), color = "#FF0000AA", size = 1.5) +
-  geom_hline(aes(yintercept = 55000), color = "#FF0000AA", size = 1.5) +
-  # geom_hline(aes(yintercept = 25), color = "#FF0000AA", size = 1.5) +
+  lapply(umit, threshline) +
   ggtitle("UMI read counts") +
   theme(axis.title.x = element_blank(),
         axis.text = element_text(size = 16),
@@ -334,9 +317,7 @@ VlnPlot(cplt, features = c("nCount_RNA")) +
         text = element_text(size = 24),
         plot.subtitle = element_text(hjust = 0.5)) +
   NoLegend() +
-  geom_text(aes(x= 0.5, y=3500, label = "gp1_umi")) +
-  geom_text(aes(x= 0.5, y=18000, label = "gp2_umi")) +
-  geom_text(aes(x= 0.5, y=65000, label = "gp3_umi"))
+  mapply(threshtext, umit, seq_along(umit), "umi")
 ```
 
 Groups' size:
@@ -358,12 +339,11 @@ ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to
                 size  = 1.2) +
     NoLegend() +
     ggtitle(paste0(DATASET, "\nUMI read counts")) +
-    theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5, size = 30),
-          axis.text = element_blank(),
-          line = element_blank(),
-          legend.text = element_text(size = 10),
+    defaultTheme() +
+    theme(legend.text = element_text(size = 10),
           legend.title = element_text(size = 14))
+
+umi_labels <- threshlabel(umit)
 
 ggplot(data = cellsData,
     aes(x = UMAP_1,
@@ -374,17 +354,10 @@ ggplot(data = cellsData,
     facet_wrap(vars(group_umi),
                ncol = 2) +
     ggtitle(paste0(DATASET, "\nUMI read counts groups")) +
-    theme_minimal() +
+    defaultTheme() +
     scale_color_discrete(name = "UMI read counts",
-                      labels = c(
-                          "       0 < x < 7000",
-                          "  7000 < x < 55000",
-                          "55000 < x "
-                          )) +
-    theme(plot.title = element_text(hjust = 0.5, size = 30),
-          strip.text.x = element_text(size = 20),
-          axis.text = element_blank(),
-          line = element_blank(),
+                      labels = umi_labels) +
+    theme(strip.text.x = element_text(size = 20),
           legend.text = element_text(size = 20),
           legend.title = element_text(size = 28),
           legend.position = c(0.85, 0.2))
@@ -399,14 +372,11 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-featureRNA-1.png"))
 ```
 
 ```{r defineGroupsfeature, out.width="50%"}
-cplt@meta.data[, "feature_groups"] <- "gp1_feature"
-cplt@meta.data[cplt@meta.data$nFeature_RNA > 2000, "feature_groups"] <- "gp2_feature"
-cplt@meta.data[cplt@meta.data$nFeature_RNA > 6500, "feature_groups"] <- "gp3_feature"
+ft <- c(2000,6500)
+cplt@meta.data[, "feature_groups"] <- set_thresh(ft, cplt@meta.data$nFeature_RNA, "feature")
 
 VlnPlot(cplt, features = c("nFeature_RNA")) +
-    geom_hline(aes(yintercept = 2000), color = "#FF0000AA", size = 1.5) +
-    geom_hline(aes(yintercept = 6500), color = "#FF0000AA", size = 1.5) +
-    # geom_hline(aes(yintercept = 25), color = "#FF0000AA", size = 1.5) +
+    lapply(ft, threshline) +
     ggtitle("feature read counts") +
     theme(axis.title.x = element_blank(),
           axis.text = element_text(size = 16),
@@ -414,9 +384,7 @@ VlnPlot(cplt, features = c("nFeature_RNA")) +
           text = element_text(size = 24),
           plot.subtitle = element_text(hjust = 0.5)) +
     NoLegend() +
-    geom_text(aes(x= 0.5, y=1000, label = "gp1_feature")) +
-    geom_text(aes(x= 0.5, y=3500, label = "gp2_feature")) +
-    geom_text(aes(x= 0.5, y=6500, label = "gp3_feature"))
+    mapply(threshtext, ft, seq_along(ft), "feature")
 ```
 
 Groups' size:
@@ -438,12 +406,11 @@ ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to
               size  = 1.2) +
   NoLegend() +
   ggtitle(paste0(DATASET, "\nfeature counts")) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5, size = 30),
-        axis.text = element_blank(),
-        line = element_blank(),
-        legend.text = element_text(size = 10),
+  defaultTheme() +
+  theme(legend.text = element_text(size = 10),
         legend.title = element_text(size = 14))
+
+feature_labels <- threshlabel(ft)
 
 ggplot(data = cellsData,
        aes(x = UMAP_1,
@@ -454,17 +421,10 @@ ggplot(data = cellsData,
   facet_wrap(vars(group_feature),
              ncol = 2) +
   ggtitle(paste0(DATASET, "\nfeature read counts groups")) +
-  theme_minimal() +
+  defaultTheme() +
   scale_color_discrete(name = "feature read counts",
-                       labels = c(
-                         "    0 < x < 2000",
-                         "2000 < x < 6500",
-                         "6500 < x "
-                       )) +
-  theme(plot.title = element_text(hjust = 0.5, size = 30),
-        strip.text.x = element_text(size = 20),
-        axis.text = element_blank(),
-        line = element_blank(),
+                       labels = feature_labels) +
+  theme(strip.text.x = element_text(size = 20),
         legend.text = element_text(size = 20),
         legend.title = element_text(size = 28),
         legend.position = c(0.85, 0.2))
@@ -479,21 +439,18 @@ invisible(apply(combn(allGroups, 2), 2, function(x) {
   print(table(cplt@meta.data[,x[1]], cplt@meta.data[,x[2]]))
   cat("\n\n")
 }))
+
+mito_text <- ""
+for(i in 1:length(mito_labels)){
+  mito_text <- paste0(mito_text, " - gp", i, "_mito&emsp;", mito_labels[i],"\n")
+}
 ```
 
 ## Mitochondrial levels CV {.tabset .tabset-pills .tabset-fade}
 
 The various levels of mitochondrial expression represent (values in %):
-  
-  - gp1_mito&emsp;0 < x < 1
 
-- gp2_mito&emsp;1 < x < 5.2
-
-- gp3_mito&emsp;5.2 < x < 15
-
-- gp4_mito&emsp;15 < x < 25
-
-- gp5_mito&emsp;25 < x < 100
+`r mito_text`
 
 
 ```{r cv_mito, results='asis', out.width='50%', fig.align='default'}
@@ -526,11 +483,8 @@ invisible(sapply(mito_groups, function(group) {
         scale_color_discrete(name = vrbl) +
         NoLegend() +
         ggtitle(paste0(DATASET, "\n", group, " versus ", vrbl)) +
-        theme_minimal() +
-        theme(plot.title = element_text(hjust = 0.5, size = 30),
-              axis.text = element_blank(),
-              line = element_blank(),
-              legend.text = element_text(size = 15),
+        defaultTheme() +
+        theme(legend.text = element_text(size = 15),
               legend.title = element_text(size = 20)) +
         guides(colour = guide_legend(override.aes = list(size=10)))
     )
@@ -538,17 +492,18 @@ invisible(sapply(mito_groups, function(group) {
   
   cat(" \n \n") # Required for '.tabset'
 }))
+
+ribo_text <- ""
+for(i in 1:length(ribo_labels)){
+  ribo_text <- paste0(ribo_text, " - gp", i, "_ribo&emsp;", ribo_labels[i],"\n")
+}
 ```
 
 ## Ribosomal levels CV {.tabset .tabset-pills .tabset-fade}
 
 The various levels of ribosomal expression represent (values in %):
   
-  - gp1_ribo&emsp;0 < x < 8
-
-- gp2_ribo&emsp;8 < x < 22
-
-- gp3_ribo&emsp;22 < x < 100
+`r ribo_text`
 
 ```{r cv_ribo, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "ribo_groups"]
@@ -580,11 +535,8 @@ invisible(sapply(ribo_groups, function(group) {
         scale_color_discrete(name = vrbl) +
         NoLegend() +
         ggtitle(paste0(DATASET, "\n", group, " versus ", vrbl)) +
-        theme_minimal() +
-        theme(plot.title = element_text(hjust = 0.5, size = 30),
-              axis.text = element_blank(),
-              line = element_blank(),
-              legend.text = element_text(size = 15),
+        defaultTheme() +
+        theme(legend.text = element_text(size = 15),
               legend.title = element_text(size = 20)) +
         guides(colour = guide_legend(override.aes = list(size=10)))
     )
@@ -592,18 +544,19 @@ invisible(sapply(ribo_groups, function(group) {
   
   cat(" \n \n") # Required for '.tabset'
 }))
+
+umi_text <- ""
+for(i in 1:length(umi_labels)){
+  umi_text <- paste0(umi_text, " - gp", i, "_umi&emsp;", umi_labels[i],"\n")
+}
 ```
 
 
 ## UMI read counts levels CV {.tabset .tabset-pills .tabset-fade}
 
 The various levels of UMI read counts are:
-  
-  - gp1_umi&emsp;0 < x < 7000
 
-- gp2_umi&emsp;7000 < x < 30000
-
-- gp3_umi&emsp;30000 < x
+`r umi_text`
 
 ```{r cv_umi, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "umi_groups"]
@@ -635,11 +588,8 @@ invisible(sapply(umi_groups, function(group) {
         scale_color_discrete(name = vrbl) +
         NoLegend() +
         ggtitle(paste0(DATASET, "\n", group, " versus ", vrbl)) +
-        theme_minimal() +
-        theme(plot.title = element_text(hjust = 0.5, size = 30),
-              axis.text = element_blank(),
-              line = element_blank(),
-              legend.text = element_text(size = 15),
+        defaultTheme() +
+        theme(legend.text = element_text(size = 15),
               legend.title = element_text(size = 20)) +
         guides(colour = guide_legend(override.aes = list(size=10)))
     )
@@ -647,6 +597,11 @@ invisible(sapply(umi_groups, function(group) {
   
   cat(" \n \n") # Required for '.tabset'
 }))
+
+feature_text <- ""
+for(i in 1:length(feature_labels)){
+  feature_text <- paste0(feature_text, " - gp", i, "_feature&emsp;", feature_labels[i],"\n")
+}
 ```
 
 
@@ -654,11 +609,7 @@ invisible(sapply(umi_groups, function(group) {
 
 The various levels of feature counts are:
   
-  - gp1_umi&emsp;0 < x < 2000
-
-- gp2_umi&emsp;2000 < x < 5500
-
-- gp3_umi&emsp;5500 < x
+`r feature_text`
 
 ```{r cv_feature, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "feature_groups"]
@@ -690,11 +641,8 @@ invisible(sapply(feature_groups, function(group) {
         scale_color_discrete(name = vrbl) +
         NoLegend() +
         ggtitle(paste0(DATASET, "\n", group, " versus ", vrbl)) +
-        theme_minimal() +
-        theme(plot.title = element_text(hjust = 0.5, size = 30),
-              axis.text = element_blank(),
-              line = element_blank(),
-              legend.text = element_text(size = 15),
+        defaultTheme() +
+        theme(legend.text = element_text(size = 15),
               legend.title = element_text(size = 20)) +
         guides(colour = guide_legend(override.aes = list(size=10)))
     )

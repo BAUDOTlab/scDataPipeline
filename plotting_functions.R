@@ -95,8 +95,11 @@ highlightClusterPlot <- function(clusterName, seuratObject, reduction = "umap") 
 }
 
 ######## Helper functions for dynamic display, better used in apply functions
-set_thresh <- function(thresh, i, metadata, metric){
-  cplt@meta.data[metadata > thresh, paste0(metric,"_groups")] <- paste0("gp",i,"_", metric)
+set_thresh <- function(thresholds, metadata, metric){
+  group_names <- paste0("gp", 1:(length(thresholds)+1), "_", metric)
+
+  # Utilisez la fonction cut pour attribuer les groupes en fonction des seuils
+  return(cut(metadata, include.lowest=T, breaks=c(-Inf,thresholds, Inf), labels = group_names))
 }
 
 threshline <- function(thresh){
@@ -104,7 +107,7 @@ threshline <- function(thresh){
 }
 
 threshtext <- function(thresh, i, metric){
-  geom_text(aes(x=0.5, y=0.8*thresh, label=paste0("gp",i,"_",metric)))
+  geom_text(aes(x=0.5, y=0.8*thresh, label=paste0("gp",i,"_",metric, " - ", thresh)))
 }
 
 threshlabel <- function(thresh){
