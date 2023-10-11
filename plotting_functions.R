@@ -98,7 +98,8 @@ highlightClusterPlot <- function(clusterName, seuratObject, reduction = "umap") 
 set_thresh <- function(thresholds, metadata, metric){
   group_names <- paste0("gp", 1:(length(thresholds)+1), "_", metric)
 
-  # Utilisez la fonction cut pour attribuer les groupes en fonction des seuils
+  # cut() breaks down a data frame column according to the submitted thresholds (infinites are needed to avoid setting minimum and maximum thresholds), 
+  # then returns a column with the labels of each groups
   return(cut(metadata, include.lowest=T, breaks=c(-Inf,thresholds, Inf), labels = group_names))
 }
 
