@@ -93,6 +93,39 @@ highlightClusterPlot <- function(clusterName, seuratObject, reduction = "umap") 
 
 }
 
+######## Helper functions for dynamic display, better used in apply functions
+set_thresh <- function(thresholds, metadata, metric){
+  group_names <- paste0("gp", 1:(length(thresholds)+1), "_", metric)
+
+  # cut() breaks down a data frame column according to the submitted thresholds (infinites are needed to avoid setting minimum and maximum thresholds), 
+  # then returns a column with the labels of each groups
+  return(cut(metadata, include.lowest=T, breaks=c(-Inf,thresholds, Inf), labels = group_names))
+}
+
+threshline <- function(thresh){
+  geom_hline(aes(yintercept = thresh), color = "#FF0000AA", size = 1.5)
+}
+
+threshtext <- function(thresh, i, metric){
+  geom_text(aes(x=0.5, y=0.8*thresh, label=paste0("gp",i,"_",metric, " - ", thresh)))
+}
+
+threshlabel <- function(thresh){
+  res = c()
+  for(i in 1:length(thresh)){
+    if(i==1){
+      res <- append(res,paste0("x < ", thresh[i]))
+    } 
+    
+    if (i==length(thresh)) {
+      res <- append(res, paste0(thresh[i], " < x"))
+    } else {
+      res <- append(res, paste0(thresh[i], " < x < ", thresh[i+1]))
+    }
+  }
+  return(res)
+}
+
 
 ######## Function to create a dot plot for 40 markers, then will create a new dotPlot
 create_dot_plot <- function(SO, geneList, title=NULL) {

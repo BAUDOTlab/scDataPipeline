@@ -164,7 +164,7 @@ msg <- "before CC regression"
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # LOAD DATA
-PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_prepocessed_", DATASET, "_filtered.rds")
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_preprocessed_", DATASET, "_filtered.rds")
 fltd <- readRDS(PATH_RDS_FILE)
 
 # LOAD CLUSTERING RESULTS
@@ -327,8 +327,6 @@ singlets@meta.data[clustOfInterest] <- NULL
 ## Remove the red blood cells (RBCs)
 
 ```{r filterRBCs}
-# noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = `Hba-a1` > 0, invert = TRUE))
-#noRBCs <- subset(singlets, cells = WhichCells(singlets, expression = ENSMUSG00000069919 > 0, invert = TRUE))
 filtered_list <- singlets
 for(i in 1:length(ff_list)){
   if(!ff_list[[i]] %in% singlets@assays[["RNA"]]@var.features){
@@ -394,8 +392,7 @@ if(gn_col == 1){
   Genes of G2/M phases:
   ")
   g2mPhase$Gene.name
-}
-else{
+} else{
   s.genes <- cc.genes.updated.2019$s.genes
   g2m.genes <- cc.genes.updated.2019$g2m.genes
 }

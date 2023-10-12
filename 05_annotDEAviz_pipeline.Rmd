@@ -126,7 +126,7 @@ colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.tabl
 
 ```{r variableDef1, include=FALSE}
 # PATHS
-PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_prepocessed_", DATASET, "_scenario.", scenario, ".rds")
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "07_annotDEAviz")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
