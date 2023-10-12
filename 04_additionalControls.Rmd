@@ -327,24 +327,44 @@ singlets@meta.data[clustOfInterest] <- NULL
 ## Remove the red blood cells (RBCs)
 
 ```{r filterRBCs}
-filtered_list <- singlets
-for(i in 1:length(ff_list)){
-  if(!ff_list[[i]] %in% singlets@assays[["RNA"]]@var.features){
-    cat(paste0("No gene named ", ff_list[[i]], " found, skipping...\n"))
-    next
+if(!is.null(ff_list)){
+  filtered_list <- singlets
+  toremove <- c()
+
+  # Loop through each feature in ff_list
+  for(i in 1:length(ff_list)){
+    # Check if the feature is present in the RNA assay's var.features and print
+    # message if not
+    if(!ff_list[[i]] %in% singlets@assays[["RNA"]]@var.features){
+      cat(paste0("No gene named ", ff_list[[i]], " found, skipping...\n"))
+      to_remove <- append(to_remove, i)
+    }
   }
+
+  # Remove features that were not found in the data
+  ff_list <- setdiff(ff_list, to_remove)
+
+  # Fetch data for the selected features
+  expr <- FetchData(object = singlets, vars = ff_list)
+
+  # Filter out cells where expression of all selected features is 0
+  filtered_list <- singlets[, which(FALSE == (expr > 0))]
 }
-# WhichCells is for interactive use only, this is inspired by https://github.com/satijalab/seurat/issues/1053#issuecomment-454512002 
-expr <- FetchData(object = singlets, vars = ff_list)
-filtered_list <- singlets[, which(FALSE == (expr > 0))]
 
-
+# Export filtered_list to an RDS file
 export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 ```
 
-From the **`r dim(singlets)[2]`** singlet cells,
-**`r length(singlets) - length(filtered_list)`** unwanted cells
-have been removed.
+```{r include=FALSE}
+if(!is.null(ff_list)) {
+cat(paste0(
+"From the **", dim(singlets)[2], "** singlet cells, **", 
+length(singlets) - length(filtered_list), "** unwanted cells
+have been removed."))
+}
+```
+
+
 
 ## Conclusion - Scenario 1
 
