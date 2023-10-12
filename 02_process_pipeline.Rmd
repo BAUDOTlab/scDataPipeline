@@ -293,7 +293,7 @@ invisible(mapply(saveDR, SO.list, names(SO.list)))
 # Clustering
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 if (goodQ) {
-    defaultMDnames <- c(defaultMDnames, "tissue_DF")
+    defaultMDnames <- c(defaultMDnames, "celltype_DF")
 }
 
 saveCluster <- function(SO, scenario) {

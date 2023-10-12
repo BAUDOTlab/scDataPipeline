@@ -6,7 +6,7 @@ source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "dea"
+# args <- "ctrl++"
 
 # Main help message
 main_help <- "
@@ -274,7 +274,7 @@ switch(args[1],
         make_option(
           c("-m", "--mito_thresholds"),
           action = "store",
-          default = NA,
+          # default = 0,
           type = "character",
           help = "ONLY USED WITH --manual
           The list of the thresholds for mitochondrial expression, as a comma-separated list."
@@ -282,7 +282,7 @@ switch(args[1],
         make_option(
           c("-r", "--ribo_thresholds"),
           action = "store",
-          default = NA,
+          # default = 0,
           type = "character",
           help = "ONLY USED WITH --manual
           The list of the thresholds for ribosomal expression, as a comma-separated list."
@@ -290,7 +290,7 @@ switch(args[1],
         make_option(
           c("-u", "--umi_thresholds"),
           action = "store",
-          default = NA,
+          # default = 0,
           type = "character",
           help = "ONLY USED WITH --manual
           The list of the thresholds for read counts, as a comma-separated list."
@@ -298,7 +298,7 @@ switch(args[1],
         make_option(
           c("-f", "--feature_thresholds"),
           action = "store",
-          default = NA,
+          # default = 0,
           type = "character",
           help = "ONLY USED WITH --manual
           The list of the thresholds for the number of features, as a comma-separated list."
@@ -459,7 +459,7 @@ switch(args[1],
           make_option(
             c("-f", "--filter_features"),
             action = "store",
-            type = "character",
+                        type = "character",
             help = "The list of features used to filter out unwanted cells. 
             For example, filtering out the HBA1 gene will remove all red blood cells, as it is a gene specifically expressed by such cells.
             The list should be in quotes and each feature must be separated by a colon."
@@ -478,7 +478,7 @@ switch(args[1],
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "testCardioKO"
+# opt$options$input_dataset <- "cardioKO"
 PATH_REQUIREMENTS <- "../01_requirements/"
 load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
 
@@ -504,10 +504,10 @@ if (TRUE){
     clust_res = if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution
     clust_meth = if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering
     # advanced filter pipeline variables  --------
-    mito_thresholds = as.numeric(unlist(strsplit(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds, ",")))
-    ribo_thresholds = as.numeric(unlist(strsplit(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds, ",")))
-    umi_thresholds = as.numeric(unlist(strsplit(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds, ",")))
-    feature_thresholds = as.numeric(unlist(strsplit(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds, ",")))
+    mito_thresholds = if (!is.null(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds)) as.numeric(unlist(strsplit(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds, ",")))
+    ribo_thresholds = if (!is.null(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds)) as.numeric(unlist(strsplit(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds, ",")))
+    umi_thresholds = if (!is.null(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds)) as.numeric(unlist(strsplit(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds, ",")))
+    feature_thresholds = if (!is.null(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds)) as.numeric(unlist(strsplit(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds, ",")))
     # deg pipeline variables ---------------------
     top_markers = opt$options$markers_number
     # doublets removal ---------------------------
@@ -524,7 +524,7 @@ if (TRUE){
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
 
-    ff_list = strsplit(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features, ",")
+    ff_list = if (!is.null(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features)) strsplit(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features, ",")
 }
 
 
