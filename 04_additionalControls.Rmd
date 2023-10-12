@@ -413,8 +413,8 @@ if(gn_col == 1){
   ")
   g2mPhase$Gene.name
 } else{
-  s.genes <- cc.genes.updated.2019$s.genes
-  g2m.genes <- cc.genes.updated.2019$g2m.genes
+  s.genes <- str_to_title(cc.genes.updated.2019$s.genes)
+  g2m.genes <- str_to_title(cc.genes.updated.2019$g2m.genes)
 }
 ```
 
