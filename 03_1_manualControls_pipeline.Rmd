@@ -1,0 +1,682 @@
+---
+author: "CC"
+date: "2023-03-27"
+output:
+  html_document:
+    theme:
+      bootswatch: yeti
+    toc: yes
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    number_sections: yes
+    df_print: kable
+    code_folding: hide
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    keep_tex: no
+title: |
+  | `r DATASET`
+  | Protocole 3.1: manual controls
+---
+  
+  <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
+  
+  <!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
+  <!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
+  
+  <style>
+  .zoomDiv {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 50;
+    transform: translate(-50%, -50%);
+    background-color: #FFFFFF;
+      box-shadow: 0px 0px 50px #888888;
+    width: fit-content;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+  }
+
+.zoomImg {
+  width: 150%;
+}
+</style>
+  
+  <script type = "text/javascript">
+  $(document).ready(function() {
+    $("body").prepend("<div class = \"zoomDiv\"><img src = \"\" class = \"zoomImg\"></div>");
+    // onClick for all img except the zoomed one and link ones (filter)
+    // use "img.zoom" and out.extra = "class = \"zoom\"" in chunk to specify manually which chunk images can be zoomed
+    $("img:not(.zoomImg)").filter(":not(a *)").click(function() {
+      $(".zoomImg").attr("src", $(this).attr("src"));
+      $(".zoomDiv").show();
+    })
+    // onClick function for hiding div
+    $("img.zoomImg").click(function() {
+      $(".zoomDiv").hide();
+    })
+  })
+</script>
+  
+  
+```{r setup, include = FALSE}
+options(knitr.purl.inline = TRUE)
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+  
+  # text output
+  echo = TRUE,
+  results = "hold",
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  strip.white = TRUE,
+  
+  # code decoration
+  #tidy = TRUE,
+  tidy.opts = list(width.cutoff = 90),
+  comment = "",
+  attr.output = ".numberLines",
+  
+  # plots
+  #fig.path = "figure/",      # is set later, in chunk setup2
+  fig.show = "asis",         # tuned to "hold" in multiple plots chunk
+  dev = c("png", "pdf"),
+  fig.width = 12,
+  fig.height = 12,
+  #fig.asp = 1.3               # fig.height = fig.width * fig.asp
+  #out.extra = "style = "border:5px solid orange""    # orange box arround plots
+  fig.align = "center"   # should be tuned to default in multiple plots chunk
+)
+```
+
+```{r load-libraries, include = FALSE}
+library(kableExtra)
+library(dplyr)
+library(Seurat)
+library(stringr)
+library(ggplot2)
+
+source("./plotting_functions.R")
+```
+
+```{r dir-managment, include = FALSE}
+if (!dir.exists(PATH_ROOT)) { dir.create(PATH_ROOT) }
+if (!dir.exists(PATH_OUT_HTML)) { dir.create(PATH_OUT_HTML) }
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "03_1_manualControls")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+if (!dir.exists(PATH_OUT_FIG)) { dir.create(PATH_OUT_FIG, recursive = TRUE) }
+```
+
+<!-- # Global settings -->
+  
+```{r show-params, eval=FALSE, include=FALSE}
+ul <- unlist(params)
+df <- data.frame(keyName = names(ul), value = ul, row.names = NULL)
+df <- df[! grepl("^PATH|DATASET", df$keyName), ]
+names(df) <- c("Parameters", "Values")
+df1 <- df[1:ceiling(dim(df)[1] / 3), ]
+df1$Parameters <- cell_spec(df1$Parameters, bold = TRUE)
+df2 <- df[(ceiling(dim(df)[1] / 3) + 1) : (2 * ceiling(dim(df)[1] / 3)), ]
+df2$Parameters <- cell_spec(df2$Parameters, bold = TRUE)
+df3 <- df[((2 * ceiling(dim(df)[1] / 3)) + 1):dim(df)[1], ]
+df3$Parameters <- cell_spec(df3$Parameters, bold = TRUE)
+
+
+list(df1, df2, df3) %>%
+  knitr::kable(align = "ll", row.names = FALSE, escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE)
+rm(df)
+```
+
+```{r setup2, eval = TRUE, include = FALSE}
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+  
+  # figures
+  fig.path = paste0(PATH_OUT_FIG, "/03_1_manualCtrl_")
+)
+```
+
+# Load `r DATASET` data
+
+```{r load-data}
+cplt <- readRDS(paste0(PATH_RDS_OBJECTS, "/02_preprocessed_", DATASET, "_complete.rds"))
+metadata <- read.table(paste0(PATH_ROOT, "/03_qc/metadata_", DATASET, "_complete.csv"), header = TRUE, sep = ",")
+umapCoord <- read.table(paste0(PATH_ROOT, "/04_process/DR_umap_", DATASET, "_complete.csv"), header = TRUE, sep = ",")
+
+# reintegrate umap coordinates
+# umapMat <- as.matrix(umapCoord[, 2:3])
+umapMat <- as.matrix(umapCoord)
+# rownames(umapMat) <- umapCoord$cellIDs
+cplt[["umap"]] <- CreateDimReducObject(embeddings = umapMat, key = "UMAP_")
+
+# reintegrate metadata
+cplt <- AddMetaData(object = cplt, metadata = metadata$percent.mito,   col.name = "percent.mito")
+cplt <- AddMetaData(object = cplt, metadata = metadata$percent.ribo,   col.name = "percent.ribo")
+```
+
+# Mitochondrial exploration 
+
+```{r defineGroupsMito, out.width="50%", fig.align='default', fig.show='hold'}
+cplt@meta.data[,"mito_groups"] <- set_thresh(mito_thresholds, cplt@meta.data$percent.mito, "mito")
+# Must add an upper bound in order for the last group to be displayed
+max_mito <- max(cplt@meta.data$percent.mito)
+mito_thresholds <- append(mito_thresholds, ceiling(max_mito + max_mito*0.05))
+
+plot1 <- VlnPlot(cplt, features = c("percent.mito")) +
+  lapply(mito_thresholds, threshline) +
+  ggtitle("Mitochondrial expression\npercentage") +
+  theme(axis.title.x = element_blank(),
+        axis.text = element_text(size = 16),
+        axis.text.x = element_text(angle = 0, size = 24, hjust = 0.5, face = "bold"),
+        text = element_text(size = 24),
+        plot.subtitle = element_text(hjust = 0.5)) +
+  NoLegend() +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  coord_cartesian(ylim = c(0, 100)) +
+  mapply(threshtext, mito_thresholds, seq_along(mito_thresholds), "mito")
+plot2 <- plot1 +
+    ggtitle("Zoom in") +
+    coord_cartesian(ylim = c(0, 15))
+
+plot1
+plot2
+```
+
+Groups' size:
+```{r groupsSizeMito}
+mito_groups <- sort(unique(cplt$mito_groups))
+table(cplt@meta.data$mito_groups)
+```
+
+```{r groupsMito, out.width="50%", fig.align='default', fig.show='hold'}
+cellsData <- data.frame(umapCoord, metadata$percent.mito, cplt@meta.data$mito_groups)
+colnames(cellsData) <- c(colnames(umapCoord), "percent.mito", "group_mito")
+
+ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+         aes( x = UMAP_1,
+              y = UMAP_2)) +
+    geom_point( data = cellsData, # Now provide data including column for facetting
+                aes(color = percent.mito),
+                alpha = 0.6,
+                size  = 1.2) +
+    NoLegend() +
+    ggtitle(paste0(DATASET, "\nmitochondrial gene expression level")) +
+    defaultTheme() +
+    theme(legend.text = element_text(size = 10),
+          legend.title = element_text(size = 14))
+
+mito_labels <- threshlabel(mito_thresholds)
+
+ggplot(data = cellsData,
+    aes(x = UMAP_1,
+        y = UMAP_2,
+        colour = factor(group_mito))) +
+    geom_point() +
+    gghighlight::gghighlight() +
+    facet_wrap(vars(group_mito)) +
+    ggtitle(paste0(DATASET, "\nmitochondrial gene expression groups")) +
+    defaultTheme() +
+    scale_color_discrete(name = "percent.mito (%)",
+                      labels = mito_labels) +
+    theme(strip.text.x = element_text(size = 20),
+          legend.text = element_text(size = 20),
+          legend.title = element_text(size = 28),
+          legend.position = c(0.85, 0.2))
+```
+
+# Ribosomal exploration 
+
+```{r importVlnRibo, out.width="50%", eval=FALSE, echo=FALSE}
+knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-riboPercentage-1.png"))
+```
+
+```{r defineGroupsRibo, out.width="50%"}
+cplt@meta.data[, "ribo_groups"] <- set_thresh(ribo_thresholds, cplt@meta.data$percent.ribo, "ribo")
+max_ribo <- max(cplt@meta.data$percent.ribo)
+ribo_thresholds <- append(ribo_thresholds, ceiling(max_ribo + max_ribo*0.05))
+
+VlnPlot(cplt, features = c("percent.ribo")) +
+    lapply(ribo_thresholds, threshline) +
+    ggtitle("Ribosomal expression\npercentage") +
+    theme(axis.title.x = element_blank(),
+          axis.text = element_text(size = 16),
+          axis.text.x = element_text(angle = 0, size = 24, hjust = 0.5, face = "bold"),
+          text = element_text(size = 24),
+          plot.subtitle = element_text(hjust = 0.5)) +
+    NoLegend() +
+    scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+    mapply(threshtext, ribo_thresholds, seq_along(ribo_thresholds), "ribo")
+```
+
+Groups' size:
+```{r groupsSizeRibo}
+ribo_groups <- sort(unique(cplt$ribo_groups))
+table(cplt@meta.data$ribo_groups)
+```
+
+```{r groupsRibo, out.width="50%", fig.align='default', fig.show='hold'}
+cellsData <- data.frame(umapCoord, metadata$percent.ribo, cplt@meta.data$ribo_groups)
+colnames(cellsData) <- c(colnames(umapCoord), "percent.ribo", "group_ribo")
+
+ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+       aes( x = UMAP_1,
+            y = UMAP_2)) +
+  geom_point( data = cellsData, # Now provide data including column for facetting
+              aes(color = percent.ribo),
+              alpha = 0.6,
+              size  = 1.2) +
+  NoLegend() +
+  ggtitle(paste0(DATASET, "\nribosomal gene expression level")) +
+  defaultTheme() +
+  theme(legend.text = element_text(size = 10),
+        legend.title = element_text(size = 14))
+
+ribo_labels <- threshlabel(ribo_thresholds)
+
+ggplot(data = cellsData,
+       aes(x = UMAP_1,
+           y = UMAP_2,
+           colour = factor(group_ribo))) +
+  geom_point() +
+  gghighlight::gghighlight() +
+  facet_wrap(vars(group_ribo),
+             ncol = 2) +
+  ggtitle(paste0(DATASET, "\nribosomal gene expression groups")) +
+  defaultTheme() +
+  scale_color_discrete(name = "percent.ribo (%)",
+                       labels = ribo_labels) +
+  theme(strip.text.x = element_text(size = 20),
+        legend.text = element_text(size = 20),
+        legend.title = element_text(size = 28),
+        legend.position = c(0.85, 0.2))
+```
+
+
+# UMI read counts exploration 
+
+```{r importVlnUMI, out.width="50%", eval=FALSE, echo=FALSE}
+knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-countRNA-1.png"))
+```
+
+```{r defineGroupsUMI, out.width="50%"}
+cplt@meta.data[, "umi_groups"] <- set_thresh(umi_thresholds, cplt@meta.data$nCount_RNA, "umi")
+max_umi <- max(cplt@meta.data$nCount_RNA)
+umi_thresholds <- append(umi_thresholds, ceiling(max_umi + max_umi*0.05))
+
+VlnPlot(cplt, features = c("nCount_RNA")) +
+  lapply(umi_thresholds, threshline) +
+  ggtitle("UMI read counts") +
+  theme(axis.title.x = element_blank(),
+        axis.text = element_text(size = 16),
+        axis.text.x = element_text(angle = 0, size = 24, hjust = 0.5, face = "bold"),
+        text = element_text(size = 24),
+        plot.subtitle = element_text(hjust = 0.5)) +
+  NoLegend() +
+  mapply(threshtext, umi_thresholds, seq_along(umi_thresholds), "umi")
+```
+
+Groups' size:
+```{r groupsSizeUMI}
+umi_groups <- sort(unique(cplt$umi_groups))
+table(cplt@meta.data$umi_groups)
+```
+
+```{r groupsUMI, out.width="50%", fig.align='default', fig.show='hold'}
+cellsData <- data.frame(umapCoord, cplt@meta.data$nCount_RNA, cplt@meta.data$umi_groups)
+colnames(cellsData) <- c(colnames(umapCoord), "nCount_RNA", "group_umi")
+
+ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+         aes( x = UMAP_1,
+              y = UMAP_2)) +
+    geom_point( data = cellsData, # Now provide data including column for facetting
+                aes(color = nCount_RNA),
+                alpha = 0.6,
+                size  = 1.2) +
+    NoLegend() +
+    ggtitle(paste0(DATASET, "\nUMI read counts")) +
+    defaultTheme() +
+    theme(legend.text = element_text(size = 10),
+          legend.title = element_text(size = 14))
+
+umi_labels <- threshlabel(umi_thresholds)
+
+ggplot(data = cellsData,
+    aes(x = UMAP_1,
+        y = UMAP_2,
+        colour = factor(group_umi))) +
+    geom_point() +
+    gghighlight::gghighlight() +
+    facet_wrap(vars(group_umi),
+               ncol = 2) +
+    ggtitle(paste0(DATASET, "\nUMI read counts groups")) +
+    defaultTheme() +
+    scale_color_discrete(name = "UMI read counts",
+                      labels = umi_labels) +
+    theme(strip.text.x = element_text(size = 20),
+          legend.text = element_text(size = 20),
+          legend.title = element_text(size = 28),
+          legend.position = c(0.85, 0.2))
+```
+
+
+
+# Feature counts exploration 
+
+```{r importVlnfeature, out.width="50%", eval=FALSE, echo=FALSE}
+knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-featureRNA-1.png"))
+```
+
+```{r defineGroupsfeature, out.width="50%", fig.align = "default", fig.show = "hold"}
+cplt@meta.data[, "feature_groups"] <- set_thresh(feature_thresholds, cplt@meta.data$nFeature_RNA, "feature")
+max_feature <- max(cplt@meta.data$nFeature_RNA)
+feature_thresholds <- append(feature_thresholds, ceiling(max_feature + max_feature*0.05))
+
+VlnPlot(cplt, features = c("nFeature_RNA")) +
+    lapply(feature_thresholds, threshline) +
+    ggtitle("feature read counts") +
+    theme(axis.title.x = element_blank(),
+          axis.text = element_text(size = 16),
+          axis.text.x = element_text(angle = 0, size = 24, hjust = 0.5, face = "bold"),
+          text = element_text(size = 24),
+          plot.subtitle = element_text(hjust = 0.5)) +
+    NoLegend() +
+    mapply(threshtext, feature_thresholds, seq_along(feature_thresholds), "feature")
+```
+
+Groups' size:
+```{r groupsSizefeature}
+feature_groups <- sort(unique(cplt$feature_groups))
+table(cplt@meta.data$feature_groups)
+```
+
+```{r groupsFeature, out.width="50%"}
+cellsData <- data.frame(umapCoord, cplt@meta.data$nFeature_RNA, cplt@meta.data$feature_groups)
+colnames(cellsData) <- c(colnames(umapCoord), "nFeature_RNA", "group_feature")
+
+ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+       aes( x = UMAP_1,
+            y = UMAP_2)) +
+  geom_point( data = cellsData, # Now provide data including column for facetting
+              aes(color = nFeature_RNA),
+              alpha = 0.6,
+              size  = 1.2) +
+  NoLegend() +
+  ggtitle(paste0(DATASET, "\nfeature counts")) +
+  defaultTheme() +
+  theme(legend.text = element_text(size = 10),
+        legend.title = element_text(size = 14))
+
+feature_labels <- threshlabel(feature_thresholds)
+
+ggplot(data = cellsData,
+       aes(x = UMAP_1,
+           y = UMAP_2,
+           colour = factor(group_feature))) +
+  geom_point() +
+  gghighlight::gghighlight() +
+  facet_wrap(vars(group_feature),
+             ncol = 2) +
+  ggtitle(paste0(DATASET, "\nfeature read counts groups")) +
+  defaultTheme() +
+  scale_color_discrete(name = "feature read counts",
+                       labels = feature_labels) +
+  theme(strip.text.x = element_text(size = 20),
+        legend.text = element_text(size = 20),
+        legend.title = element_text(size = 28),
+        legend.position = c(0.85, 0.2))
+```
+
+# Cross-validations
+
+```{r crossValidation}
+allGroups <- c("mito_groups", "ribo_groups", "umi_groups", "feature_groups")
+invisible(apply(combn(allGroups, 2), 2, function(x) {
+  cat(paste0(x[1], " and ", x[2], " co-ocurrence"))
+  print(table(cplt@meta.data[,x[1]], cplt@meta.data[,x[2]]))
+  cat("\n\n")
+}))
+
+mito_text <- ""
+for(i in 1:length(mito_labels)){
+  mito_text <- paste0(mito_text, " - gp", i, "_mito&emsp;", mito_labels[i],"\n")
+}
+```
+
+## Mitochondrial levels CV {.tabset .tabset-pills .tabset-fade}
+
+The various levels of mitochondrial expression represent (values in %):
+
+`r mito_text`
+
+
+```{r cv_mito, results='asis', out.width='50%', fig.align='default'}
+vars <- allGroups[allGroups != "mito_groups"]
+
+invisible(sapply(mito_groups, function(group) {
+  
+  cat("### ", group, "\n")
+  
+  Idents(cplt) <- "mito_groups"
+  
+  # Highlight cells of current cluster on a dimreduc plot
+  highlightClusterPlot(group, seuratObject = cplt, reduction = ifelse( exists("useReduction"), useReduction, "umap"))
+  
+  invisible(sapply(vars, function(vrbl) {
+    cellsData <- data.frame(cplt@reductions$umap@cell.embeddings, cplt@meta.data$mito_groups, cplt@meta.data[[vrbl]])
+    colnames(cellsData) <- c(colnames(umapCoord), "mito_groups", vrbl)
+    
+    print(
+      ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+             aes( x = UMAP_1,
+                  y = UMAP_2)) +
+        geom_point( alpha = .4,
+                    size  = 1,
+                    color = "grey") +
+        geom_point( data = cellsData[cellsData$mito_groups == group,],
+                    aes(color = get(vrbl)),
+                    alpha = .5,
+                    size  = 1.2) +
+        scale_color_discrete(name = vrbl) +
+        NoLegend() +
+        ggtitle(paste0(DATASET, "\n", group, " versus ", vrbl)) +
+        defaultTheme() +
+        theme(legend.text = element_text(size = 15),
+              legend.title = element_text(size = 20)) +
+        guides(colour = guide_legend(override.aes = list(size=10)))
+    )
+  }))
+  
+  cat(" \n \n") # Required for '.tabset'
+}))
+
+ribo_text <- ""
+for(i in 1:length(ribo_labels)){
+  ribo_text <- paste0(ribo_text, " - gp", i, "_ribo&emsp;", ribo_labels[i],"\n")
+}
+```
+
+## Ribosomal levels CV {.tabset .tabset-pills .tabset-fade}
+
+The various levels of ribosomal expression represent (values in %):
+  
+`r ribo_text`
+
+```{r cv_ribo, results='asis', out.width='50%', fig.align='default'}
+vars <- allGroups[allGroups != "ribo_groups"]
+
+invisible(sapply(ribo_groups, function(group) {
+  
+  cat("### ", group, "\n")
+  
+  Idents(cplt) <- "ribo_groups"
+  
+  # Highlight cells of current cluster on a dimreduc plot
+  highlightClusterPlot(group, seuratObject = cplt, reduction = ifelse( exists("useReduction"), useReduction, "umap"))
+  
+  invisible(sapply(vars, function(vrbl) {
+    cellsData <- data.frame(cplt@reductions$umap@cell.embeddings, cplt@meta.data$ribo_groups, cplt@meta.data[[vrbl]])
+    colnames(cellsData) <- c(colnames(umapCoord), "ribo_groups", vrbl)
+    
+    print(
+      ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+             aes( x = UMAP_1,
+                  y = UMAP_2)) +
+        geom_point( alpha = .4,
+                    size  = 1,
+                    color = "grey") +
+        geom_point( data = cellsData[cellsData$ribo_groups == group,],
+                    aes(color = get(vrbl)),
+                    alpha = .5,
+                    size  = 1.2) +
+        scale_color_discrete(name = vrbl) +
+        NoLegend() +
+        ggtitle(paste0(DATASET, "\n", group, " versus ", vrbl)) +
+        defaultTheme() +
+        theme(legend.text = element_text(size = 15),
+              legend.title = element_text(size = 20)) +
+        guides(colour = guide_legend(override.aes = list(size=10)))
+    )
+  }))
+  
+  cat(" \n \n") # Required for '.tabset'
+}))
+
+umi_text <- ""
+for(i in 1:length(umi_labels)){
+  umi_text <- paste0(umi_text, " - gp", i, "_umi&emsp;", umi_labels[i],"\n")
+}
+```
+
+
+## UMI read counts levels CV {.tabset .tabset-pills .tabset-fade}
+
+The various levels of UMI read counts are:
+
+`r umi_text`
+
+```{r cv_umi, results='asis', out.width='50%', fig.align='default'}
+vars <- allGroups[allGroups != "umi_groups"]
+
+invisible(sapply(umi_groups, function(group) {
+  
+  cat("### ", group, "\n")
+  
+  Idents(cplt) <- "umi_groups"
+  
+  # Highlight cells of current cluster on a dimreduc plot
+  highlightClusterPlot(group, seuratObject = cplt, reduction = ifelse( exists("useReduction"), useReduction, "umap"))
+  
+  invisible(sapply(vars, function(vrbl) {
+    cellsData <- data.frame(cplt@reductions$umap@cell.embeddings, cplt@meta.data$umi_groups, cplt@meta.data[[vrbl]])
+    colnames(cellsData) <- c(colnames(umapCoord), "umi_groups", vrbl)
+    
+    print(
+      ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+             aes( x = UMAP_1,
+                  y = UMAP_2)) +
+        geom_point( alpha = .4,
+                    size  = 1,
+                    color = "grey") +
+        geom_point( data = cellsData[cellsData$umi_groups == group,],
+                    aes(color = get(vrbl)),
+                    alpha = .5,
+                    size  = 1.2) +
+        scale_color_discrete(name = vrbl) +
+        NoLegend() +
+        ggtitle(paste0(DATASET, "\n", group, " versus ", vrbl)) +
+        defaultTheme() +
+        theme(legend.text = element_text(size = 15),
+              legend.title = element_text(size = 20)) +
+        guides(colour = guide_legend(override.aes = list(size=10)))
+    )
+  }))
+  
+  cat(" \n \n") # Required for '.tabset'
+}))
+
+feature_text <- ""
+for(i in 1:length(feature_labels)){
+  feature_text <- paste0(feature_text, " - gp", i, "_feature&emsp;", feature_labels[i],"\n")
+}
+```
+
+
+## Feature counts levels CV {.tabset .tabset-pills .tabset-fade}
+
+The various levels of feature counts are:
+  
+`r feature_text`
+
+```{r cv_feature, results='asis', out.width='50%', fig.align='default'}
+vars <- allGroups[allGroups != "feature_groups"]
+
+invisible(sapply(feature_groups, function(group) {
+  
+  cat("### ", group, "\n")
+  
+  Idents(cplt) <- "feature_groups"
+  
+  # Highlight cells of current cluster on a dimreduc plot
+  highlightClusterPlot(group, seuratObject = cplt, reduction = ifelse( exists("useReduction"), useReduction, "umap"))
+  
+  invisible(sapply(vars, function(vrbl) {
+    cellsData <- data.frame(cplt@reductions$umap@cell.embeddings, cplt@meta.data$feature_groups, cplt@meta.data[[vrbl]])
+    colnames(cellsData) <- c(colnames(umapCoord), "feature_groups", vrbl)
+    
+    print(
+      ggplot(cellsData[c('UMAP_1', 'UMAP_2')], # Omit the column used for facetting to get all points repeated in all facets
+             aes( x = UMAP_1,
+                  y = UMAP_2)) +
+        geom_point( alpha = .4,
+                    size  = 1,
+                    color = "grey") +
+        geom_point( data = cellsData[cellsData$feature_groups == group,],
+                    aes(color = get(vrbl)),
+                    alpha = .5,
+                    size  = 1.2) +
+        scale_color_discrete(name = vrbl) +
+        NoLegend() +
+        ggtitle(paste0(DATASET, "\n", group, " versus ", vrbl)) +
+        defaultTheme() +
+        theme(legend.text = element_text(size = 15),
+              legend.title = element_text(size = 20)) +
+        guides(colour = guide_legend(override.aes = list(size=10)))
+    )
+  }))
+  
+  cat(" \n \n") # Required for '.tabset'
+}))
+```
+
+
+# Exports
+
+```{r save4}
+# Groups metadata
+keepMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
+cplt@meta.data <- cbind(cellIDs = rownames(cplt@meta.data), cplt@meta.data)
+exportMD <- names(cplt@meta.data)[! names(cplt@meta.data) %in% keepMDnames]
+
+write.table(
+  cplt@meta.data[exportMD],
+  file.path(
+    PATH_OUT_ANALYSIS, 
+    paste0("metadataGroups_", DATASET, ".csv")),
+  row.names = FALSE,
+  col.names = TRUE,
+  sep = ","
+)
+
+invisible(gc())
+```

@@ -270,7 +270,39 @@ switch(args[1],
               help = "Generate plots automatically if 'FALSE'. Otherwise, the
 			  user needs to interact with 03_1_manualControls_<INPUT_DATASET>_pipeline.Rmd
 			  	(default: FALSE)"
-          )
+          ),
+        make_option(
+          c("-m", "--mito_thresholds"),
+          action = "store",
+          default = NA,
+          type = "character",
+          help = "ONLY USED WITH --manual
+          The list of the thresholds for mitochondrial expression, as a comma-separated list."
+        ),
+        make_option(
+          c("-r", "--ribo_thresholds"),
+          action = "store",
+          default = NA,
+          type = "character",
+          help = "ONLY USED WITH --manual
+          The list of the thresholds for ribosomal expression, as a comma-separated list."
+        ),
+        make_option(
+          c("-u", "--umi_thresholds"),
+          action = "store",
+          default = NA,
+          type = "character",
+          help = "ONLY USED WITH --manual
+          The list of the thresholds for read counts, as a comma-separated list."
+        ),
+        make_option(
+          c("-f", "--feature_thresholds"),
+          action = "store",
+          default = NA,
+          type = "character",
+          help = "ONLY USED WITH --manual
+          The list of the thresholds for the number of features, as a comma-separated list."
+        )
       )
       parsed <- OptionParser(
           usage = "Usage: \n\t%prog filter? [--flag <flag_arg>]",
@@ -471,6 +503,11 @@ if (TRUE){
     top_pcs = if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs
     clust_res = if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution
     clust_meth = if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering
+    # advanced filter pipeline variables  --------
+    mito_thresholds = as.numeric(unlist(strsplit(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds, ",")))
+    ribo_thresholds = as.numeric(unlist(strsplit(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds, ",")))
+    umi_thresholds = as.numeric(unlist(strsplit(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds, ",")))
+    feature_thresholds = as.numeric(unlist(strsplit(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds, ",")))
     # deg pipeline variables ---------------------
     top_markers = opt$options$markers_number
     # doublets removal ---------------------------
@@ -516,7 +553,7 @@ switch(args[1],
        "filters" = {
            if (opt$options$manual) {
                rmarkdown::render(
-                   paste0("03_1_manualControls_", DATASET, "_pipeline.Rmd"),
+                   "03_1_manualControls_pipeline.Rmd",
                    output_file = paste0(PATH_OUT_HTML, "03_1_manualControls_", DATASET, "_", Sys.Date(), ".html")
                )
            } else {
