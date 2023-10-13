@@ -169,107 +169,10 @@ invisible(gc())
 
 SHOW THE TABLE OF SO$ORIG.IDENT TO CHECK THE NUMBER OF CELLS FROM EACH DATASET
 
-# Preprocessing workflow
-
-The preprocessing workflow consists in the steps of
-
-- data normalization,
-
-- data centering,
-
-- highly variable genes identification,
-
-- principal components analysis (PCA),
-
-- non-linear dimension reduction for visualization, and
-
-- clustering.
-
-```{r preprocess-1, eval=hvg_meth != "mvp", echo=hvg_meth != "mvp", message=TRUE}
-SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
-SO <- FindVariableFeatures(SO, nfeatures=hvg_num, selection.method = hvg_meth, verbose=FALSE)
-var.feats.dataset <- VariableFeatures(SO)
-#saveRDS(var.feats.dataset, file=file.path(rdsObjects, paste0("var.feats.dataset_", dataset, "_", combine_meth, ".rds")))
-
-SO <- RunPCA(SO,
-             npcs = pca_npcs,
-             nfeatures.print = pca_print,
-             seed.use = general_seed,
-             verbose=TRUE)
-
-if (combine_meth == "blkH"){
-   	SO <- RunHarmony(SO, "orig.ident", plot_convergence = FALSE)
-}
-
-SO <- RunUMAP(SO,
-              reduction = ifelse( combine_meth == "blkH", "harmony", "pca"),
-              dims = 1:top_pcs,
-              seed.use = general_seed,
-              verbose = FALSE)
-SO <- FindNeighbors(SO,
-                    reduction = ifelse( combine_meth == "blkH", "harmony", "pca"),
-                    dims = 1:top_pcs,
-                    verbose=FALSE)
-SO <- FindClusters(SO,
-                   resolution = clust_res,
-                   algorithm = clust_meth,
-                   random.seed = general_seed,
-                   verbose=FALSE)
-```
-
-
-```{r hvg-mvp2, eval=hvg.meth == "mvp", echo=hvg.meth == "mvp", message=TRUE}
-SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale.scale, verbose=FALSE)
-
-SO <- FindVariableFeatures(SO, selection.method = hvg.hvg_meth, verbose=FALSE)
-head(SO@assays[[DefaultAssay(SO)]]@meta.features) %>%
-  knitr::kable(caption = "Example of HVG selection output") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
-
-t(as.data.frame(table(SO@assays[[DefaultAssay(SO)]]@meta.features$mvp.variable))) %>%
-  knitr::kable(caption = "Number of features selected as highly variable genes (HVG)",
-               row.names = FALSE,
-               escape = F,
-               align = "cc") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
-
-var.feats.dataset <- VariableFeatures(SO)
-#saveRDS(var.feats.dataset, file=file.path(rdsObjects, paste0("var.feats.dataset_", dataset, "_", combine_meth, ".rds")))
-
-SO <- RunPCA(SO, npcs = pca.pca_npcs, nfeatures.print = pca.pca_print, seed.use = general_seed, verbose=TRUE)
-
-if (combine_meth == "blkH"){
-    SO <- RunHarmony(SO, "orig.ident", plot_convergence = FALSE)
-}
-
-SO <- RunUMAP(SO,
-              reduction = ifelse( combine_meth == "blkH", "harmony", "pca"),
-              dims = 1:top_pcs,
-              seed.use = general_seed,
-              verbose = FALSE)
-SO <- FindNeighbors(SO,
-                    reduction = ifelse( combine_meth == "blkH", "harmony", "pca"),
-                    dims = 1:top_pcs,
-                    verbose=FALSE)
-SO <- FindClusters(SO,
-                   resolution = clust_res,
-                   algorithm = clust_meth,
-                   random.seed = general_seed,
-                   verbose=FALSE)
-```
 
 ```{r save2}
+# Variable not working: DATASET
 saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("06_combine_", DATASET, "_scenario.", scenario, "_method.", combine_meth, ".rds")))
 invisible(gc())
-```
-
-
-```{r callAtlas}
-fltd <- SO
-rm(SO)
-invisible(gc())
-```
-
-```{r mapping-atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
 ```
 

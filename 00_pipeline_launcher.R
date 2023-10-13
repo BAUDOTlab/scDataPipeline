@@ -7,7 +7,7 @@ source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "ctrl++"
+# args <- "combine"
 
 # Main help message
 main_help <- "
@@ -573,13 +573,14 @@ switch(args[1],
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "cardioWT,cardioKO"
+# opt$options$input_dataset <- "cardioKO"
+# opt$options$input_list <- "cardioWT,cardioKO"
 PATH_REQUIREMENTS <- "../01_requirements/"
-if (!str_detect(opt$options$input_dataset, ",")) {
+if (is.null(opt$options$input_list)) {
     load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
 } else {
-	# 1) Split input_dataset based on comma(s)
-	input_datasets <- strsplit(opt$options$input_dataset, ",")[[1]]
+	# 1) Split input_list based on comma(s)
+	input_datasets <- strsplit(opt$options$input_list, ",")[[1]]
 	
 	# 2) Get the list of files present in the PATH_REQUIREMENTS directory
 	file_list <- list.files(PATH_REQUIREMENTS)
@@ -691,6 +692,12 @@ switch(args[1],
            rmarkdown::render(
                "04_additionalControls.Rmd",
                output_file = paste0(PATH_OUT_HTML, "04_additionalControls_", DATASET, "_", Sys.Date(), ".html")
+           )
+       },
+       "combine" = {
+           rmarkdown::render(
+               "06_combineData_pipeline.Rmd",
+               output_file = paste0(PATH_OUT_HTML, "07_combineData_", DATASET, "_", Sys.Date(), ".html")
            )
        }
 )
