@@ -8,7 +8,7 @@ output:
 # the file is considered as an inputs of the atlas
 
 
-atlas.subset <- readRDS(file.path(PATH_ATLAS, "atlas_preprocessed.rds"))
+atlas.subset <- readRDS(file.path(PATH_ATLAS, "atlas_preprocessed_corentin.rds"))
 colname <- ifelse(args[1] != "dea", "celltype_DF", "celltype_singleData")
 prediction_file <- file.path(PATH_OUT_ANALYSIS, paste0("transferAnnotation_", ifelse(args[1] != "dea", "DF_", "singleData_"), DATASET, ".csv"))
 
