@@ -328,8 +328,8 @@ singlets@meta.data[clustOfInterest] <- NULL
 
 ```{r filterRBCs}
 filtered_list <- singlets
+to_remove <- c()
 if(!is.null(ff_list)){
-  to_remove <- c()
 
   # Loop through each feature in ff_list
   for(i in 1:length(ff_list)){
