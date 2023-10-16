@@ -327,9 +327,9 @@ singlets@meta.data[clustOfInterest] <- NULL
 ## Remove the red blood cells (RBCs)
 
 ```{r filterRBCs}
+filtered_list <- singlets
 if(!is.null(ff_list)){
-  filtered_list <- singlets
-  toremove <- c()
+  to_remove <- c()
 
   # Loop through each feature in ff_list
   for(i in 1:length(ff_list)){

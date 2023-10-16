@@ -80,6 +80,7 @@ highlightClusterPlot <- function(clusterName, seuratObject, reduction = "umap") 
                   cols.highlight = "#FF000088", 
                   sizes.highlight = Seurat:::AutoPointSize(seuratObject)*1.5, 
                   order = clusterCells,  # Plot highlighted cells last
+                  shuffle = TRUE,
                   group.by=NULL) + 
            ggtitle( paste(clusterName)) +
            theme( axis.title.x = element_blank(),
@@ -103,17 +104,19 @@ set_thresh <- function(thresholds, metadata, metric){
 }
 
 threshline <- function(thresh){
-  geom_hline(aes(yintercept = thresh), color = "#FF0000AA", size = 1.5)
+  if(thresh != 0){
+    geom_hline(aes(yintercept = thresh), color = "#FF0000AA", size = 1.5)
+  }
 }
 
-threshtext <- function(thresh, i, metric){
-  geom_text(aes(x=0.5, y=0.8*thresh, label=paste0("gp",i,"_",metric, " - ", thresh)))
+threshtext <- function(thresh, i, metric, thresholds){
+  geom_text(aes(x=0.5, y=thresh, vjust=-1, label=paste0("gp",i,"_",metric, " - ", thresh)))
 }
 
 threshlabel <- function(thresh){
   res = c()
-  for(i in 1:length(thresh)){
-    if(i==1){
+  for(i in 2:length(thresh)){
+    if(i==2){
       res <- append(res,paste0("x < ", thresh[i]))
     } 
     
