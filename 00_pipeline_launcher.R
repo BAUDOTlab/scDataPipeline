@@ -1,12 +1,13 @@
 #!/usr/bin/env Rscript
 
 library(optparse)
+library(stringr)
 
 source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "ctrl++"
+# args <- "process"
 
 # Main help message
 main_help <- "
@@ -20,10 +21,13 @@ Pipeline Order:
 4) ctrl++
 5) process (again)
 6) dea
+7) combine
+8) process (last time)
+9) dea (last time aswell)
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the
-                        following: qc, process, filters, ctrl++, dea
+                        following: qc, process, filters, ctrl++, dea, combine
 
 Flag Argument:
     --flag <flag_arg>   There are optional arguments according to the required
@@ -49,7 +53,7 @@ if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl++")) {
+if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl++", "combine")) {
   cat(main_help)
   quit(status = 1)
 }
@@ -241,7 +245,16 @@ switch(args[1],
           help = "Process the dataset only with good quality cells, after the
 		  ctrl++ pipeline
 		  	(default: FALSE)."
-      )
+      ),
+          make_option(
+              c("--combinedData"),
+              action = "store_true",
+              default = FALSE,
+              type = "logical",
+              help = "Process the dataset on combined datasets, after the
+        combine pipeline
+        (default: FALSE)"
+          )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog process [--flag <flag_arg>]",
@@ -473,14 +486,77 @@ switch(args[1],
           epilogue = "Add some details, examples, ...",
           formatter = IndentedHelpFormatter # TitleHelpFormatter
       )
+  },
+  "combine" = {
+      option_list6 <- list(
+          make_option(
+              c("-I", "--input_list"),
+              action = "store",
+              default = NA,
+              type = "character",
+              help = "Comma separated list of input datasets
+				(required)."
+          ),
+          make_option(
+              c("-S", "--scenario"),
+              action = "store",
+              default = 1,
+              type = "integer",
+              help = "Select the scenario to run:
+                1 - no regression on cell cycle
+                2 - global cell cycle regression, all phases are regressed
+                3 - cycling cell cycle regression, G2M and S phases are regressed
+				(default: 1)."
+          ),
+          make_option(
+              c("-c", "--combineMethod"),
+              action = "store",
+              default = NA,
+              type = "character",
+              help = "Select how to combine the datasets:
+              - 'merge' will simply merge the datasets
+              - 'blkS' performs the block-wise CCA integration from Seurat
+              - 'seqS' performs the sequential CCA integration from Seurat
+            (required)."
+          )
+      )
+      parsed <- OptionParser(
+          usage = "Usage: \n\t%prog filter? [--flag <flag_arg>]",
+          option_list = option_list6,
+          add_help_option = TRUE,
+          description = "\nVisualize filtered cells on the UMAP plot of the complete dataset.",
+          epilogue = "Add some details, examples, ...",
+          formatter = IndentedHelpFormatter # TitleHelpFormatter
+      )
   }
 )
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
 # opt$options$input_dataset <- "cardioKO"
+# opt$options$input_list <- "cardioWT,cardioKO"
+# opt$options$input_dataset <- "cardioKO_vs_cardioWT"
+# opt$options$filter <- "filtered"
+# opt$options$good_quality <- TRUE
 PATH_REQUIREMENTS <- "../01_requirements/"
-load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
+if (is.null(opt$options$input_list)) {
+    load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
+} else {
+	# 1) Split input_list based on comma(s)
+	input_datasets <- strsplit(opt$options$input_list, ",")[[1]]
+	
+	# 2) Get the list of files present in the PATH_REQUIREMENTS directory
+	file_list <- list.files(PATH_REQUIREMENTS)
+	
+	# 3) Match multiple patterns using grepl and &
+	matching_element <- Reduce(`&`, lapply(input_datasets, grepl, file_list))
+	
+	# 4) Get the file that contains all the names in input_datasets
+	matching_file <- file_list[matching_element]
+    
+	load_parameters(paste0(PATH_REQUIREMENTS, matching_file))
+	# DATASET <- paste0(input_datasets, collapse = "_") # don't know if I need to keep it ???
+}
 
 if (TRUE){
     general_seed = as.numeric(general_seed)
@@ -515,16 +591,22 @@ if (TRUE){
     # cell cycle regression ----------------------
     s_thresh = if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase
     g2m_thresh = if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase
-    scenario = opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl++ if set to 1 (ie not interested in CC regression)
+    scenario = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl++ if set to 1 (ie not interested in CC regression)
+    # combining multiple datasets
+    combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
-    do_integ = opt$options$do_integ
-    do_merge = opt$options$do_merge
-    combine_meth = opt$options$combine_meth
     manual = opt$options$manual
+    combinedD = opt$options$combinedData
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
 
     ff_list = if (!is.null(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features)) strsplit(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features, ",")
+}
+
+# combinedD <- TRUE
+
+if (combinedD) {
+	FILTER = "filtered"
 }
 
 
@@ -538,10 +620,15 @@ switch(args[1],
            )
        },
        "process" = {
-           if (opt$options$good_quality) {
+           if (goodQ) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
                    output_file = paste0(PATH_OUT_HTML, "05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html")
+               )
+           } else if (combinedD) {
+               rmarkdown::render(
+                   "02_process_pipeline.Rmd",
+                   output_file = paste0(PATH_OUT_HTML, "08_process_", DATASET, "_combinedData_scenario_", opt$options$scenario, Sys.Date(), ".html")
                )
            } else {
                rmarkdown::render(
@@ -580,6 +667,12 @@ switch(args[1],
            rmarkdown::render(
                "04_additionalControls.Rmd",
                output_file = paste0(PATH_OUT_HTML, "04_additionalControls_", DATASET, "_", Sys.Date(), ".html")
+           )
+       },
+       "combine" = {
+           rmarkdown::render(
+               "06_combineData_pipeline.Rmd",
+               output_file = paste0(PATH_OUT_HTML, "07_combineData_", DATASET, "_", Sys.Date(), ".html")
            )
        }
 )
