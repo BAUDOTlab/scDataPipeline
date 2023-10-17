@@ -323,7 +323,6 @@ saveCluster <- function(SO, scenario) {
 }
 
 invisible(mapply(saveCluster, SO.list, names(SO.list)))
-invisible(mapply(saveCluster, SO.list, names(SO.list)))
 invisible(gc())
 ```
 
