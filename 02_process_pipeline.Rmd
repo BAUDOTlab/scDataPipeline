@@ -176,11 +176,13 @@ process <- function(SO, scenario) {
     SO <- RunPCA(SO, npcs = pca_npcs, nfeatures.print = pca_print, seed.use = general_seed, verbose=TRUE)
     SO <- RunUMAP(SO, dims = 1:top_pcs, seed.use = general_seed, verbose = FALSE)
     
-#    if (goodQ) {
-#        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")))
-#    } else {
-#        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("02_preprocessed_", DATASET, "_", FILTER, ".rds")))
-#    }
+    if (goodQ) {
+        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")))
+    } else if (combinedD) {
+        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")))
+    } else {
+        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("02_preprocessed_", DATASET, "_", FILTER, ".rds")))
+    }
 
     return(SO)
 }
@@ -210,9 +212,12 @@ process <- function(SO, scenario) {
     
     if (goodQ) {
         saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")))
+    } else if (combinedD) {
+        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")))
     } else {
         saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("02_preprocessed_", DATASET, "_", FILTER, ".rds")))
-    } 
+    }
+
     return(SO)
 }
 
