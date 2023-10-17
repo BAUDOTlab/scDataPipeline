@@ -510,6 +510,7 @@ if (TRUE){
     feature_thresholds = if (!is.null(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds)) as.numeric(unlist(strsplit(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds, ",")))
     # deg pipeline variables ---------------------
     top_markers = opt$options$markers_number
+    genes_of_interest = if (exists("GENES_OF_INTEREST")) GENES_OF_INTEREST else NULL
     # doublets removal ---------------------------
     doublets_rate = if (exists("DOUBLETS_RATE")) as.numeric(DOUBLETS_RATE) else opt$options$doublets_rate
     # cell cycle regression ----------------------
