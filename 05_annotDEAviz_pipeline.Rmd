@@ -491,7 +491,7 @@ DimPlot(renamed,
 		NoLegend()
 
 cellsData <- data.frame(renamed@reductions[["umap"]]@cell.embeddings, renamed@meta.data$celltype_singleData)
-# colnames(cellsData) <- c(colnames(renamed@reductions[["umap"]]@cell.embeddings), "celltype")
+colnames(cellsData) <- c(colnames(renamed@reductions[["umap"]]@cell.embeddings), "celltype")
 
 invisible(sapply(levels(as.factor(renamed@meta.data$celltype_singleData)), function(act)
 {
