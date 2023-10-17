@@ -370,7 +370,7 @@ switch(args[1],
           default = "filtered",
           type = "character",
           help = "Dataset type, 'filtered' or 'complete'
-				(default: 'complete')."
+				(default: 'filtered')."
       ),
       make_option(
         c("-s", "--selected_resolution"),
