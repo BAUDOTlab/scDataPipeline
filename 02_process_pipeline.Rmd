@@ -116,16 +116,18 @@ set.seed(general_seed)
 # PATHS
 if (goodQ){
     PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "06_process")
-    if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+} else if (combinedD) {
+    PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "08_combineData")
 } else {
     PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "04_process")
-    if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 }
+
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 ```
 
 # Load `r DATASET` data
 
-```{r load-data-1, eval=!goodQ, echo=!goodQ}
+```{r load-data-1, eval=!goodQ & !combinedD, echo=!goodQ & !combinedD}
 SO.list <- list(readRDS(paste0(PATH_RDS_OBJECTS, "/01_qc_", DATASET, "_", FILTER, ".rds")))
 names(SO.list) <- FILTER
 ```
@@ -135,6 +137,11 @@ SO.list <- lapply(c("1", "2", "3"), function(scenario){
     SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/04_", scenario, "_goodQualityCells_", DATASET, ".rds"))
 })
 names(SO.list) <- c("1", "2", "3")
+```
+
+```{r load-data-3, eval=combinedD, echo=combinedD}
+SO.list <- list(readRDS(paste0(PATH_RDS_OBJECTS, "/06_combine_", DATASET, "_scenario.", scenario, "_method.", combine_meth, ".rds")))
+names(SO.list) <- scenario
 ```
 
 
@@ -156,7 +163,10 @@ The preprocessing workflow consists in the steps of
 
 ```{r preprocess-1, eval=hvg_meth != "mvp", echo=hvg_meth != "mvp", message=TRUE}
 process <- function(SO, scenario) {
-    if (!goodQ) {
+    if (combinedD) {
+        SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
+
+    } else if (!goodQ) {
         SO <- NormalizeData(SO, normalization.method = norm_meth, verbose=FALSE)
         SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
     }
@@ -166,11 +176,11 @@ process <- function(SO, scenario) {
     SO <- RunPCA(SO, npcs = pca_npcs, nfeatures.print = pca_print, seed.use = general_seed, verbose=TRUE)
     SO <- RunUMAP(SO, dims = 1:top_pcs, seed.use = general_seed, verbose = FALSE)
     
-    if (goodQ) {
-        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")))
-    } else {
-        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("02_preprocessed_", DATASET, "_", FILTER, ".rds")))
-    }
+#    if (goodQ) {
+#        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")))
+#    } else {
+#        saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("02_preprocessed_", DATASET, "_", FILTER, ".rds")))
+#    }
 
     return(SO)
 }
@@ -272,7 +282,7 @@ saveHVG <- function(var.feats.dataset, scenario) {
             var.feats.dataset,
             file = file.path(
                 PATH_OUT_ANALYSIS,
-                paste0("varFeatures_meth.", hvg_meth, "_nb.", hvg_num, "_", DATASET, "_", ifelse(!goodQ, FILTER, paste0("scenario.", scenario)), ".txt")),
+                paste0("varFeatures_meth.", hvg_meth, "_nb.", hvg_num, "_", DATASET, "_", ifelse(!goodQ & !combinedD, FILTER, paste0("scenario.", scenario)), ".txt")),
             row.names = FALSE,
             col.names = FALSE
         )
@@ -284,7 +294,7 @@ invisible(mapply(saveHVG, var.feats.list, names(var.feats.list)))
 # PCA and UMAP tables
 saveDR <- function(SO, scenario) {
     invisible(sapply(c("pca", "umap"), function(dr) {
-        export_dimred(SO, dr, paste0("DR_", dr, "_", DATASET, "_", ifelse(!goodQ, FILTER, paste0("scenario.", scenario)), ".csv"))
+        export_dimred(SO, dr, paste0("DR_", dr, "_", DATASET, "_", ifelse(!goodQ & !combinedD, FILTER, paste0("scenario.", scenario)), ".csv"))
     }))
 }
 
@@ -301,7 +311,7 @@ saveCluster <- function(SO, scenario) {
         SO@meta.data,
         paste0(
             "clustering_", DATASET, "_",
-            ifelse(!goodQ, FILTER, paste0("scenario.", scenario)),
+            ifelse(!goodQ & !combinedD, FILTER, paste0("scenario.", scenario)),
             "_meth.", clust_meth,
             "_res.", clust_res,
             ".csv"))

@@ -7,7 +7,7 @@ source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "combine"
+# args <- "process"
 
 # Main help message
 main_help <- "
@@ -243,7 +243,16 @@ switch(args[1],
           help = "Process the dataset only with good quality cells, after the
 		  ctrl++ pipeline
 		  	(default: FALSE)."
-      )
+      ),
+          make_option(
+              c("--combinedData"),
+              action = "store_true",
+              default = FALSE,
+              type = "logical",
+              help = "Process the dataset on combined datasets, after the
+        combine pipeline
+        (default: FALSE)"
+          )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog process [--flag <flag_arg>]",
@@ -506,59 +515,8 @@ switch(args[1],
               - 'merge' will simply merge the datasets
               - 'blkS' performs the block-wise CCA integration from Seurat
               - 'seqS' performs the sequential CCA integration from Seurat
-              - 'blkH' performs the block-wise Harmony integration
             (required)."
-          ),
-    	  make_option(
-    	    c("-v", "--hvg_method"),
-    	    action = "store",
-    	    default = "mvp",
-    	    type = "character",
-    	    help = "FindVariableFeatures method: 'vst', 'mvp', or 'disp'
-				'vst' and 'disp' must be used with the option --hvg_number
-				(default: 'mvp')."
-    	  ),
-    	  make_option(
-    	    c("-w", "--hvg_number"),
-    	    action = "store",
-    	    default = FALSE,
-    	    type = "integer",
-    	    help = "Number of highly variable genes
-				required with the option --hvg_method 'vst' or 'disp'
-				(default: FALSE)."
-    	  ),
-    	  make_option(
-    	    c("-d", "--do_scaling"),
-    	    action = "store_true",
-    	    default = FALSE,
-    	    type = "logical",
-    	    help = "Compute scaling
-				(default: FALSE)."
-    	  ),
-    	  make_option(
-    	    c("-p", "--pca_npcs"),
-    	    action = "store",
-    	    default = 50,
-    	    type = "integer",
-    	    help = "Number of PCs to compute for RunPCA
-				(default: 50)."
-    	  ),
-    	  make_option(
-    	    c("-t", "--top_pcs"),
-    	    action = "store",
-    	    default = 30,
-    	    type = "integer",
-    	    help = "Number of PCs to select for downstream analysis
-				(default: 30)."
-    	  ),
-    	  make_option(
-    	    c("--pca_print"),
-    	    action = "store",
-    	    default = 20,
-    	    type = "integer",
-    	    help = "Number of features to print from the top of each PC
-				(default: 20)."
-    	  )
+          )
       )
       parsed <- OptionParser(
           usage = "Usage: \n\t%prog filter? [--flag <flag_arg>]",
@@ -575,6 +533,9 @@ opt <- parse_args(parsed, positional_arguments = TRUE)
 
 # opt$options$input_dataset <- "cardioKO"
 # opt$options$input_list <- "cardioWT,cardioKO"
+# opt$options$input_dataset <- "cardioKO_vs_cardioWT"
+# opt$options$filter <- "filtered"
+# opt$options$good_quality <- TRUE
 PATH_REQUIREMENTS <- "../01_requirements/"
 if (is.null(opt$options$input_list)) {
     load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
@@ -628,15 +589,22 @@ if (TRUE){
     # cell cycle regression ----------------------
     s_thresh = if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase
     g2m_thresh = if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase
-    scenario = opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl++ if set to 1 (ie not interested in CC regression)
+    scenario = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl++ if set to 1 (ie not interested in CC regression)
     # combining multiple datasets
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
     manual = opt$options$manual
+    combinedD = opt$options$combinedData
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
 
     ff_list = if (!is.null(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features)) strsplit(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features, ",")
+}
+
+# combinedD <- TRUE
+
+if (combinedD) {
+	FILTER = "filtered"
 }
 
 
@@ -650,10 +618,15 @@ switch(args[1],
            )
        },
        "process" = {
-           if (opt$options$good_quality) {
+           if (goodQ) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
                    output_file = paste0(PATH_OUT_HTML, "05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html")
+               )
+           } else if (combinedD) {
+               rmarkdown::render(
+                   "02_process_pipeline.Rmd",
+                   output_file = paste0(PATH_OUT_HTML, "08_process_", DATASET, "_combinedData_scenario_", opt$options$scenario, Sys.Date(), ".html")
                )
            } else {
                rmarkdown::render(

@@ -112,10 +112,13 @@ colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.tabl
 
 ```{r variableDef1, include=FALSE}
 # Split comma separated input files into a list
-PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "07_annotDEAviz")
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "08_combineData")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 ```
 
+# Load the data
+
+All integration part removed from this report. Take the code from 06.1_combineData_pipeline.Rmd.
 ```{r load-data, include=FALSE}
 # Load data
 data_load <- function(DATASET) {
@@ -130,7 +133,13 @@ SO.list <- lapply(input_datasets, data_load)
 names(SO.list) <- input_datasets
 ```
 
+
+
 ```{r integrate-sep-data, eval=combine_meth!="merge", echo=combine_meth!="merge"}
+cat("
+# Integrate the data
+")
+
 set.seed(general_seed)
 
 if (combine_meth == "blkH"){
@@ -159,6 +168,10 @@ invisible(gc())
 
 
 ```{r merge-sep-data, eval=combine_meth=="merge", echo=combine_meth=="merge"}
+cat("
+# Merge the data
+")
+
 SO <- merge(x = SO.list[[1]], y = SO.list[2:length(SO.list)], merge.data = T)
 SO
 
@@ -176,3 +189,54 @@ saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("06_combine_", DATASET, "_sc
 invisible(gc())
 ```
 
+
+
+
+<!-- This code chunk will extract all code blocks from `example.Rmd` and write
+them to a temporary file, preserving chunk options. It will then read them and
+make those chunks avaliable in the current R environment when the presentation
+is knitted. -->
+
+```{r include, eval=FALSE, echo=FALSE, include = FALSE}
+SO <- ScaleData(SO, verbose = FALSE)
+SO.list <- list(SO)
+names(SO.list) <- DATASET
+```
+
+
+```{r include2, eval=FALSE, include = FALSE}
+tmp_script <- tempfile()
+knitr::purl("02_process_pipeline.Rmd", output=tmp_script, quiet = TRUE)
+knitr::read_chunk(tmp_script)
+#' Run a previously loaded chunk interactively
+#'
+#' Takes labeled code loaded with load_chunk and runs it in the /global/ envir (unless otherwise specified)
+#'
+#' @param chunkName The name of the chunk as a character string
+#' @param envir The environment in which the chunk is to be evaluated 
+run_chunk <- function(chunkName, envir=.GlobalEnv) {
+    chunkName <- unlist(lapply(as.list(substitute(.(chunkName)))[-1], as.character))
+    # eval(parse(text=knitr:::knit_code$get(chunkName)), envir=envir)
+    eval(parse(text=knitr:::knit_code$get(chunkName)), envir=envir)
+}
+```
+
+# Preprocessing workflow
+
+```{r preprocess-12, message=TRUE, echo=FALSE, results='asis', eval=FALSE}
+run_chunk("preprocess-1", envir = environment())
+```
+
+```{r clustering_02process2, echo=FALSE, results='asis', eval=FALSE}
+run_chunk("clustering_02process", envir = environment())
+```
+
+# Visualization
+
+```{r dimplot-cluster-fltd2, fig.align='default', echo=FALSE, results='asis', eval=FALSE}
+run_chunk("dimplot-cluster-fltd}", envir = environment())
+```
+
+```{r save4-12, eval=FALSE, echo=FALSE, results='asis'}
+run_chunk("save4-1", envir = environment())
+```
