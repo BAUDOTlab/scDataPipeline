@@ -229,14 +229,14 @@ the redundant gene names and the corresponding ensembl gene IDs.
 
 ```{r echo=FALSE}
 # datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
-duplicatesGN %>%
-    rename(gene_names = external_gene_name) %>%
-    arrange(gene_names) %>%
-    knitr::kable(row.names = FALSE, align = "ll") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"),
-                full_width = FALSE, position = "center") %>%
-  column_spec(1, width = "12em") %>%
-  column_spec(2, width = "12em")
+#duplicatesGN %>%
+    #rename(gene_names = external_gene_name) %>%
+    #arrange(gene_names) %>%
+    #knitr::kable(row.names = FALSE, align = "ll") %>%
+  #kable_styling(bootstrap_options = c("striped", "hover"),
+                #full_width = FALSE, position = "center") %>%
+  #column_spec(1, width = "12em") %>%
+  #column_spec(2, width = "12em")
 ```
 
 <br>
