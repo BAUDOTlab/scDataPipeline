@@ -22,6 +22,8 @@ Pipeline Order:
 5) process (again)
 6) dea
 7) combine
+8) process (last time)
+9) dea (last time aswell)
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the

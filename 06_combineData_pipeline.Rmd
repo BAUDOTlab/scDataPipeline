@@ -85,7 +85,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, "/07_combine_ata_"),
+  fig.path = paste0(PATH_OUT_FIG, "/08_combineData_"),
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   out.width = "50%",
@@ -142,10 +142,7 @@ cat("
 
 set.seed(general_seed)
 
-if (combine_meth == "blkH"){
-    SO <- merge(x = SO.list[[1]], y = SO.list[2:length(SO.list)], merge.data = TRUE)
-    
-} else if (combine_meth == "blkS"){
+if (combine_meth == "blkS"){
     features <- SelectIntegrationFeatures(object.list = SO.list)
     anchors <- FindIntegrationAnchors(object.list = SO.list, anchor.features = features)
     SO <- IntegrateData(anchorset = anchors)
@@ -184,7 +181,6 @@ SHOW THE TABLE OF SO$ORIG.IDENT TO CHECK THE NUMBER OF CELLS FROM EACH DATASET
 
 
 ```{r save2}
-# Variable not working: DATASET
 saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("06_combine_", DATASET, "_scenario.", scenario, "_method.", combine_meth, ".rds")))
 invisible(gc())
 ```
@@ -221,7 +217,7 @@ run_chunk <- function(chunkName, envir=.GlobalEnv) {
 }
 ```
 
-# Preprocessing workflow
+<!-- # Preprocessing workflow -->
 
 ```{r preprocess-12, message=TRUE, echo=FALSE, results='asis', eval=FALSE}
 run_chunk("preprocess-1", envir = environment())
