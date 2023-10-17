@@ -521,10 +521,11 @@ switch(args[1],
           )
       )
       parsed <- OptionParser(
-          usage = "Usage: \n\t%prog filter? [--flag <flag_arg>]",
+          usage = "Usage: \n\t%prog combine? [--flag <flag_arg>]",
           option_list = option_list6,
           add_help_option = TRUE,
-          description = "\nVisualize filtered cells on the UMAP plot of the complete dataset.",
+          description = "\nCombine multiple datasets. Choose between merge or one
+          of the two integration mode, blkS or seqS",
           epilogue = "Add some details, examples, ...",
           formatter = IndentedHelpFormatter # TitleHelpFormatter
       )
