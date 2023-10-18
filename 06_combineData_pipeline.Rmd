@@ -121,9 +121,9 @@ if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 All integration part removed from this report. Take the code from 06.1_combineData_pipeline.Rmd.
 ```{r load-data, include=FALSE}
 # Load data
-data_load <- function(DATASET) {
+data_load <- function(DATASET_NAME) {
     # PATHS
-    PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_prepocessed_", DATASET, "_scenario.", scenario, ".rds")
+    PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_preprocessed_", DATASET_NAME, "_scenario.", scenario, ".rds")
     # PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
     
     data <- readRDS(PATH_RDS_FILE)
