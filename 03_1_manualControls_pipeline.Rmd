@@ -171,7 +171,7 @@ cplt <- AddMetaData(object = cplt, metadata = metadata$percent.ribo,   col.name 
 cplt@meta.data[,"mito_groups"] <- set_thresh(mito_thresholds, cplt@meta.data$percent.mito, "mito")
 # Must add an upper bound in order for the last group to be displayed
 max_mito <- max(cplt@meta.data$percent.mito)
-mito_thresholds <- append(mito_thresholds, ceiling(max_mito + max_mito*0.05))
+mito_thresholds <- c(0,mito_thresholds)
 
 plot1 <- VlnPlot(cplt, features = c("percent.mito")) +
   lapply(mito_thresholds, threshline) +
@@ -232,7 +232,8 @@ ggplot(data = cellsData,
     theme(strip.text.x = element_text(size = 20),
           legend.text = element_text(size = 20),
           legend.title = element_text(size = 28),
-          legend.position = c(0.85, 0.2))
+        legend.position = "bottom",
+        legend.direction = "vertical")
 ```
 
 # Ribosomal exploration 
@@ -244,7 +245,7 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-riboPercentage-1.png"))
 ```{r defineGroupsRibo, out.width="50%"}
 cplt@meta.data[, "ribo_groups"] <- set_thresh(ribo_thresholds, cplt@meta.data$percent.ribo, "ribo")
 max_ribo <- max(cplt@meta.data$percent.ribo)
-ribo_thresholds <- append(ribo_thresholds, ceiling(max_ribo + max_ribo*0.05))
+ribo_thresholds <- c(0,ribo_thresholds)
 
 VlnPlot(cplt, features = c("percent.ribo")) +
     lapply(ribo_thresholds, threshline) +
@@ -299,7 +300,8 @@ ggplot(data = cellsData,
   theme(strip.text.x = element_text(size = 20),
         legend.text = element_text(size = 20),
         legend.title = element_text(size = 28),
-        legend.position = c(0.85, 0.2))
+        legend.position = "bottom",
+        legend.direction = "vertical")
 ```
 
 
@@ -311,8 +313,8 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-countRNA-1.png"))
 
 ```{r defineGroupsUMI, out.width="50%"}
 cplt@meta.data[, "umi_groups"] <- set_thresh(umi_thresholds, cplt@meta.data$nCount_RNA, "umi")
-max_umi <- max(cplt@meta.data$nCount_RNA)
-umi_thresholds <- append(umi_thresholds, ceiling(max_umi + max_umi*0.05))
+
+umi_thresholds <- c(0,umi_thresholds)
 
 VlnPlot(cplt, features = c("nCount_RNA")) +
   lapply(umi_thresholds, threshline) +
@@ -366,7 +368,8 @@ ggplot(data = cellsData,
     theme(strip.text.x = element_text(size = 20),
           legend.text = element_text(size = 20),
           legend.title = element_text(size = 28),
-          legend.position = c(0.85, 0.2))
+        legend.position = "bottom",
+        legend.direction = "vertical")
 ```
 
 
@@ -377,10 +380,10 @@ ggplot(data = cellsData,
 knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-featureRNA-1.png"))
 ```
 
-```{r defineGroupsfeature, out.width="50%", fig.align = "default", fig.show = "hold"}
+```{r defineGroupsfeature, out.width="50%"}
 cplt@meta.data[, "feature_groups"] <- set_thresh(feature_thresholds, cplt@meta.data$nFeature_RNA, "feature")
 max_feature <- max(cplt@meta.data$nFeature_RNA)
-feature_thresholds <- append(feature_thresholds, ceiling(max_feature + max_feature*0.05))
+feature_thresholds <- c(0,feature_thresholds)
 
 VlnPlot(cplt, features = c("nFeature_RNA")) +
     lapply(feature_thresholds, threshline) +
@@ -400,7 +403,7 @@ feature_groups <- sort(unique(cplt$feature_groups))
 table(cplt@meta.data$feature_groups)
 ```
 
-```{r groupsFeature, out.width="50%"}
+```{r groupsFeature, out.width="50%", fig.align="default", fig.show="hold"}
 cellsData <- data.frame(umapCoord, cplt@meta.data$nFeature_RNA, cplt@meta.data$feature_groups)
 colnames(cellsData) <- c(colnames(umapCoord), "nFeature_RNA", "group_feature")
 
@@ -434,7 +437,8 @@ ggplot(data = cellsData,
   theme(strip.text.x = element_text(size = 20),
         legend.text = element_text(size = 20),
         legend.title = element_text(size = 28),
-        legend.position = c(0.85, 0.2))
+        legend.position = "bottom",
+        legend.direction = "vertical")
 ```
 
 # Cross-validations

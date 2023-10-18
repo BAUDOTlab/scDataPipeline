@@ -124,7 +124,15 @@ colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$cell
 colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
 ```
 
-```{r variableDef1, include=FALSE}
+```{r variableDef1-1, include=FALSE, eval=combinedD}
+# PATHS
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
+PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "07_annotDEAviz")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+```
+
+```{r variableDef1-2, include=FALSE, eval=!combinedD}
 # PATHS
 PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
@@ -138,7 +146,7 @@ fltd <- readRDS(PATH_RDS_FILE)
 
 # LOAD CLUSTERING RESULTS
 clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
-clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(clusters), value = TRUE)
+clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(clusters), value = TRUE)
 fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.names')
 fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
@@ -234,7 +242,8 @@ the redundant gene names and the corresponding ensembl gene IDs.
 """))
 ```
 
-```{r echo=FALSE, eval=(gn_col == 1)}
+
+```{r echo=FALSE, eval=exists("external_gene_name")}
 # datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
 if(gn_col == 1){
 duplicatesGN %>%
@@ -338,8 +347,8 @@ renamed
 if (exists("renamed")){
   fltd <- renamed
 }
-clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(fltd@meta.data), value = TRUE)
-Idents(fltd) <- clustOfInterest
+clustOfInterest <- grep(paste0(DefaultAssay(renamed), "_snn_res.", clust_res), names(renamed@meta.data), value = TRUE)
+Idents(renamed) <- clustOfInterest
 
 DefaultAssay(fltd) <- 'RNA'
 
@@ -386,8 +395,6 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 # Parameters
 ntop <- 5
 
-
-DefaultAssay(fltd) <- "RNA"
 topNmarkers <- extract_top_features(markers.sign, topn = ntop)
 topNgenes <- unique(topNmarkers$gene)
 Idents(fltd) <- factor(fltd@meta.data[,clustOfInterest], levels = sort(as.numeric(levels(as.factor(fltd@meta.data[,clustOfInterest])))))
@@ -496,7 +503,7 @@ invisible( lapply( names( topMarkers), function(clusterName)
 ## Celltype identity {.tabset .tabset-pills .tabset-fade}
 
 ```{r addPlots-4}
-Idents(fltd) <- factor(fltd@meta.data$celltype_singleData, levels = sort(levels(as.factor(fltd@meta.data$celltype_singleData))))
+Idents(fltd) <- factor(renamed@meta.data[, colname], levels = sort(levels(as.factor(renamed@meta.data[, colname]))))
 ```
 
 ### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}
@@ -514,10 +521,10 @@ DimPlot(fltd,
 		defaultTheme() +
 		NoLegend()
 
-cellsData <- data.frame(fltd@reductions[["umap"]]@cell.embeddings, fltd@meta.data$celltype_singleData)
+cellsData <- data.frame(fltd@reductions[["umap"]]@cell.embeddings, fltd@meta.data[, colname])
 colnames(cellsData) <- c(colnames(fltd@reductions[["umap"]]@cell.embeddings), "celltype")
 
-invisible(sapply(levels(as.factor(fltd@meta.data$celltype_singleData)), function(act)
+invisible(sapply(levels(as.factor(fltd@meta.data[, colname])), function(act)
 {
     cat("#### ", act, "\n")
         
@@ -532,7 +539,7 @@ invisible(sapply(levels(as.factor(fltd@meta.data$celltype_singleData)), function
                 alpha = .5,
                 size  = 3.5) +
     blankTheme() +
-    scale_fill_manual(values = colors.celltype[fltd@meta.data$celltype_singleData], aesthetics = "color") +
+    scale_fill_manual(values = colors.celltype[fltd@meta.data[, colname]], aesthetics = "color") +
     NoLegend() +
     ggtitle(paste0(act))
     )

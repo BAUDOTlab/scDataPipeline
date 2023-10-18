@@ -327,9 +327,9 @@ singlets@meta.data[clustOfInterest] <- NULL
 ## Remove the red blood cells (RBCs)
 
 ```{r filterRBCs}
+filtered_list <- singlets
+to_remove <- c()
 if(!is.null(ff_list)){
-  filtered_list <- singlets
-  toremove <- c()
 
   # Loop through each feature in ff_list
   for(i in 1:length(ff_list)){
@@ -359,7 +359,7 @@ export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, 
 if(!is.null(ff_list)) {
 cat(paste0(
 "From the **", dim(singlets)[2], "** singlet cells, **", 
-length(singlets) - length(filtered_list), "** unwanted cells
+dim(singlets)[2] - dim(filtered_list)[2], "** unwanted cells
 have been removed."))
 }
 ```
@@ -369,9 +369,9 @@ have been removed."))
 ## Conclusion - Scenario 1
 
 After removing the **`r doubletsNb`** doublets cells, we also reduced our
-dataset from cells expressing the **`r paste( unlist(ff_list), collapse='', sep=",")`** genes, a RBC marker. It is
+dataset from cells expressing the **`r paste( unlist(ff_list), collapse='', sep=",")`** genes. It is
 equivalent to the removal of
-**`r length(singlets) - length(filtered_list)`** unwanted cells
+**`r dim(singlets)[2] - dim(filtered_list)[2]`** unwanted cells
 from the singlets. Now, the scenario 1 dataset contains **`r dim(filtered_list)[2]`**
 cells. It is ready for the downstream analysis.
 
@@ -582,8 +582,8 @@ singlets <- globalReg
 STEP_ID <- "2"
 <<filterRBCs>>
 cat(paste0("
-On the global cell cycle regressed dataset, we removed ", dim(singlets)[2], " 
-cells, as they were expressing the **Hba-a1** gene marker.  
+On the global cell cycle regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
+cells, as they were expressing the **", paste( unlist(ff_list), collapse='', sep=','), ",** gene marker.  
 The dataset has ", dim(filtered_list)[2], " remaining cells.
 "))
 rm(singlets, globalReg, filtered_list)
@@ -595,7 +595,7 @@ singlets <- cyclingReg
 STEP_ID <- "3"
 <<filterRBCs>>
 cat(paste0("
-On the cycling phases regressed dataset, we removed ", dim(singlets)[2], " 
+On the cycling phases regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
 cells.  
 The dataset has ", dim(filtered_list)[2], " remaining cells.
 "))
