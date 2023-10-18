@@ -7,7 +7,7 @@ source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "process"
+# args <- "dea"
 
 # Main help message
 main_help <- "
@@ -389,7 +389,16 @@ switch(args[1],
                 1 = original Louvain algorithm; 2 = Louvain algorithm with multilevel refinement;
                 3 = SLM algorithm; 4 = Leiden algorithm (recommended)
 				(default: 4)."
-      )
+      ),
+          make_option(
+              c("--combinedData"),
+              action = "store_true",
+              default = FALSE,
+              type = "logical",
+              help = "Process the dataset on combined datasets, after the
+        combine pipeline
+        (default: FALSE)"
+          )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog dea [--flag <flag_arg>]",
@@ -521,10 +530,11 @@ switch(args[1],
           )
       )
       parsed <- OptionParser(
-          usage = "Usage: \n\t%prog filter? [--flag <flag_arg>]",
+          usage = "Usage: \n\t%prog combine? [--flag <flag_arg>]",
           option_list = option_list6,
           add_help_option = TRUE,
-          description = "\nVisualize filtered cells on the UMAP plot of the complete dataset.",
+          description = "\nCombine multiple datasets. Choose between merge or one
+          of the two integration mode, blkS or seqS",
           epilogue = "Add some details, examples, ...",
           formatter = IndentedHelpFormatter # TitleHelpFormatter
       )
