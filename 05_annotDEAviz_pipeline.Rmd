@@ -412,10 +412,12 @@ create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cl
 
 ### DotPlot of the genes of interest on cluster identity
 
-```{r cluster-dotPlot-goi, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
+```{r cluster-dotPlot-goi}
 if(!is.null(genes_of_interest)){
 
 create_dot_plot(fltd, sort(goiList), title="Genes of interest in clusters")
+} else {
+  cat("No genes of interest provided, nothing to see here.")
 }
 ```
 
@@ -457,8 +459,8 @@ invisible( lapply( names( topMarkers), function(clusterName)
 
 ### FeaturePlots of the genes of interest with cluster labels
 
-```{r cluster-featurePlot-goi, out.width='20%', fig.align='default', eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
-
+```{r cluster-featurePlot-goi, out.width='20%', fig.align='default'}
+if(!is.null(genes_of_interest)){
 # FeaturePlot the genes of interest
 FeaturePlot( fltd,
     features = goiList, 
@@ -467,6 +469,9 @@ FeaturePlot( fltd,
     order = TRUE, label = TRUE,
     combine = FALSE)
 
+} else {
+  cat("No genes of interest provided, nothing to see here.")
+}
 ```
 
 ### ViolinPlots of the markers {.tabset .tabset-pills .tabset-fade}
@@ -545,9 +550,13 @@ create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cl
 
 ### DotPlot of the genes of interest on celltype identity
 
-```{r celltype-dotPlot-goi, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
+```{r celltype-dotPlot-goi}
+if(!is.null(genes_of_interest)){
 ## DotPlot the genes of interest
 create_dot_plot(fltd, sort(goiList), title="Genes of interest in celltypes")
+} else {
+  cat("These are not the droids you are looking for.")
+}
 ```
 
 
