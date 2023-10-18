@@ -7,7 +7,7 @@ source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "process"
+# args <- "dea"
 
 # Main help message
 main_help <- "
@@ -389,7 +389,16 @@ switch(args[1],
                 1 = original Louvain algorithm; 2 = Louvain algorithm with multilevel refinement;
                 3 = SLM algorithm; 4 = Leiden algorithm (recommended)
 				(default: 4)."
-      )
+      ),
+          make_option(
+              c("--combinedData"),
+              action = "store_true",
+              default = FALSE,
+              type = "logical",
+              help = "Process the dataset on combined datasets, after the
+        combine pipeline
+        (default: FALSE)"
+          )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog dea [--flag <flag_arg>]",
