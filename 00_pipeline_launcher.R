@@ -2,12 +2,13 @@
 
 library(optparse)
 library(stringr)
+library(RcppTOML)
 
 source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "dea"
+# args <- "qc"
 
 # Main help message
 main_help <- "
@@ -254,6 +255,7 @@ switch(args[1],
               help = "Process the dataset on combined datasets, after the
         combine pipeline
         (default: FALSE)"
+          )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog process [--flag <flag_arg>]",
@@ -548,7 +550,7 @@ opt <- parse_args(parsed, positional_arguments = TRUE)
 # opt$options$good_quality <- TRUE
 PATH_REQUIREMENTS <- "../01_requirements/"
 if (is.null(opt$options$input_list)) {
-    load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
+    load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".toml"))
 } else {
 	# 1) Split input_list based on comma(s)
 	input_datasets <- strsplit(opt$options$input_list, ",")[[1]]
@@ -605,7 +607,7 @@ if (TRUE){
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
     manual = opt$options$manual
-    combinedD = opt$options$combinedData
+    combinedD = if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
 
