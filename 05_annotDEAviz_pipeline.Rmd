@@ -504,7 +504,7 @@ invisible( lapply( names( topMarkers), function(clusterName)
 ## Celltype identity {.tabset .tabset-pills .tabset-fade}
 
 ```{r addPlots-4}
-Idents(fltd) <- factor(renamed@meta.data[, colname], levels = sort(levels(as.factor(renamed@meta.data[, colname]))))
+Idents(fltd) <- factor(fltd@meta.data[, colname], levels = sort(levels(as.factor(fltd@meta.data[, colname]))))
 ```
 
 ### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}
