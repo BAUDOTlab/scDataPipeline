@@ -255,7 +255,7 @@ switch(args[1],
               help = "Process the dataset on combined datasets, after the
         combine pipeline
         (default: FALSE)"
-          )
+      )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog process [--flag <flag_arg>]",
