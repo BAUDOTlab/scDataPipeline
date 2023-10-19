@@ -254,7 +254,6 @@ switch(args[1],
               help = "Process the dataset on combined datasets, after the
         combine pipeline
         (default: FALSE)"
-          )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog process [--flag <flag_arg>]",
@@ -318,7 +317,7 @@ switch(args[1],
         )
       )
       parsed <- OptionParser(
-          usage = "Usage: \n\t%prog filter? [--flag <flag_arg>]",
+          usage = "Usage: \n\t%prog filters [--flag <flag_arg>]",
           option_list = option_list3,
           add_help_option = TRUE,
           description = "\nVisualize filtered cells on the UMAP plot of the complete dataset.",
@@ -530,7 +529,7 @@ switch(args[1],
           )
       )
       parsed <- OptionParser(
-          usage = "Usage: \n\t%prog combine? [--flag <flag_arg>]",
+          usage = "Usage: \n\t%prog combine [--flag <flag_arg>]",
           option_list = option_list6,
           add_help_option = TRUE,
           description = "\nCombine multiple datasets. Choose between merge or one
@@ -544,8 +543,7 @@ switch(args[1],
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
 # opt$options$input_dataset <- "cardioKO"
-# opt$options$input_list <- "cardioWT,cardioKO"
-# opt$options$input_dataset <- "cardioKO_vs_cardioWT"
+#opt$options$input_list <- "highDiet,normalDiet"
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
 PATH_REQUIREMENTS <- "../01_requirements/"
