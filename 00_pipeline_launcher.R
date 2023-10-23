@@ -606,7 +606,7 @@ if (TRUE){
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
     manual = opt$options$manual
-    combinedD = opt$options$combinedData
+    combinedD = if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
 
