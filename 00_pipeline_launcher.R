@@ -567,6 +567,11 @@ if (is.null(opt$options$input_list)) {
 	# DATASET <- paste0(input_datasets, collapse = "_") # don't know if I need to keep it ???
 }
 
+# Check for spaces after DATASET or inside DATASET
+if (grepl("\\s+", DATASET)) {
+    stop("Error: DATASET contains spaces. Please ensure there are no spaces in the DATASET.")
+}
+
 if (TRUE){
     general_seed = as.numeric(general_seed)
     # qc pipeline variables ----------------------
@@ -606,7 +611,7 @@ if (TRUE){
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
     manual = opt$options$manual
-    combinedD = opt$options$combinedData
+    combinedD = if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
 
