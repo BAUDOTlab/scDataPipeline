@@ -155,17 +155,6 @@ rm(df)
 # Load `r DATASET` data
 
 ```{r load-data}
-# Check if DATASET contains a space
-if (grepl("[ ]", DATASET)) {
-  stop("Error: DATASET contains a space. Please remove any spaces from the DATASET variable.")
-}
-
-# Check if DATASET ends with a space
-if (grepl("[ ]$", DATASET)) {
-  stop("Error: DATASET ends with a space. Please remove the trailing space from the DATASET variable and try again.")
-}
-
-# Continue loading data
 raw_data <- Read10X(data.dir = PATH_INPUT_LABDATA, gene.column = gn_col)
 SO <- CreateSeuratObject(counts = raw_data, project = DATASET)
 SO
