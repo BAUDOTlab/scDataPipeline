@@ -135,10 +135,9 @@ rm(df)
 # Load `r DATASET` data
 
 ```{r load-data}
-#cplt <- readRDS(paste0(PATH_RDS_OBJECTS, "/02_normANDscaled_", DATASET, "_complete.rds"))
 metadata <- read.table(paste0(PATH_ROOT, "/03_qc/metadata_", DATASET, "_complete.csv"), header = TRUE, sep = ",")
 umapCoord <- read.table(paste0(PATH_ROOT, "/04_process/DR_umap_", DATASET, "_complete.csv"), header = TRUE, sep = ",")
-clusters = read.table(paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_complete_meth.", clust_meth, "_res.",clust_res,".csv"), header = T, sep =",")
+clusters <- read.table(paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_complete_meth.", clust_meth, "_res.",clust_res,".csv"), header = T, sep =",")
 ```
 
 UMAP representation of the complete `r DATASET` dataset.
