@@ -568,6 +568,11 @@ if (is.null(opt$options$input_list)) {
 	# DATASET <- paste0(input_datasets, collapse = "_") # don't know if I need to keep it ???
 }
 
+# Check for spaces after DATASET or inside DATASET
+if (grepl("\\s+", DATASET)) {
+    stop("Error: DATASET contains spaces. Please ensure there are no spaces in the DATASET.")
+}
+
 if (TRUE){
     general_seed = as.numeric(general_seed)
     # qc pipeline variables ----------------------
