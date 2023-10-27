@@ -643,7 +643,7 @@ switch(args[1],
            } else if (combinedD) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "08_process_", DATASET, "_combinedData_scenario_", opt$options$scenario, Sys.Date(), ".html")
+                   output_file = paste0(PATH_OUT_HTML, "08_process_", DATASET, "_combinedData_scenario_", scenario, "_", Sys.Date(), ".html")
                )
            } else {
                rmarkdown::render(
@@ -669,7 +669,7 @@ switch(args[1],
            if (FILTER == "filtered") {
                rmarkdown::render(
                    "05_annotDEAviz_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "06_annotDEAviz_", DATASET, "_scenario_", opt$options$scenario, "_", Sys.Date(), ".html")
+                   output_file = paste0(PATH_OUT_HTML, "06_annotDEAviz_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html")
                )
            } else if (FILTER == "complete") {
                rmarkdown::render(
@@ -687,7 +687,7 @@ switch(args[1],
        "combine" = {
            rmarkdown::render(
                "06_combineData_pipeline.Rmd",
-               output_file = paste0(PATH_OUT_HTML, "07_combineData_", DATASET, "_", Sys.Date(), ".html")
+               output_file = paste0(PATH_OUT_HTML, "07_combineData_", DATASET, "_scenario_", scenario, "_",  Sys.Date(), ".html")
            )
        }
 )
