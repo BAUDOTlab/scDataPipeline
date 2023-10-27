@@ -644,7 +644,7 @@ switch(args[1],
            } else if (combinedD) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = file.path(PATH_OUT_HTML, paste0("08_process_", DATASET, "_combinedData_scenario_", opt$options$scenario, Sys.Date(), ".html"))
+                   output_file = file.path(PATH_OUT_HTML, paste0("08_process_", DATASET, "_combinedData_scenario_", scenario, Sys.Date(), ".html"))
                )
            } else {
                rmarkdown::render(
