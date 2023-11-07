@@ -627,24 +627,24 @@ switch(args[1],
        "qc" = {
            rmarkdown::render(
                "01_qc_pipeline.Rmd",
-               output_file = paste0(PATH_OUT_HTML, "01_qc_", DATASET, "_", Sys.Date(), ".html")
+               output_file = file.path(PATH_OUT_HTML, paste0("01_qc_", DATASET, "_", Sys.Date(), ".html"))
            )
        },
        "process" = {
            if (goodQ) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html"))
                )
            } else if (combinedD) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "08_process_", DATASET, "_combinedData_scenario_", opt$options$scenario, Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("08_process_", DATASET, "_combinedData_scenario_", opt$options$scenario, Sys.Date(), ".html"))
                )
            } else {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html"))
                )
            }
        },
@@ -652,12 +652,12 @@ switch(args[1],
            if (opt$options$manual) {
                rmarkdown::render(
                    "03_1_manualControls_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "03_1_manualControls_", DATASET, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("03_1_manualControls_", DATASET, "_", Sys.Date(), ".html"))
                )
            } else {
                rmarkdown::render(
                    "03_filtersControls_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "03_filtersControls_", DATASET, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("03_filtersControls_", DATASET, "_", Sys.Date(), ".html"))
                )   
            }
        },
@@ -665,25 +665,25 @@ switch(args[1],
            if (FILTER == "filtered") {
                rmarkdown::render(
                    "05_annotDEAviz_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "06_annotDEAviz_", DATASET, "_scenario_", opt$options$scenario, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("06_annotDEAviz_", DATASET, "_scenario_", opt$options$scenario, "_", Sys.Date(), ".html"))
                )
            } else if (FILTER == "complete") {
                rmarkdown::render(
                    "04_1_deg_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "04_1_deg_", DATASET, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("04_1_deg_", DATASET, "_", Sys.Date(), ".html"))
                )   
            }
        },
        "ctrl++" = {
            rmarkdown::render(
                "04_additionalControls.Rmd",
-               output_file = paste0(PATH_OUT_HTML, "04_additionalControls_", DATASET, "_", Sys.Date(), ".html")
+               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_", Sys.Date(), ".html"))
            )
        },
        "combine" = {
            rmarkdown::render(
                "06_combineData_pipeline.Rmd",
-               output_file = paste0(PATH_OUT_HTML, "07_combineData_", DATASET, "_", Sys.Date(), ".html")
+               output_file = file.path(PATH_OUT_HTML, paste0("07_combineData_", DATASET, "_", Sys.Date(), ".html"))
            )
        }
 )
