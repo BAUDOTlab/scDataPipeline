@@ -544,7 +544,7 @@ switch(args[1],
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "cardioKO"
+# opt$options$input_dataset <- "fibroWT"
 #opt$options$input_list <- "highDiet,normalDiet"
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
@@ -590,10 +590,10 @@ if (TRUE){
     clust_res = if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution
     clust_meth = if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering
     # advanced filter pipeline variables  --------
-    mito_thresholds = if (!is.null(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds)) as.numeric(unlist(strsplit(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds, ",")))
-    ribo_thresholds = if (!is.null(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds)) as.numeric(unlist(strsplit(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds, ",")))
-    umi_thresholds = if (!is.null(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds)) as.numeric(unlist(strsplit(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds, ",")))
-    feature_thresholds = if (!is.null(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds)) as.numeric(unlist(strsplit(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds, ",")))
+    mito_thresholds = if (!is.null(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds)) if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$mito_thresholds)))
+    ribo_thresholds = if (!is.null(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds)) if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$ribo_thresholds, ",")))
+    umi_thresholds = if (!is.null(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds)) if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else as.integer(unlist(strsplit(opt$options$umi_thresholds, ",")))
+    feature_thresholds = if (!is.null(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds)) if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else as.integer(unlist(strsplit(opt$options$feature_thresholds, ",")))
     # deg pipeline variables ---------------------
     top_markers = opt$options$markers_number
     genes_of_interest = if (exists("GENES_OF_INTEREST")) GENES_OF_INTEREST else NULL
