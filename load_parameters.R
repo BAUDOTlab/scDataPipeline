@@ -16,19 +16,32 @@ load_parameters <- function(config_file) {
     assign("PATH_RDS_OBJECTS",  	file.path(PATH_ROOT, path$output$PATH_RDS_OBJECTS), 		envir = .GlobalEnv)
     assign("PATH_OUT_HTML",     	file.path(PATH_ROOT, path$output$PATH_OUT_HTML), 			envir = .GlobalEnv)
     assign("PATH_OUT_FIG",      	file.path(PATH_ROOT, path$output$PATH_OUT_FIG, DATASET),	envir = .GlobalEnv)
+    assign("PATH_GENES_OF_INTEREST",file.path(PATH_ROOT, path$input$PATH_GENES_OF_INTEREST),	envir = .GlobalEnv)
 
     # parse the qc variables
-    list2env(qc, envir = .GlobalEnv)
+    if (exists("qc")) {
+        list2env(qc, envir = .GlobalEnv)
+    }
 
     # parse the process variables
-    list2env(process, envir = .GlobalEnv)
+    if (exists("process")) {
+        list2env(process, envir = .GlobalEnv)
+    }
 
     # parse the filters variables
-    list2env(filters, envir = .GlobalEnv)
+    if (exists("filters")) {
+        list2env(filters, envir = .GlobalEnv)
+    }
 
     # parse the ctrl++ variables
-    list2env(ctrl, envir = .GlobalEnv)
+    if (exists("ctrl++")) {
+        list2env(ctrl, envir = .GlobalEnv)
+    }
 
+    #parse the combine variables
+    if (exists("combine")) {
+        list2env(combine, envir = .GlobalEnv)
+    }
 
     rm(paramsList)
 }
