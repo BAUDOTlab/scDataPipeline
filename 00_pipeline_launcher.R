@@ -19,7 +19,7 @@ Pipeline Order:
 1) qc
 2) process
 3) filters
-4) ctrl++
+4) ctrl
 5) process (again)
 6) dea
 7) combine
@@ -28,7 +28,7 @@ Pipeline Order:
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the
-                        following: qc, process, filters, ctrl++, dea, combine
+                        following: qc, process, filters, ctrl, dea, combine
 
 Flag Argument:
     --flag <flag_arg>   There are optional arguments according to the required
@@ -54,7 +54,7 @@ if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl++", "combine")) {
+if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine")) {
   cat(main_help)
   quit(status = 1)
 }
@@ -244,7 +244,7 @@ switch(args[1],
           default = FALSE,
           type = "logical",
           help = "Process the dataset only with good quality cells, after the
-		  ctrl++ pipeline
+		  ctrl pipeline
 		  	(default: FALSE)."
       ),
           make_option(
@@ -410,7 +410,7 @@ switch(args[1],
       formatter = IndentedHelpFormatter # TitleHelpFormatter
     )
   },
-  "ctrl++" = {
+  "ctrl" = {
     option_list5 <- list(
         make_option(
             c("-i", "--input_dataset"),
@@ -489,7 +489,7 @@ switch(args[1],
           )
       )
       parsed <- OptionParser(
-          usage = "Usage: \n\t%prog ctrl++ [--flag <flag_arg>]",
+          usage = "Usage: \n\t%prog ctrl [--flag <flag_arg>]",
           option_list = option_list5,
           add_help_option = TRUE,
           description = "\nControl and adjust single-cell RNA sequencing data for doublets and cell cycle effects.",
@@ -607,7 +607,7 @@ if (TRUE){
     # cell cycle regression ----------------------
     s_thresh = if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase
     g2m_thresh = if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase
-    scenario = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl++ if set to 1 (ie not interested in CC regression)
+    scenario = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl if set to 1 (ie not interested in CC regression)
     # combining multiple datasets
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
@@ -679,7 +679,7 @@ switch(args[1],
                )   
            }
        },
-       "ctrl++" = {
+       "ctrl" = {
            rmarkdown::render(
                "04_additionalControls.Rmd",
                output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_", Sys.Date(), ".html"))
