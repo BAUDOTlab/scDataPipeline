@@ -19,29 +19,30 @@ load_parameters <- function(config_file) {
     assign("PATH_GENES_OF_INTEREST",file.path(PATH_ROOT, path$input$PATH_GENES_OF_INTEREST),	envir = .GlobalEnv)
 
     # parse the qc variables
-    if (exists("qc")) {
+    if (exists("qc") && is.list(qc)) {
         list2env(qc, envir = .GlobalEnv)
     }
 
     # parse the process variables
-    if (exists("process")) {
+    if (exists("process") && is.list(process)) {
         list2env(process, envir = .GlobalEnv)
     }
 
     # parse the filters variables
-    if (exists("filters")) {
+    if (exists("filters") && is.list(filters)) {
         list2env(filters, envir = .GlobalEnv)
     }
 
-    # parse the ctrl++ variables
-    if (exists("ctrl++")) {
+    # parse the ctrl variables
+    if (exists("ctrl") && is.list(ctrl)) {
         list2env(ctrl, envir = .GlobalEnv)
     }
 
     #parse the combine variables
-    if (exists("combine")) {
+    if (exists("combine") && is.list(combine)) {
         list2env(combine, envir = .GlobalEnv)
     }
 
     rm(paramsList)
 }
+
