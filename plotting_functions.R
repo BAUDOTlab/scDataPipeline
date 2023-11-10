@@ -80,7 +80,6 @@ highlightClusterPlot <- function(clusterName, seuratObject, reduction = "umap") 
                   cols.highlight = "#FF000088", 
                   sizes.highlight = Seurat:::AutoPointSize(seuratObject)*1.5, 
                   order = clusterCells,  # Plot highlighted cells last
-                  shuffle = TRUE,
                   group.by=NULL) + 
            ggtitle( paste(clusterName)) +
            theme( axis.title.x = element_blank(),
