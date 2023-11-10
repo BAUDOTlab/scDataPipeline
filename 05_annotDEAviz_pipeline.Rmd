@@ -184,11 +184,12 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 
 
 ```{r, results='asis', eval=(gn_col == 1), echo=(gn_col==1)}
-cat("""
+cat("
 
 # Map ensembl IDs to gene names
 
-Presentation of Biomart, selection of the reference genome""")
+Presentation of Biomart, selection of the reference genome.
+")
 
 ensembl.ids <- rownames(fltd)
 
@@ -218,7 +219,7 @@ duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) |
 ```
 
 ```{r, eval=(gn_col == 1), echo=(gn_col==1)}
-cat(paste0("""
+cat(paste0("
 The ", DATASET,"dataset has **", length(ensembl.ids), "** different feature genes
 comprising ", length(manInsert), " manually inserted genes:  
 ", manInsert, "
@@ -239,7 +240,7 @@ Number of unique retrieved gene names: **", length(unique(geneNames108$external_
 
 Some gene names fit multiple ensembl gene IDs. Below you can see the table of
 the redundant gene names and the corresponding ensembl gene IDs.
-"""))
+"))
 ```
 
 
@@ -258,12 +259,12 @@ duplicatesGN %>%
 ```
 
 ```{r, eval=(gn_col == 1), echo=(gn_col==1)}
-cat("""
+cat("
 <br>
 
 We removed all ensembl gene IDs mapped to multiple gene names. We reduce the
 feature list to the remaining ensembl gene IDs.
-""")
+")
 ```
 
 ```{r RenameGenesSeurat,eval=(gn_col == 1), echo=(gn_col==1)}
@@ -376,7 +377,7 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 
 ```{r addPlots-1, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
   # Load list of genes of interest
-  goi <- read.table(file.path(PATH_REQUIREMENTS, genes_of_interest))
+  goi <- read.table(genes_of_interest)
   goiList <- goi$V1
 
   genesToRemove <- goiList[!(goiList %in% rownames(fltd))]

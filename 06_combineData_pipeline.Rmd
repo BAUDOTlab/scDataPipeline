@@ -127,6 +127,10 @@ data_load <- function(DATASET_NAME) {
     # PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
     
     data <- readRDS(PATH_RDS_FILE)
+    if(scenario != 1){ # scale.data is empty in scenario 1, so we use it only for scenarios 2 and 3
+      data.use = GetAssayData(data, slot="scale.data")
+      data = SetAssayData(data, slot="data", new.data=data.use)
+    }
 }
 
 SO.list <- lapply(input_datasets, data_load)

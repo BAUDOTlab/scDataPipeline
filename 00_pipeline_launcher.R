@@ -2,12 +2,13 @@
 
 library(optparse)
 library(stringr)
+library(RcppTOML)
 
 source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "dea"
+# args <- "qc"
 
 # Main help message
 main_help <- "
@@ -18,7 +19,7 @@ Pipeline Order:
 1) qc
 2) process
 3) filters
-4) ctrl++
+4) ctrl
 5) process (again)
 6) dea
 7) combine
@@ -27,7 +28,7 @@ Pipeline Order:
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the
-                        following: qc, process, filters, ctrl++, dea, combine
+                        following: qc, process, filters, ctrl, dea, combine
 
 Flag Argument:
     --flag <flag_arg>   There are optional arguments according to the required
@@ -53,7 +54,7 @@ if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl++", "combine")) {
+if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine")) {
   cat(main_help)
   quit(status = 1)
 }
@@ -243,7 +244,7 @@ switch(args[1],
           default = FALSE,
           type = "logical",
           help = "Process the dataset only with good quality cells, after the
-		  ctrl++ pipeline
+		  ctrl pipeline
 		  	(default: FALSE)."
       ),
           make_option(
@@ -409,7 +410,7 @@ switch(args[1],
       formatter = IndentedHelpFormatter # TitleHelpFormatter
     )
   },
-  "ctrl++" = {
+  "ctrl" = {
     option_list5 <- list(
         make_option(
             c("-i", "--input_dataset"),
@@ -488,7 +489,7 @@ switch(args[1],
           )
       )
       parsed <- OptionParser(
-          usage = "Usage: \n\t%prog ctrl++ [--flag <flag_arg>]",
+          usage = "Usage: \n\t%prog ctrl [--flag <flag_arg>]",
           option_list = option_list5,
           add_help_option = TRUE,
           description = "\nControl and adjust single-cell RNA sequencing data for doublets and cell cycle effects.",
@@ -543,13 +544,13 @@ switch(args[1],
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "cardioKO"
+# opt$options$input_dataset <- "fibroWT"
 #opt$options$input_list <- "highDiet,normalDiet"
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
 PATH_REQUIREMENTS <- "../01_requirements/"
 if (is.null(opt$options$input_list)) {
-    load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".param"))
+    load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".toml"))
 } else {
 	# 1) Split input_list based on comma(s)
 	input_datasets <- strsplit(opt$options$input_list, ",")[[1]]
@@ -565,6 +566,11 @@ if (is.null(opt$options$input_list)) {
     
 	load_parameters(paste0(PATH_REQUIREMENTS, matching_file))
 	# DATASET <- paste0(input_datasets, collapse = "_") # don't know if I need to keep it ???
+}
+
+# Check for spaces after DATASET or inside DATASET
+if (grepl("\\s+", DATASET)) {
+    stop("Error: DATASET contains spaces. Please ensure there are no spaces in the DATASET.")
 }
 
 if (TRUE){
@@ -589,19 +595,19 @@ if (TRUE){
     clust_res = if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution
     clust_meth = if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering
     # advanced filter pipeline variables  --------
-    mito_thresholds = if (!is.null(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds)) as.numeric(unlist(strsplit(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds, ",")))
-    ribo_thresholds = if (!is.null(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds)) as.numeric(unlist(strsplit(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds, ",")))
-    umi_thresholds = if (!is.null(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds)) as.numeric(unlist(strsplit(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds, ",")))
-    feature_thresholds = if (!is.null(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds)) as.numeric(unlist(strsplit(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds, ",")))
+    mito_thresholds = if (!is.null(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds)) if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$mito_thresholds)))
+    ribo_thresholds = if (!is.null(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds)) if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$ribo_thresholds, ",")))
+    umi_thresholds = if (!is.null(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds)) if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else as.integer(unlist(strsplit(opt$options$umi_thresholds, ",")))
+    feature_thresholds = if (!is.null(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds)) if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else as.integer(unlist(strsplit(opt$options$feature_thresholds, ",")))
     # deg pipeline variables ---------------------
     top_markers = opt$options$markers_number
-    genes_of_interest = if (exists("GENES_OF_INTEREST")) GENES_OF_INTEREST else NULL
+    genes_of_interest = if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL
     # doublets removal ---------------------------
     doublets_rate = if (exists("DOUBLETS_RATE")) as.numeric(DOUBLETS_RATE) else opt$options$doublets_rate
     # cell cycle regression ----------------------
     s_thresh = if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase
     g2m_thresh = if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase
-    scenario = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl++ if set to 1 (ie not interested in CC regression)
+    scenario = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl if set to 1 (ie not interested in CC regression)
     # combining multiple datasets
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
@@ -610,7 +616,7 @@ if (TRUE){
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
 
-    ff_list = if (!is.null(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features)) strsplit(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features, ",")
+    ff_list = if (!is.null(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features)) if (exists("FILTER_FEATURES")) FILTER_FEATURES else unlist(strsplit(opt$options$filter_features, ","))
 }
 
 # combinedD <- TRUE
@@ -626,24 +632,24 @@ switch(args[1],
        "qc" = {
            rmarkdown::render(
                "01_qc_pipeline.Rmd",
-               output_file = paste0(PATH_OUT_HTML, "01_qc_", DATASET, "_", Sys.Date(), ".html")
+               output_file = file.path(PATH_OUT_HTML, paste0("01_qc_", DATASET, "_", Sys.Date(), ".html"))
            )
        },
        "process" = {
            if (goodQ) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html"))
                )
            } else if (combinedD) {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "08_process_", DATASET, "_combinedData_scenario_", opt$options$scenario, Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("08_process_", DATASET, "_combinedData_scenario_", scenario, "_", Sys.Date(), ".html"))
                )
            } else {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html"))
                )
            }
        },
@@ -651,12 +657,12 @@ switch(args[1],
            if (opt$options$manual) {
                rmarkdown::render(
                    "03_1_manualControls_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "03_1_manualControls_", DATASET, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("03_1_manualControls_", DATASET, "_", Sys.Date(), ".html"))
                )
            } else {
                rmarkdown::render(
                    "03_filtersControls_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "03_filtersControls_", DATASET, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("03_filtersControls_", DATASET, "_", Sys.Date(), ".html"))
                )   
            }
        },
@@ -664,25 +670,25 @@ switch(args[1],
            if (FILTER == "filtered") {
                rmarkdown::render(
                    "05_annotDEAviz_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "06_annotDEAviz_", DATASET, "_scenario_", opt$options$scenario, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("06_annotDEAviz_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
                )
            } else if (FILTER == "complete") {
                rmarkdown::render(
                    "04_1_deg_pipeline.Rmd",
-                   output_file = paste0(PATH_OUT_HTML, "04_1_deg_", DATASET, "_", Sys.Date(), ".html")
+                   output_file = file.path(PATH_OUT_HTML, paste0("04_1_deg_", DATASET, "_", Sys.Date(), ".html"))
                )   
            }
        },
-       "ctrl++" = {
+       "ctrl" = {
            rmarkdown::render(
                "04_additionalControls.Rmd",
-               output_file = paste0(PATH_OUT_HTML, "04_additionalControls_", DATASET, "_", Sys.Date(), ".html")
+               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_", Sys.Date(), ".html"))
            )
        },
        "combine" = {
            rmarkdown::render(
                "06_combineData_pipeline.Rmd",
-               output_file = paste0(PATH_OUT_HTML, "07_combineData_", DATASET, "_", Sys.Date(), ".html")
+               output_file = file.path(PATH_OUT_HTML, paste0("07_combineData_", DATASET, "_scenario_", scenario, "_",  Sys.Date(), ".html"))
            )
        }
 )

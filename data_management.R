@@ -44,8 +44,8 @@ export_dimred <- function(SO, dr, file_name) {
 # Function to extract top features
 extract_top_features <- function(df, topn = 20) {
 	# if "cluster" is in the column names, sort by cluster, then sort by p_val_adj
-	if ("cluster" %in% names(markers)) {
-		markers <- markers %>%
+	if ("cluster" %in% names(df)) {
+		markers <- df %>%
 			dplyr::arrange(cluster, p_val_adj)
 		topn <- markers %>%
 			group_by(cluster) %>%
@@ -53,7 +53,7 @@ extract_top_features <- function(df, topn = 20) {
 		topnMarkers <- topn %>%
 			dplyr::arrange(cluster, p_val_adj)
 	} else { # else sort by p_val_adj
-		markers <- markers %>%
+		markers <- df %>%
 			dplyr::arrange(p_val_adj)
 		topn <- markers %>%
 			top_n(n = topn, wt = avg_log2FC)
