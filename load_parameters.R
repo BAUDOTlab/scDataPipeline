@@ -13,6 +13,7 @@ load_parameters <- function(config_file) {
 
     assign("PATH_INPUT_LABDATA",	file.path(PATH_ROOT, path$input$PATH_INPUT_LABDATA),		envir = .GlobalEnv)
 	assign("PATH_ATLAS",         	file.path(PATH_ROOT, path$input$PATH_ATLAS), 				envir = .GlobalEnv)
+    assign("PATH_ATLAS_FILE",       file.path(PATH_ROOT, path$input$PATH_ATLAS_FILE), 		    envir = .GlobalEnv)
     assign("PATH_RDS_OBJECTS",  	file.path(PATH_ROOT, path$output$PATH_RDS_OBJECTS), 		envir = .GlobalEnv)
     assign("PATH_OUT_HTML",     	file.path(PATH_ROOT, path$output$PATH_OUT_HTML), 			envir = .GlobalEnv)
     assign("PATH_OUT_FIG",      	file.path(PATH_ROOT, path$output$PATH_OUT_FIG, DATASET),	envir = .GlobalEnv)
