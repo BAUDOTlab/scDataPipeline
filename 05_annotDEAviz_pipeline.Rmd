@@ -218,11 +218,11 @@ write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, "correspondanceENS
 duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
 ```
 
-```{r, eval=(gn_col == 1), echo=(gn_col==1)}
+```{r, eval=(gn_col == 1), echo=(gn_col==1), results='asis'}
 cat(paste0("
-The ", DATASET,"dataset has **", length(ensembl.ids), "** different feature genes
+The ", DATASET," dataset has **", length(ensembl.ids), "** different feature genes
 comprising ", length(manInsert), " manually inserted genes:  
-", manInsert, "
+", toString(manInsert), "
 
 ***
 
@@ -232,19 +232,22 @@ Number of unique retrieved ensembl gene IDs:
 
 List of the **", length(setdiff(ensembl.ids, geneNames108$ensembl_gene_id)), "**
 not found ensembl gene IDs:  
-", setdiff(ensembl.ids, geneNames108$ensembl_gene_id), "
+", toString(setdiff(ensembl.ids, geneNames108$ensembl_gene_id)), "
 
 ***
 
 Number of unique retrieved gene names: **", length(unique(geneNames108$external_gene_name)), "**
 
-Some gene names fit multiple ensembl gene IDs. Below you can see the table of
-the redundant gene names and the corresponding ensembl gene IDs.
 "))
 ```
 
 
-```{r echo=FALSE, eval=exists("external_gene_name")}
+```{r echo=FALSE, eval=dim(duplicatesGN)[1] !=0, results='asis'}
+cat("
+
+Some gene names fit multiple ensembl gene IDs. Below you can see the table of
+the redundant gene names and the corresponding ensembl gene IDs.
+")
 # datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
 if(gn_col == 1){
 duplicatesGN %>%
@@ -256,9 +259,7 @@ duplicatesGN %>%
   column_spec(1, width = "12em") %>%
   column_spec(2, width = "12em")
 }
-```
 
-```{r, eval=(gn_col == 1), echo=(gn_col==1)}
 cat("
 <br>
 
@@ -267,7 +268,7 @@ feature list to the remaining ensembl gene IDs.
 ")
 ```
 
-```{r RenameGenesSeurat,eval=(gn_col == 1), echo=(gn_col==1)}
+```{r RenameGenesSeurat, eval=(gn_col == 1), echo=(gn_col==1)}
 # Remove ensembl gene IDs with multiple match to gene names
 geneNamesUniq <- geneNames108[-which(geneNames108$ensembl_gene_id %in% duplicatesGN$ensembl_gene_id),]
 
@@ -337,17 +338,14 @@ RenameGenesSeurat <- function(obj = NULL, newnames = NULL) {
     return(obj)
 }
 
-renamed <- RenameGenesSeurat(obj = SOsubset, newnames = geneNamesUniq)
-renamed
+fltd <- RenameGenesSeurat(obj = SOsubset, newnames = geneNamesUniq)
+fltd
 ```
 
 
 # Perform differential expression analysis
 
 ```{r}
-if (exists("renamed")){
-  fltd <- renamed
-}
 clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(fltd@meta.data), value = TRUE)
 Idents(fltd) <- clustOfInterest
 
@@ -376,17 +374,17 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 # Additional Plots
 
 ```{r addPlots-1, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
-  # Load list of genes of interest
-  goi <- read.table(genes_of_interest)
-  goiList <- goi$V1
+# Load list of genes of interest
+goi <- read.table(genes_of_interest)
+goiList <- goi$V1
 
-  genesToRemove <- goiList[!(goiList %in% rownames(fltd))]
-  if (length(genesToRemove) >= 1){
+genesToRemove <- goiList[!(goiList %in% rownames(fltd))]
+if (length(genesToRemove) >= 1){
     cat(paste0("One or more genes of interest are not in the dataset (maybe because of the case):\n\t",
-              paste(genesToRemove, collapse = ", "), "\nThe listed genes will not be plotted"))
-  }
+               paste(genesToRemove, collapse = ", "), "\nThe listed genes will not be plotted"))
+}
 
-  goiList <- goiList[goiList %in% rownames(fltd)] # remove the unknown genes
+goiList <- goiList[goiList %in% rownames(fltd)] # remove the unknown genes
 
 ```
 
