@@ -644,7 +644,7 @@ switch(args[1],
                )
            } else if (combinedD) {
               lapply(scenarios, function(scenario){
-                print(paste0("Processing scenario ", scenario))
+                print(paste0("Processing scenario ", scenario, " on combined data."))
                 rmarkdown::render(
                     "02_process_pipeline.Rmd",
                     output_file = file.path(PATH_OUT_HTML, paste0("08_process_", DATASET, "_combinedData_scenario_", scenario, "_", Sys.Date(), ".html"))
@@ -674,7 +674,7 @@ switch(args[1],
        "dea" = {
            if (FILTER == "filtered") {
               lapply(scenarios, function(scenario){
-                print(paste0("Processing scenario ", scenario))
+                print(paste0("Performing DEA analysis on scenario ", scenario))
                 rmarkdown::render(
                     "05_annotDEAviz_pipeline.Rmd",
                     output_file = file.path(PATH_OUT_HTML, paste0("06_annotDEAviz_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
@@ -695,7 +695,7 @@ switch(args[1],
        },
        "combine" = {
           lapply(scenarios, function(scenario){
-            print(paste0("Processing scenario ", scenario))
+            print(paste0("Combining datasets ", paste0(input_datasets, sep=", "), " for scenario ", scenario))
             rmarkdown::render(
                 "06_combineData_pipeline.Rmd",
                 output_file = file.path(PATH_OUT_HTML, paste0("07_combineData_", DATASET, "_scenario_", scenario, "_",  Sys.Date(), ".html"))
