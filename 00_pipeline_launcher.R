@@ -559,7 +559,7 @@ if (is.null(opt$options$input_list)) {
 	file_list <- list.files(PATH_REQUIREMENTS)
 	
 	# 3) Match multiple patterns using grepl and &
-	matching_element <- Reduce(`&`, lapply(input_datasets, grepl, file_list))
+	matching_element <- Reduce(`&`, lapply(c(input_datasets, "toml"), grepl, file_list))
 	
 	# 4) Get the file that contains all the names in input_datasets
 	matching_file <- file_list[matching_element]
