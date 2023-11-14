@@ -607,7 +607,7 @@ if (TRUE){
     # cell cycle regression ----------------------
     s_thresh = if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase
     g2m_thresh = if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase
-    scenario = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl if set to 1 (ie not interested in CC regression)
+    scenarios = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl if set to 1 (ie not interested in CC regression)
     # combining multiple datasets
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # unclassified variables ---------------------
@@ -628,6 +628,7 @@ if (combinedD) {
 
 checkDirHierarchy()
 
+
 switch(args[1],
        "qc" = {
            rmarkdown::render(
@@ -642,10 +643,14 @@ switch(args[1],
                    output_file = file.path(PATH_OUT_HTML, paste0("05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html"))
                )
            } else if (combinedD) {
-               rmarkdown::render(
-                   "02_process_pipeline.Rmd",
-                   output_file = file.path(PATH_OUT_HTML, paste0("08_process_", DATASET, "_combinedData_scenario_", scenario, "_", Sys.Date(), ".html"))
-               )
+              lapply(scenarios, function(scenario){
+                print(paste0("Processing scenario ", scenario, " on combined data."))
+                rmarkdown::render(
+                    "02_process_pipeline.Rmd",
+                    output_file = file.path(PATH_OUT_HTML, paste0("08_process_", DATASET, "_combinedData_scenario_", scenario, "_", Sys.Date(), ".html"))
+                )
+               })
+               
            } else {
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
@@ -668,10 +673,13 @@ switch(args[1],
        },
        "dea" = {
            if (FILTER == "filtered") {
-               rmarkdown::render(
-                   "05_annotDEAviz_pipeline.Rmd",
-                   output_file = file.path(PATH_OUT_HTML, paste0("06_annotDEAviz_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
-               )
+              lapply(scenarios, function(scenario){
+                print(paste0("Performing DEA analysis on scenario ", scenario))
+                rmarkdown::render(
+                    "05_annotDEAviz_pipeline.Rmd",
+                    output_file = file.path(PATH_OUT_HTML, paste0("06_annotDEAviz_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                )
+              })
            } else if (FILTER == "complete") {
                rmarkdown::render(
                    "04_1_deg_pipeline.Rmd",
@@ -686,10 +694,13 @@ switch(args[1],
            )
        },
        "combine" = {
-           rmarkdown::render(
-               "06_combineData_pipeline.Rmd",
-               output_file = file.path(PATH_OUT_HTML, paste0("07_combineData_", DATASET, "_scenario_", scenario, "_",  Sys.Date(), ".html"))
-           )
+          lapply(scenarios, function(scenario){
+            print(paste0("Combining datasets ", toString(input_datasets), " for scenario ", scenario))
+            rmarkdown::render(
+                "06_combineData_pipeline.Rmd",
+                output_file = file.path(PATH_OUT_HTML, paste0("07_combineData_", DATASET, "_scenario_", scenario, "_",  Sys.Date(), ".html"))
+            )
+          })
        }
 )
 
