@@ -218,7 +218,7 @@ write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, "correspondanceENS
 duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
 ```
 
-```{r, eval=(gn_col == 1), echo=(gn_col==1), results='asis'}
+```{r, eval=(gn_col == 1), results='asis'}
 cat(paste0("
 The ", DATASET," dataset has **", length(ensembl.ids), "** different feature genes
 comprising ", length(manInsert), " manually inserted genes:  
@@ -270,75 +270,59 @@ feature list to the remaining ensembl gene IDs.
 
 ```{r RenameGenesSeurat, eval=(gn_col == 1), echo=(gn_col==1)}
 # Remove ensembl gene IDs with multiple match to gene names
-geneNamesUniq <- geneNames108[-which(geneNames108$ensembl_gene_id %in% duplicatesGN$ensembl_gene_id),]
+geneNamesUniq <- geneNames108[-which(geneNames108$ensembl_gene_id %in% ifelse(dim(duplicatesGN)[1] !=0, duplicatesGN$ensembl_gene_id, geneNames108$ensembl_gene_id)),]
 
 SOsubset <- subset(fltd, features = geneNamesUniq$ensembl_gene_id)
 
-RenameGenesSeurat <- function(obj = NULL, newnames = NULL) {
-    # Replace gene names in different slots of a Seurat object. Run this before
-    # integration. Run this before integration. It only changes
-    # obj@assays$RNA@counts, @data and @scale.data.
-    
-    if (!(exists("newnames")&&is.data.frame(get("newnames")))) {
-        print("Please provide a vector of new names.")
-    }
-    
-    # print("Run this before integration. It only changes obj@assays$RNA@counts,
-    #       @data, @scale.data and @var.features."
-    # )
-    
-    RNA <- obj@assays$RNA
-    # RNA <- SOsubset@assays$RNA
-    # newnames <- geneNames80
-    
-    # Replacement labels must have the same length with the data
-    if (nrow(RNA) == length(newnames$external_gene_name)) {
-        
-        # print("Changes obj@assays$RNA@counts and @data")
-        if (length(RNA@counts)) RNA@counts@Dimnames[[1]]    <- newnames$external_gene_name
-        if (length(RNA@data)) RNA@data@Dimnames[[1]]        <- newnames$external_gene_name
-        
-        # print("Changes obj@assays$RNA@scale.data")
-        if (length(RNA@scale.data)) {
-            
-            tmp.scale.data <- as.data.frame(RNA@scale.data) %>%
-                tibble::rownames_to_column("ensembl_gene_id") %>%
-                right_join(newnames, ., by = "ensembl_gene_id") %>%
-                tibble::column_to_rownames("external_gene_name") %>%
-                select(-(ensembl_gene_id))
-            RNA@scale.data <- as.matrix(tmp.scale.data)
-            
-            
-            # variable features
-            # wonder if the broken link with meta.features is a problem
-            # print("Changes obj@assays$RNA@var.features")
-            if (length(RNA@var.features) > 0) {
-                
-                # rename variable features with gene names
-                ensemblFeat <- data.frame(hvg = RNA@var.features)
-                geneFeat <- ensemblFeat %>%
-                    left_join(newnames, by = join_by(hvg == ensembl_gene_id))
-                RNA@var.features <- geneFeat$external_gene_name
-                
-                
-                # change rownames of the variable features meta data table
-                # NOT WORKING AS DUPLICATE ROW.NAMES ARE NOT ALLOWED
-                # WORKS AS DUPLICATES ARE REMOVED
-                tmp.meta.features <- RNA@meta.features %>%
-                    tibble::rownames_to_column("ensembl_gene_id") %>%
-                    right_join(newnames, ., by = "ensembl_gene_id") %>%
-                    tibble::column_to_rownames("external_gene_name") %>%
-                    select(-(ensembl_gene_id))
-                RNA@meta.features <- tmp.meta.features
-            }
-            
-        }
-    } else {"Unequal gene sets: nrow(RNA) != nrow(newnames)"}
-    obj@assays$RNA <- RNA
-    return(obj)
+# Function to rename genes in seurat object
+renameFeatures <- function(SO = NULL, assay = "RNA", newNames = NULL) {
+
+	# Focus on a specific assay
+	obj <- SO@assays[[assay]]
+
+	# Replacement labels must have the same length with the data
+	if (length(newNames$external_gene_name) == nrow(obj)) {
+
+		# Replace the names in the counts and data matrices
+		if (length(obj@counts)) obj@counts@Dimnames[[1]]    <- newNames$external_gene_name
+        if (length(obj@data)) obj@data@Dimnames[[1]]        <- newNames$external_gene_name
+	
+		# Replace the names in the scales matrix
+		if (length(obj@scale.data)) dimnames(obj@scale.data)[[1]] <- newNames$external_gene_name
+
+		# Replace the names in the variable features matrices
+		if (length(obj@var.features) > 0) {
+
+			# rename variable features with gene names
+			ensemblFeat <- data.frame(hvg = obj@var.features)
+    	    geneFeat <- ensemblFeat %>%
+				left_join(newNames, by = join_by(hvg == ensembl_gene_id))
+    	    obj@var.features <- geneFeat$external_gene_name
+
+			# change rownames of the variable features meta data table
+			# WORKS ONLY WHEN DUPLICATES ARE REMOVED
+			tmp.meta.features <- obj@meta.features %>%
+				tibble::rownames_to_column("ensembl_gene_id") %>%
+    	        right_join(newNames, ., by = "ensembl_gene_id") %>%
+    	        tibble::column_to_rownames("external_gene_name") %>%
+    	        select(-(ensembl_gene_id))
+			obj@meta.features <- tmp.meta.features
+		}
+
+	} else {
+	   cat("Error: Unequal gene sets: nrow(RNA) != nrow(newnames)")
+	}
+
+	# Return the object
+	SO@assays[[assay]] <- obj
+
+	return(SO)
 }
 
-fltd <- RenameGenesSeurat(obj = SOsubset, newnames = geneNamesUniq)
+
+fltd <- renameFeatures(SOsubset, DefaultAssay(SOsubset), geneNamesUniq)
+if (DefaultAssay(fltd) == "integrated") fltd <- renameFeatures(fltd, "RNA", geneNamesUniq)
+
 fltd
 ```
 
