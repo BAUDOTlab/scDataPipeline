@@ -695,7 +695,7 @@ switch(args[1],
        },
        "combine" = {
           lapply(scenarios, function(scenario){
-            print(paste0("Combining datasets ", paste0(input_datasets, sep=", ", collapse=""), "for scenario ", scenario))
+            print(paste0("Combining datasets ", toString(input_datasets), "for scenario ", scenario))
             rmarkdown::render(
                 "06_combineData_pipeline.Rmd",
                 output_file = file.path(PATH_OUT_HTML, paste0("07_combineData_", DATASET, "_scenario_", scenario, "_",  Sys.Date(), ".html"))
