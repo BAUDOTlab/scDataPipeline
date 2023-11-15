@@ -101,7 +101,9 @@ source("./convert.R")
 
 ```{r convert-to-h5ad}
 input_file <- file.path(PATH_RDS_OBJECTS, paste0("07_preprocessed_", DATASET, "_scenario.", scenario, ".rds"))
-convert(input_file)
+if(!file.exists(gsub(".rds",".h5Seurat", input_file))){
+  convert(input_file)
+}
 ```
 
 ```{python load-py-libraries}
