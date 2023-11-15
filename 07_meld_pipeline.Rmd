@@ -63,6 +63,9 @@ title: "Differential Abundance using MELD"
 
 
 ```{r setup, include = FALSE}
+library(knitr)
+library(reticulate)
+knitr::knit_engines$set(python = reticulate::eng_python)
 options(knitr.purl.inline = TRUE)
 knitr::opts_chunk$set(
   # code evaluation
@@ -83,10 +86,10 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, "/07_MELD"),      # is set later, in chunk setup2
+  #fig.path = paste0(PATH_OUT_FIG, "/07_MELD_"),      # is set later, in chunk setup2
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
-  dev = c("png", "pdf"),
-  out.width = "50%",
+  #dev = c("png", "pdf"),
+  #out.width = "50%",
   fig.width = 12,
   fig.height = 12,
   #fig.asp = 1.3               # fig.height = fig.width * fig.asp
@@ -95,31 +98,33 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r load-r-libraries}
+```{r load-r-libraries, include=FALSE}
 source("./convert.R")
 ```
 
-```{r convert-to-h5ad}
+```{r convert-to-h5ad, include=FALSE}
 input_file <- file.path(PATH_RDS_OBJECTS, paste0("07_preprocessed_", DATASET, "_scenario.", scenario, ".rds"))
-if(!file.exists(gsub(".rds",".h5Seurat", input_file))){
+if(!file.exists(gsub("\\.rds",".h5ad", input_file))){
   convert(input_file)
 }
 ```
 
-```{python load-py-libraries}
+```{python load-py-libraries, include=FALSE}
 import pandas as pd
 import numpy as np
 import meld
 import scanpy as sc
-from matplotlib import colormaps
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scprep
 import sklearn
+from pathlib import Path
 np.random.seed(42)
+mpl.use("agg", force = True)
 ```
 
 ```{python load-data, include = FALSE}
-adata = sc.read_h5ad(Path(r.input_file).with_extension("h5ad"))
+adata = sc.read_h5ad(Path(r.input_file).with_suffix(".h5ad"))
 
 # Get the loadings of the different reductions, the metadata and raw data as a dataframe. We will mostly be using the umap to project the data.
 umap = adata.obsm["X_umap"]
@@ -139,7 +144,7 @@ meld_op = meld.MELD(beta = 67, knn=7)
 sample_densities = meld_op.fit_transform(pca, sample_labels=metadata["orig.ident"])
 ```
 
-```{python plot-meld, eval=FALSE}
+```{python plot-meld, results='asis'}
 fig, axes = plt.subplots(1,2, figsize=(18,8))
 
 # Display the density of the samples on the umap.
@@ -152,16 +157,17 @@ for i, ax in enumerate(axes.flatten()):
     
 
 fig.tight_layout()
+plt.show(fig)
 ```
 
-```{python sample-likelihood}
-def replicate_normalize_densities(sample_densities, replicate):
+```{python sample-likelihood, results='asis'}
+def replicate_normalize_densities(sample_densities, replicates):
     # Get the unique replicates
     sample_likelihoods = sample_densities.copy()
     
     # If there is no replicate, we normalize across the complete conditions
-    if replicate is None:
-      samples_likelihoods = sklearn.preprocessing.normalize(sample_densities, norm="l1")
+    if replicates is None:
+      sample_likelihoods[conditions] = sklearn.preprocessing.normalize(sample_densities[conditions], norm="l1")
     else:
       for rep in replicates:
           # Select the columns of `sample_densities` for that replicate
@@ -171,25 +177,25 @@ def replicate_normalize_densities(sample_densities, replicate):
 
     return sample_likelihoods
 
-sample_likelihoods = replicate_normalize_densities(sample_densities, replicates_markers)
+sample_likelihoods = replicate_normalize_densities(sample_densities, replicate_markers)
 ```
 
 ```{python metadata-prep}
 metadata['cond_likelihood'] = sample_likelihoods[experimental_samples].mean(axis=1).values # store the mean of the condition's replicate
 #metadata["orig.ident"] = [1 if ident == "highDiet" else 0 for ident in metadata['orig.ident']] # Need to turn the orig idents as numbers since we compute the means later on
-pred = pd.read_csv(Path(PATH_ROOT, "07_annotDEAviz", f"transferAnnotation_combinedData_{r.DATASET}.csv"), header=0)
-clusters = pd.read_csv(Path(PATH_ROOT, "08_combineData", f"clustering_{r.DATASET}_scenario.{r.scenario}_meth.{r.CLUST_METH}_res.{r.CLUST_RES}.csv"), header=0)
-colortable = pd.read_csv(Path(PATH_ATLAS, "colorsSheet.csv"), header=0)
+pred = pd.read_csv(Path(r.PATH_ROOT, "07_annotDEAviz", f"transferAnnotation_combinedData_{r.DATASET}.csv"), header=0)
+clusters = pd.read_csv(Path(r.PATH_ROOT, "08_combineData", f"clustering_{r.DATASET}_scenario.{r.scenario}_meth.{r.CLUST_METH}_res.{int(r.CLUST_RES)}.csv"), header=0)
+colortable = pd.read_csv(Path(r.PATH_ATLAS, "colorsSheet.csv"), header=0)
 metadata["prediction"] = pred["predicted.id"].values
 metadata["clusters"] = clusters["integrated_snn_res.1"].values
 
 celltype_colors = dict(zip(colortable["celltype"],colortable["celltype_color"]))
 predcol = [celltype_colors[celltype] for celltype in metadata["prediction"]]
 
-cluster_colors = colormaps["tab20"].resampled(len(np.unique(metadata["clusters"])))
+cluster_colors = mpl.colormaps["tab20"].resampled(len(np.unique(metadata["clusters"])))
 ```
 
-```{python plot-likelihoods}
+```{python plot-likelihoods, results='asis'}
 vmin = np.min(metadata["cond_likelihood"])
 vmax = np.max(metadata["cond_likelihood"])
 
@@ -217,7 +223,9 @@ else:
                             vmin=vmin, vmax=vmax,
                             title=f"{experimental_samples[0]} high contrast", ticks=False, ax=axes[1])
     
-    fig.tight_layout()
+fig.tight_layout()
+plt.show()
+#plt.close(fig)
 ```
 
 ```{python plot-likelihoods-stats}
@@ -233,6 +241,8 @@ if(len(experimental_samples) > 1):
                         cmap='inferno', title='St. Dev.', ticks=False, ax=axes[1])
 
     fig.tight_layout()
+    plt.show(fig)
+    plt.close(fig)
 ```
 
 ```{python clustering}
@@ -242,13 +252,15 @@ scprep.plot.scatter2d(umap, c=metadata["clusters"], cmap=cluster_colors,
                       title='Cluster visualisation', ticks=False, ax=axes[0], legend=False, legend_anchor=(0,2), legend_loc="upper center") # Legend is finicky, will either try to correctly display or delete the chunk
 
 scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
-                      title='Celltypess visualisation', ticks=False, ax=axes[1], legend=False, legend_anchor=(0,2), legend_loc="upper center") # Legend is finicky, will either try to correctly display or delete the chunk
+                      title='Celltypes visualisation', ticks=False, ax=axes[1], legend=False, legend_anchor=(0,2), legend_loc="upper center") # Legend is finicky, will either try to correctly display or delete the chunk
 
 scprep.plot.scatter2d(umap, c=metadata["cond_likelihood"], cmap=meld.get_meld_cmap(),
                         vmin=0, vmax=1,
                         title=f"MELD ({conditions[0]} likelihood)", ticks=False, ax=axes[2])
 
 fig.tight_layout()
+plt.show(fig)
+plt.close(fig)
 ```
 
 ```{python plot-confidence-interval-func, include=FALSE}
@@ -297,4 +309,5 @@ for clustering, ax in zip(["clusters","prediction"],axes):
 
   ax.set_title(f"Likelihood of the {'cluster' if clustering == 'clusters' else 'celltype'} cells.")
 fig.tight_layout()
+plt.show(fig)
 ```

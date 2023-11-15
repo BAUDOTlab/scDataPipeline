@@ -740,14 +740,17 @@ switch(args[1],
           })
        },
        "da" = {
-          lapply(da_meth, function(meth){
-            if(file.exists(paste0("07_",meth,"_pipeline.Rmd"))){
-              rmarkdown::render(
-                paste0("07_",meth,"_pipeline.Rmd"),
-                output_file = file.path(PATH_OUT_HTML, paste0("09_DAanalysis_",meth,"_", DATASET, "_", Sys.Date(), ".html"))
-              )
-            }
-       })
+        lapply(scenarios, function(scenario){
+            lapply(da_meth, function(meth){
+              print(paste0("Performing DA analysis using ", meth, " method on ", DATASET, " dataset for scenario ", scenario))
+              if(file.exists(paste0("07_",meth,"_pipeline.Rmd"))){
+                rmarkdown::render(
+                  paste0("07_",meth,"_pipeline.Rmd"),
+                  output_file = file.path(PATH_OUT_HTML, paste0("09_DAanalysis_", DATASET, "_meth_", meth, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                )
+              }
+        })
+        })
        }
 )
 

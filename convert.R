@@ -3,7 +3,7 @@ convert <- function(inputFile){
     library(SeuratObject)
     library(SeuratDisk)
 
-    outputFile <- gsub(".rds",".h5Seurat", inputFile)
+    outputFile <- gsub("\\.rds",".h5Seurat", inputFile)
 
     cat("\n-----------------------------------------------------------------------------\n")
     print(paste0("Conversion of the file ", inputFile))
