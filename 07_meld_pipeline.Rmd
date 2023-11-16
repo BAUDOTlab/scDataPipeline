@@ -163,7 +163,8 @@ for i in range(len(sample_densities.columns)):
                           vmin=0, 
                           ticks=False)
     plt.tight_layout()
-    
+    plt.show()
+plt.clf()
 ```
 
 ```{python sample-likelihood}
@@ -237,6 +238,7 @@ else:
                             title=f"{experimental_samples[0]} high contrast", ticks=False)
     plt.tight_layout()
     plt.show()
+plt.clf()
 ```
 
 ```{python plot-likelihoods-stats, eval=(length(py$experimental_samples) > 1), echo=(length(py$experimental_samples) > 1), fig.align="default"}
@@ -275,6 +277,7 @@ scprep.plot.scatter2d(umap, c=metadata["cond_likelihood"], cmap=meld.get_meld_cm
                         title=f"MELD ({conditions[0]} likelihood)", ticks=False)
 plt.tight_layout()
 plt.show()
+plt.clf()
 ```
 
 ```{python plot-confidence-interval-func, include=FALSE}
@@ -326,4 +329,5 @@ for clustering in ["clusters","prediction"]:
   plt.title(f"Likelihood of the {'cluster' if clustering == 'clusters' else 'celltype'} cells.")
   plt.tight_layout()
   plt.show()
+plt.clf()
 ```
