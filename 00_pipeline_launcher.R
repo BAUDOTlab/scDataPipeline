@@ -561,7 +561,18 @@ switch(args[1],
         - 'sccomp' performs the SCCOMP method
         - 'all' performs the MELD and SCCOMP methods sequentially (default)
         (required)."
-      )
+      ),
+      make_option(
+        c("-S", "--scenario"),
+        action = "store",
+        default = 1,
+        type = "integer",
+        help = "Select the scenario to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1)."
+        )
     )
     parsed <- OptionParser(
       usage = "Usage: \n\t%prog da [--flag <flag_arg>]",
