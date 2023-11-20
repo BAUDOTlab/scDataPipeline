@@ -103,11 +103,12 @@ knitr::opts_chunk$set(
 To perform differential abundance analysis, the MELD method calculates the relative likelihood that each cell would be observed in either a condition or the other over a manifold approximated from all cells of all conditions.
 In other words, it gives for each cell, how likely it is to be observed in one condition. Using the calculated ratio, it is then possible to identify which cell population react differently to the conditions.
 
+<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8122059/">Original paper available here.</a>
 ```{r load-r-libraries, include=FALSE}
 source("./convert.R")
 ```
 
-# Load `r DATASET` data for scenario `r scenario`
+# Load `r DATASET` data for scenario `r scenario` and compute MELD
 
 ```{r convert-to-h5ad, include=FALSE}
 input_file <- file.path(PATH_RDS_OBJECTS, paste0("07_preprocessed_", DATASET, "_scenario.", scenario, ".rds"))
@@ -152,22 +153,7 @@ meld_op = meld.MELD(beta = 67, knn=7)
 sample_densities = meld_op.fit_transform(pca, sample_labels=metadata["orig.ident"])
 ```
 
-# Density distribution on the UMAP
-
-```{python plot-meld, results='asis', fig.align='default'}
-# Display the density of the samples on the umap.
-for i in range(len(sample_densities.columns)):
-    density = sample_densities.iloc[:,i]
-    scprep.plot.scatter2d(umap, c=density,
-                          title=density.name,
-                          vmin=0, 
-                          ticks=False)
-    plt.tight_layout()
-    plt.show()
-plt.clf()
-```
-
-```{python sample-likelihood}
+```{python sample-likelihood, include=FALSE}
 def replicate_normalize_densities(sample_densities, replicates):
     # Get the unique replicates
     sample_likelihoods = sample_densities.copy()
@@ -187,7 +173,7 @@ def replicate_normalize_densities(sample_densities, replicates):
 sample_likelihoods = replicate_normalize_densities(sample_densities, replicate_markers)
 ```
 
-```{python metadata-prep}
+```{python metadata-prep, include=FALSE}
 metadata['cond_likelihood'] = sample_likelihoods[experimental_samples].mean(axis=1).values # store the mean of the condition's replicate
 #metadata["orig.ident"] = [1 if ident == "highDiet" else 0 for ident in metadata['orig.ident']] # Need to turn the orig idents as numbers since we compute the means later on
 pred = pd.read_csv(Path(r.PATH_ROOT, "07_annotDEAviz", f"transferAnnotation_combinedData_{r.DATASET}.csv"), header=0)
@@ -204,7 +190,12 @@ cluster_colors = mpl.colormaps["tab20"].resampled(len(np.unique(metadata["cluste
 
 # MELD visualisation
 
-```{python plot-likelihoods, results='asis', fig.align='default'}
+The MELD method computes the relative likelihood that each cell is in one sample or the other. The plots below display the umap projection of the likelihood manifold for the `r py$conditions[1]`condition.
+The more a cell is close to 1, the higher the likelihood of it belonging to the `r py$conditions[1]` sample, and inversely. The cells with a likelihood around 0.5 are equivalent in each conditions.
+
+Only one sample is represented here, because the value of a cell for the `r py$conditions[2]` dataset is simply 1 - `r py$conditions[1]` value.
+
+```{python plot-likelihoods, fig.align='default'}
 vmin = np.min(metadata["cond_likelihood"])
 vmax = np.max(metadata["cond_likelihood"])
 
@@ -241,10 +232,12 @@ else:
 plt.clf()
 ```
 
+`r if(length(py$experimental_samples) > 1){ cat("## Replicates mean and standard deviation")}`
+
 ```{python plot-likelihoods-stats, eval=(length(py$experimental_samples) > 1), echo=(length(py$experimental_samples) > 1), fig.align="default"}
 # Display the mean and std between replicates. Only meaningful with technical replicates in one condition.
 # Low standard deviation highlight areas where the cells are similarly enriched or depleted between replicates
-print("## Replicates mean and standard deviation")
+
 scprep.plot.scatter2d(umap, c=sample_likelihoods[experimental_samples].mean(axis=1), 
                     cmap=meld.get_meld_cmap(), vmin=0, vmax=1,
                     title='Mean', ticks=False)
@@ -263,33 +256,30 @@ plt.show()
 #fig, axes = plt.subplots(1,3, figsize=(16,8))
 
 scprep.plot.scatter2d(umap, c=metadata["clusters"], cmap=cluster_colors,
-                      title='Cluster visualisation', ticks=False, legend=False, legend_anchor=(0,2), legend_loc="upper center") # Legend is finicky, will either try to correctly display or delete the chunk
+                      title='Cluster visualisation', ticks=False, discrete=True, legend=True)
 plt.tight_layout()
 plt.show()
 
 scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
-                      title='Celltypes visualisation', ticks=False, legend=False, legend_anchor=(0,2), legend_loc="upper center") # Legend is finicky, will either try to correctly display or delete the chunk
+                      title='Celltypes visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
 plt.tight_layout()
 plt.show()
 
-scprep.plot.scatter2d(umap, c=metadata["cond_likelihood"], cmap=meld.get_meld_cmap(),
-                        vmin=0, vmax=1,
-                        title=f"MELD ({conditions[0]} likelihood)", ticks=False)
-plt.tight_layout()
-plt.show()
 plt.clf()
 ```
 
 ```{python plot-confidence-interval-func, include=FALSE}
 # Function adapted from https://stackoverflow.com/a/70949996
-def plot_confidence_interval(y, values, z=1.96, thresholds=[0.5,0.5], colors=['#2187bb', "red"], vertical_line_width=0.35):
+def plot_confidence_interval(y, values, z=1.96, thresholds=[0.5,0.5], colors=["green", 'blue', "red"], vertical_line_width=0.35):
     mean = np.mean(values)
     stdev = np.std(values)
     confidence_interval = z * stdev #/ np.sqrt(len(values))
-    if (mean > thresholds[1] and mean - confidence_interval > thresholds[1]) or (mean < thresholds[0] and mean + confidence_interval < thresholds[0]):
+    if (mean < thresholds[0] and mean + confidence_interval < thresholds[0]):
         color = colors[0]
-    else:
+    elif (mean > thresholds[1] and mean - confidence_interval > thresholds[1]):
         color = colors[1]
+    else:
+        color = colors[2]
         
     top = y - vertical_line_width / 2
     left = mean - confidence_interval
@@ -300,23 +290,41 @@ def plot_confidence_interval(y, values, z=1.96, thresholds=[0.5,0.5], colors=['#
     plt.plot([right, right], [top, bottom], color=color)
     plt.plot(mean, y, "o", color="black")
 
-    return mean, confidence_interval
+    return {y: color}
 ```
 
 # Confidence interval of the likelihoods
-
-```{python plot-likelihood-clusters, fig.align='default'}
+```{python likelihood-plot-prep, include=FALSE}
 #Sort the index of each cluster from lowest to highest average chd likelihood value
 metadata[f"clustersID"] = scprep.utils.sort_clusters_by_values(metadata["clusters"], metadata["cond_likelihood"])
 metadata[f"predictionID"] = scprep.utils.sort_clusters_by_values(metadata["prediction"], metadata["cond_likelihood"])
+likelihood_cmap = {"clusters":{}, "prediction":{}}
+likelihood_colors = ["green", 'blue', "red"]
+likelihood_thresholds = [0.5,0.5]
+```
 
-#fig, axes = plt.subplots(1,2, figsize = (15,6))
+The likelihood of each cluster can be plotted just like the individual cells. Here, the cells the clusters and celltypes significantly **depleted** in the `r py$conditions[1]` dataset are highlighted
+in `r py$likelihood_colors[1]`, and those significantly **enriched** are highlighted in `r py$likelihood_colors[2]`. Clusters and celltypes with no significant difference are in `r py$likelihood_colors[3]`.
+To be considered significantly depleted, a cluster must have a 95% credible interval below `r py$likelihood_thresholds[1]` likelihood, and above `r py$likelihood_thresholds[2]` to be significantly enriched.
+
+Below, the clusters are colored depending on their depletion/enrichment.
+
+```{python plot-likelihood-clusters, fig.align='default'}
+
+legend_lines = [mpl.lines.Line2D([0], [0], marker = "o", color = likelihood_colors[0], markerfacecolor = "black"),
+                mpl.lines.Line2D([0], [0], marker = "o", color = likelihood_colors[1], markerfacecolor = "black"),
+                mpl.lines.Line2D([0], [0], marker = "o", color = likelihood_colors[2], markerfacecolor = "black")]
+legend_scatter = [mpl.lines.Line2D([0], [0], marker="o", color = "white", markerfacecolor = likelihood_colors[0]),
+                  mpl.lines.Line2D([0], [0], marker="o", color = "white", markerfacecolor = likelihood_colors[1]),
+                  mpl.lines.Line2D([0], [0], marker="o", color = "white", markerfacecolor = likelihood_colors[2])]
+legend_labels =  ["Significantly depleted","Significantly enriched","No significant difference"]
 
 for clustering in ["clusters","prediction"]:
   clusters, counts = np.unique(metadata[clustering], return_counts=True)
 
   for pred in np.unique(metadata[f"{clustering}ID"]):
-      plot_confidence_interval(pred, metadata.loc[metadata[f"{clustering}ID"] == pred, "cond_likelihood"])
+    clust_cmap = plot_confidence_interval(pred, metadata.loc[metadata[f"{clustering}ID"] == pred, "cond_likelihood"], thresholds = likelihood_thresholds, colors=likelihood_colors)
+    likelihood_cmap[clustering].update(clust_cmap)
 
   plt.axvline(0.5, linestyle = '--', color='grey', zorder=0)
 
@@ -326,8 +334,22 @@ for clustering in ["clusters","prediction"]:
   ylabel = [f"{clust} ({counts[list(clusters).index(clust)]})" for clust in metadata.set_index(f"{clustering}ID")[clustering].drop_duplicates()]
   plt.yticks(metadata[f"{clustering}ID"].drop_duplicates(), ylabel)
 
-  plt.title(f"Likelihood of the {'cluster' if clustering == 'clusters' else 'celltype'} cells.")
+  plt.title(f"Likelihood of the {'cluster' if clustering == 'clusters' else 'celltype'} cells enrichment in {conditions[0]} condition")
+
+  plt.legend(legend_lines,legend_labels, loc="center right",fontsize="large")
   plt.tight_layout()
   plt.show()
+
+scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=likelihood_cmap["clusters"],
+                      title='Cluster likelihoods', ticks=False, legend=False)
+plt.legend(legend_scatter,legend_labels, loc="upper right",fontsize="large")
+plt.tight_layout()
+plt.show()
+
+scprep.plot.scatter2d(umap, c=metadata["predictionID"], cmap=likelihood_cmap["prediction"],
+                      title='Celltypes likelihoods', ticks=False, legend=False)
+plt.legend(legend_scatter,legend_labels, loc="upper right",fontsize="large")
+plt.tight_layout()
+plt.show()
 plt.clf()
 ```

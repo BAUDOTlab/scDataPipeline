@@ -655,7 +655,7 @@ if (TRUE){
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # da variables --------------------------------
     da_meth = if (exists("DA_METH")) DA_METH else opt$options$daMethod
-    if(da_meth == "all"){
+    if(!is.null(da_meth) && da_meth == "all"){
       da_meth = list("meld","sccomp")
     }
     # unclassified variables ---------------------
