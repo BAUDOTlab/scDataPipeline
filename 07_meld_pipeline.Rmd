@@ -360,12 +360,28 @@ for clustering in ["clusters","prediction"]:
 
 scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=likelihood_cmap["clusters"],
                       title='Cluster likelihoods', ticks=False, legend=False)
+for cluster in metadata["clusters"]:
+  plt.annotate(cluster, 
+    umap[metadata['clusters']==cluster].mean(axis=0),
+    horizontalalignment='center',
+    verticalalignment='center',
+    size=10, weight='bold',
+    color="black", backgroundcolor="white")
+
 plt.legend(legend_scatter,legend_labels, loc="upper right",fontsize="large")
 plt.tight_layout()
 plt.show()
 
 scprep.plot.scatter2d(umap, c=metadata["predictionID"], cmap=likelihood_cmap["prediction"],
                       title='Celltypes likelihoods', ticks=False, legend=False)
+for pred in metadata["prediction"]:
+  plt.annotate(pred, 
+    umap[metadata["prediction"]==pred].mean(axis=0),
+    horizontalalignment='center',
+    verticalalignment='center',
+    size=8,
+    color="black", backgroundcolor="white")
+
 plt.legend(legend_scatter,legend_labels, loc="upper right",fontsize="large")
 plt.tight_layout()
 plt.show()
