@@ -128,7 +128,7 @@ colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.tabl
 # PATHS
 PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
-PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "07_annotDEAviz")
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "08_combineData")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 ```
 
@@ -343,13 +343,13 @@ markers.sign <- markers.sign[order(markers.sign$cluster), ]
 markers.sign <- markers.sign[ , c(6, 7, 2:4, 1, 5)]
 write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
                                                paste0("markers_min.pct_logFC_default_", 
-                                                      DATASET, ".integ.res_", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+                                                      DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
 topNmarkers <- extract_top_features(markers.sign, topn = top_markers)
 
 
 write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
-                                              paste0("top_", top_markers, "_markers_", DATASET, "_filtered.csv")), sep = ",", row.names = F, col.names = T)
+                                              paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
 datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
 ```
