@@ -257,11 +257,29 @@ plt.show()
 
 scprep.plot.scatter2d(umap, c=metadata["clusters"], cmap=cluster_colors,
                       title='Cluster visualisation', ticks=False, discrete=True, legend=True)
+
+for cluster in metadata["clusters"]:
+  plt.annotate(cluster, 
+    umap[metadata['clusters']==cluster].mean(axis=0),
+    horizontalalignment='center',
+    verticalalignment='center',
+    size=10, weight='bold',
+    color="black")
+
 plt.tight_layout()
 plt.show()
 
 scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
                       title='Celltypes visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
+
+for pred in metadata["prediction"]:
+  plt.annotate(pred, 
+    umap[metadata["prediction"]==pred].mean(axis=0),
+    horizontalalignment='center',
+    verticalalignment='center',
+    size=8,
+    color="black")
+
 plt.tight_layout()
 plt.show()
 
