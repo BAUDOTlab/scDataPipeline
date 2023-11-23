@@ -673,6 +673,12 @@ if (combinedD) {
 	FILTER = "filtered"
 }
 
+atlas <- TRUE
+
+if(!(is.null(PATH_ATLAS_FILE) && !file.exists(PATH_ATLAS_FILE)) && args[1] %in% c("dea","ctrl","da")){
+  print("No atlas file provided. Some parts of the report will not be generated.")
+  atlas <- FALSE
+}
 
 checkDirHierarchy()
 
