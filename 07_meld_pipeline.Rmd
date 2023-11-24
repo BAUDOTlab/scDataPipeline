@@ -372,18 +372,10 @@ plt.legend(legend_scatter,legend_labels, loc="upper right",fontsize="large")
 plt.tight_layout()
 plt.show()
 
-scprep.plot.scatter2d(umap, c=metadata["predictionID"], cmap=likelihood_cmap["prediction"],
-                      title='Celltypes likelihoods', ticks=False, legend=False)
-for pred in metadata["prediction"]:
-  plt.annotate(pred, 
-    umap[metadata["prediction"]==pred].mean(axis=0),
-    horizontalalignment='center',
-    verticalalignment='center',
-    size=8,
-    color="black", backgroundcolor="white")
-
-plt.legend(legend_scatter,legend_labels, loc="upper right",fontsize="large")
+scprep.plot.scatter2d(umap, c=metadata["orig.ident"], cmap=mpl.colormaps["tab10"](range(len(conditions))),
+                      title='Cell distribution by conditions', ticks=False, legend=True)
 plt.tight_layout()
 plt.show()
+
 plt.clf()
 ```
