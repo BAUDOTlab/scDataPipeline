@@ -1,4 +1,4 @@
-convert <- function(inputFile){
+seurat_to_h5ad <- function(inputFile){
     library(Seurat)
     library(SeuratObject)
     library(SeuratDisk)
