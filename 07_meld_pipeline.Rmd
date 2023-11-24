@@ -105,15 +105,17 @@ In other words, it gives for each cell, how likely it is to be observed in one c
 
 <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8122059/">Original paper available here.</a>
 ```{r load-r-libraries, include=FALSE}
-source("./convert.R")
+source("./conversions.R")
 ```
 
 # Load `r DATASET` data for scenario `r scenario` and compute MELD
 
 ```{r convert-to-h5ad, include=FALSE}
 input_file <- file.path(PATH_RDS_OBJECTS, paste0("07_preprocessed_", DATASET, "_scenario.", scenario, ".rds"))
-if(!file.exists(gsub("\\.rds",".h5ad", input_file))){
-  convert(input_file)
+converted_file <- gsub("\\.rds",".h5ad", input_file)
+# Run the conversion if the converted file does not exist or the input file is newer
+if(!(file.exists(converted_file) && file.info(input_file)$mtime < file.info(converted_file)$mtime)){
+  seurat_to_h5ad(input_file)
 }
 ```
 
@@ -269,22 +271,28 @@ for cluster in metadata["clusters"]:
 plt.tight_layout()
 plt.show()
 
-scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
-                      title='Celltypes visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
+# scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
+#                       title='Celltypes visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
 
-for pred in metadata["prediction"]:
-  plt.annotate(pred, 
-    umap[metadata["prediction"]==pred].mean(axis=0),
-    horizontalalignment='center',
-    verticalalignment='center',
-    size=8,
-    color="black")
+# for pred in metadata["prediction"]:
+#   plt.annotate(pred, 
+#     umap[metadata["prediction"]==pred].mean(axis=0),
+#     horizontalalignment='center',
+#     verticalalignment='center',
+#     size=8,
+#     color="black")
 
-plt.tight_layout()
+# plt.tight_layout()
+# plt.show()
+
+celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, "06_annotDEAviz_celltype-dimplot-1.png"))
+plt.imshow(celltypes_plot)
 plt.show()
 
 plt.clf()
 ```
+
+<!-- ![celltype plot](`r PATH_OUT_FIG`/06_annotDEAviz_celltype-dimplot-1.png) -->
 
 ```{python plot-confidence-interval-func, include=FALSE}
 # Function adapted from https://stackoverflow.com/a/70949996
