@@ -272,9 +272,24 @@ for cluster in metadata["clusters"]:
 plt.tight_layout()
 plt.show()
 
-celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, "06_annotDEAviz_celltype-dimplot-1.png"))
-plt.imshow(celltypes_plot)
-plt.show()
+if r.atlas:
+  scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
+                        title='Celltypes visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
+
+  for pred in metadata["prediction"]:
+    plt.annotate(pred, 
+      umap[metadata["prediction"]==pred].mean(axis=0),
+      horizontalalignment='center',
+      verticalalignment='center',
+      size=8,
+      color="black")
+
+  plt.tight_layout()
+  plt.show()
+
+# celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, "06_annotDEAviz_celltype-dimplot-1.png"))
+# plt.imshow(celltypes_plot)
+# plt.show()
 
 plt.clf()
 ```
