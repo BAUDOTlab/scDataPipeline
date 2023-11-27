@@ -352,11 +352,12 @@ switch(args[1],
           action = "store",
           default = 1,
           type = "integer",
-          help = "Select the scenario to run:
-                1 - no regression on cell cycle
-                2 - global cell cycle regression, all phases are regressed
-                3 - cycling cell cycle regression, G2M and S phases are regressed
-				(default: 1)."
+          help = "Select the scenario(s) to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
       ),
       make_option(
           c("-t", "--top_pcs"),
@@ -513,11 +514,12 @@ switch(args[1],
               action = "store",
               default = 1,
               type = "integer",
-              help = "Select the scenario to run:
-                1 - no regression on cell cycle
-                2 - global cell cycle regression, all phases are regressed
-                3 - cycling cell cycle regression, G2M and S phases are regressed
-				(default: 1)."
+              help = "Select the scenario(s) to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
           ),
           make_option(
               c("-c", "--combineMethod"),
@@ -567,11 +569,12 @@ switch(args[1],
         action = "store",
         default = 1,
         type = "integer",
-        help = "Select the scenario to run:
+        help = "Select the scenario(s) to run:
           1 - no regression on cell cycle
           2 - global cell cycle regression, all phases are regressed
           3 - cycling cell cycle regression, G2M and S phases are regressed
-      (default: 1)."
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
         )
     )
     parsed <- OptionParser(
