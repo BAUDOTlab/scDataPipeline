@@ -25,6 +25,7 @@ Pipeline Order:
 7) combine
 8) process (last time)
 9) dea (last time aswell)
+10) da
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the
@@ -54,7 +55,7 @@ if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine")) {
+if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine", "da")) {
   cat(main_help)
   quit(status = 1)
 }
@@ -539,6 +540,48 @@ switch(args[1],
           epilogue = "Add some details, examples, ...",
           formatter = IndentedHelpFormatter # TitleHelpFormatter
       )
+  },
+  "da" = {
+    option_list7 <- list(
+      make_option(
+        c("-i", "--input_dataset"),
+        action = "store",
+        default = NA,
+        type = "character",
+        help = "Name of the dataset to process
+          (required)."
+      ),
+      make_option(
+        c("-m", "--daMethod"),
+        action = "store",
+        default = "all",
+        type = "character",
+        help = "Comma separated list of the methods to use for differential abundance analysis:
+        - 'meld' performs the MELD method
+        - 'sccomp' performs the SCCOMP method
+        - 'all' performs the MELD and SCCOMP methods sequentially (default)
+        (required)."
+      ),
+      make_option(
+        c("-S", "--scenario"),
+        action = "store",
+        default = 1,
+        type = "integer",
+        help = "Select the scenario to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1)."
+        )
+    )
+    parsed <- OptionParser(
+      usage = "Usage: \n\t%prog da [--flag <flag_arg>]",
+      option_list = option_list7,
+      add_help_option = TRUE,
+      description = "\nPerform differential abundance analysis on the dataset.",
+      epilogue = "Add some details, examples, ...",
+      formatter = IndentedHelpFormatter # TitleHelpFormatter
+    )
   }
 )
 
@@ -610,6 +653,11 @@ if (TRUE){
     scenarios = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl if set to 1 (ie not interested in CC regression)
     # combining multiple datasets
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
+    # da variables --------------------------------
+    da_meth = if (exists("DA_METH")) DA_METH else opt$options$daMethod
+    if(!is.null(da_meth) && da_meth == "all"){
+      da_meth = list("meld","sccomp")
+    }
     # unclassified variables ---------------------
     manual = opt$options$manual
     combinedD = if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
@@ -701,6 +749,19 @@ switch(args[1],
                 output_file = file.path(PATH_OUT_HTML, paste0("07_combineData_", DATASET, "_scenario_", scenario, "_",  Sys.Date(), ".html"))
             )
           })
+       },
+       "da" = {
+        lapply(scenarios, function(scenario){
+            lapply(da_meth, function(meth){
+              print(paste0("Performing DA analysis using ", meth, " method on ", DATASET, " dataset for scenario ", scenario))
+              if(file.exists(paste0("07_",meth,"_pipeline.Rmd"))){
+                rmarkdown::render(
+                  paste0("07_",meth,"_pipeline.Rmd"),
+                  output_file = file.path(PATH_OUT_HTML, paste0("09_DAanalysis_", DATASET, "_meth_", meth, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                )
+              }
+        })
+        })
        }
 )
 
