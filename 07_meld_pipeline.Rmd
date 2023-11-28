@@ -178,7 +178,7 @@ sample_likelihoods = replicate_normalize_densities(sample_densities, replicate_m
 ```{python metadata-prep, include=FALSE}
 metadata['cond_likelihood'] = sample_likelihoods[experimental_samples].mean(axis=1).values # store the mean of the condition's replicate
 #metadata["orig.ident"] = [1 if ident == "highDiet" else 0 for ident in metadata['orig.ident']] # Need to turn the orig idents as numbers since we compute the means later on
-pred = pd.read_csv(Path(r.PATH_ROOT, "07_annotDEAviz", f"transferAnnotation_combinedData_{r.DATASET}.csv"), header=0)
+pred = pd.read_csv(Path(r.PATH_ROOT, "07_annotDEAviz", f"transferAnnotation_combinedData_{r.DATASET}_scenario.{r.scenario}.csv"), header=0)
 clusters = pd.read_csv(Path(r.PATH_ROOT, "08_combineData", f"clustering_{r.DATASET}_scenario.{r.scenario}_meth.{r.CLUST_METH}_res.{int(r.CLUST_RES)}.csv"), header=0)
 colortable = pd.read_csv(Path(r.PATH_ATLAS, "colorsSheet.csv"), header=0)
 metadata["prediction"] = pred["predicted.id"].values
