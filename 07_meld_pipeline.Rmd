@@ -86,7 +86,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, "/07_MELD_"),      # is set later, in chunk setup2
+  fig.path = paste0(PATH_OUT_FIG, "/07_MELD_scenario_", scenario, "_"),      # is set later, in chunk setup2
   fig.show = "hold",         # tuned to "hold" in multiple plots chunk
   dev = "png",
   out.width = "50%",
