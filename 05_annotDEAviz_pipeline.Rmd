@@ -270,7 +270,11 @@ feature list to the remaining ensembl gene IDs.
 
 ```{r RenameGenesSeurat, eval=(gn_col == 1), echo=(gn_col==1)}
 # Remove ensembl gene IDs with multiple match to gene names
-geneNamesUniq <- geneNames108[-which(geneNames108$ensembl_gene_id %in% ifelse(dim(duplicatesGN)[1] !=0, duplicatesGN$ensembl_gene_id, geneNames108$ensembl_gene_id)),]
+if (dim(duplicatesGN)[1] !=0) {
+    geneNamesUniq <- geneNames108[!geneNames108$ensembl_gene_id %in% duplicatesGN$ensembl_gene_id, ]
+} else {
+    geneNamesUniq <- geneNames108
+}
 
 SOsubset <- subset(fltd, features = geneNamesUniq$ensembl_gene_id)
 
