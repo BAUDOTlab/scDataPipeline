@@ -619,6 +619,15 @@ if (grepl("\\s+", DATASET)) {
     stop("Error: DATASET contains spaces. Please ensure there are no spaces in the DATASET.")
 }
 
+
+if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea","ctrl","da")){
+  print("No atlas file provided. Some parts of the report will not be generated.")
+  atlas <- FALSE
+} else {
+  atlas <- TRUE
+}
+
+
 if (TRUE){
     general_seed = as.numeric(general_seed)
     # qc pipeline variables ----------------------
@@ -676,12 +685,6 @@ if (combinedD) {
 	FILTER = "filtered"
 }
 
-atlas <- TRUE
-
-if(!(is.null(PATH_ATLAS_FILE) && !file.exists(PATH_ATLAS_FILE)) && args[1] %in% c("dea","ctrl","da")){
-  print("No atlas file provided. Some parts of the report will not be generated.")
-  atlas <- FALSE
-}
 
 checkDirHierarchy()
 
