@@ -143,7 +143,7 @@ knitr::opts_chunk$set(
   eval = TRUE,
   
   # figures
-  fig.path = paste0(PATH_OUT_FIG, "/03_1_manualCtrl_")
+  fig.path = paste0(PATH_OUT_FIG, "/03_1_manualCtrl/")
 )
 ```
 

@@ -85,7 +85,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, ifelse(!goodQ, "/02_process_", paste0("/05_process_scenario_", scenario, "_"))),
+  fig.path = paste0(PATH_OUT_FIG, ifelse(!goodQ, "/02_process/", paste0("/05_process_scenario_", scenario, "/"))),
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   out.width = "50%",

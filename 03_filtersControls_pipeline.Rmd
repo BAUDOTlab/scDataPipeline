@@ -86,7 +86,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, "/03_filtersCheck_"),      # is set later, in chunk setup2
+  fig.path = paste0(PATH_OUT_FIG, "/03_filters/"),      # is set later, in chunk setup2
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   out.width = "50%",
