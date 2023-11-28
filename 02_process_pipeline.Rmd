@@ -105,7 +105,7 @@ library(stringr)
 library(ggplot2)
 library(tibble)
 
-source("./data_management.R")
+source("./data_management.R", local = TRUE)
 ```
 
 ```{r get-params, include = FALSE}
