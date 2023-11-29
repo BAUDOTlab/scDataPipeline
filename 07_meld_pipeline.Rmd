@@ -291,6 +291,10 @@ if r.atlas:
 # plt.imshow(celltypes_plot)
 # plt.show()
 
+celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, f"06_annotDEAviz_scenario_{r.scenario}_celltype-dimplot-1.png"))
+plt.imshow(celltypes_plot)
+plt.show()
+
 plt.clf()
 ```
 
@@ -370,7 +374,7 @@ for clustering in clustering_type:
   plt.tight_layout()
   plt.show()
 
-scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=likelihood_cmap["clusters"],
+scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=meld.get_meld_cmap().resample(3),
                       title='Cluster likelihoods', ticks=False, legend=False)
 for cluster in metadata["clusters"]:
   plt.annotate(cluster, 
