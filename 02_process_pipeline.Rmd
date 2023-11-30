@@ -85,7 +85,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, ifelse(!goodQ, "/02_process_", "/05_process_")),
+  fig.path = paste0(PATH_OUT_FIG, ifelse(!goodQ, "/02_process_", paste0("/05_process_scenario_", scenario, "_"))),
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   out.width = "50%",
@@ -105,7 +105,7 @@ library(stringr)
 library(ggplot2)
 library(tibble)
 
-source("./data_management.R")
+source("./data_management.R", local = TRUE)
 ```
 
 ```{r get-params, include = FALSE}
