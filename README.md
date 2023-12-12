@@ -36,9 +36,9 @@ This may take several minutes. Some packages must be installed manually in a R c
 - [SeuratDisk](https://github.com/mojaveazure/seurat-disk)
 
 ```R
-install.packages("scCustomize")
 install.packages("remotes")
 remotes::install_github("mojaveazure/seurat-disk")
+remotes::install_version("scCustomize", version="1.1.1")
 ```
 
 ### Installation

@@ -126,7 +126,6 @@ dependencies:
   - matplotlib-base=3.7.1=py310he60537e_0
   - munkres=1.1.4=pyh9f0ad1d_0
   - natsort=8.4.0=pyhd8ed1ab_0
-  - ncurses=6.3=h27087fc_1
   - networkx=3.1=pyhd8ed1ab_0
   - nomkl=1.0=h5ca1d4c_0
   - numba=0.57.1=py310h0f6aa51_0
@@ -336,8 +335,8 @@ dependencies:
   - r-sctransform=0.3.4=r41hef8c1a7_0
   - r-selectr=0.4_2=r41hc72bb7e_1
   - r-sessioninfo=1.2.2=r41hc72bb7e_0
-  - r-seurat=4.1.1=r41h7525677_0
-  - r-seuratobject=4.1.1=r41h7525677_0
+  - r-seurat=4.3.0=r41h7525677_0
+  - r-seuratobject=4.1.3=r41h7525677_0
   - r-shiny=1.7.2=r41h785f33e_0
   - r-sitmo=2.0.2=r41h7525677_0
   - r-sourcetools=0.1.7=r41h03ef668_1002
