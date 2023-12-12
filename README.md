@@ -12,9 +12,10 @@ At each step, the state of the seurat object is saved in a RDS file and all requ
 - Quality Control.
 - Filtering according to QC thresholds, [DoubletFinder](https://github.com/chris-mcginnis-ucsf/DoubletFinder) and undesired cells, such as Red Blood Cells.
 - Downstream analysis along 3 scenarios : no regression, global cell cycle regression, and cycling cell regression.
-- Differential Expression Analysis
-- Differential Composition Analysis
-- **[TBD]** Differential Gene Set Expression 
+- Differential Expression Analysis.
+- Dataset combination (via merging or integration).
+- Differential Composition Analysis.
+- **[TBD]** Differential Gene Set Expression.
 
 ## Getting Started
 
@@ -86,7 +87,7 @@ Need help? Post your question on the [issue board](https://github.com/BAUDOTlab/
 
 ## Contributing
 
-As this project is still under active development, it might be hard to contribute from outside the team. However, suggestions are always welcome!
+As this project is still under active development, it might be hard to contribute from outside the team. However, suggestions are always welcomed!
 
 ## License
 
