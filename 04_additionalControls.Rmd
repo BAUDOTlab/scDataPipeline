@@ -616,7 +616,7 @@ For a single dataset, we get 3 objects to process:
 
 - object 2, where doublets were removed and a global regression was applied, and
 
-- object 3: where doublets were removed and a regression on cycling cells was
+- object 3, where doublets were removed and a regression on cycling cells was
 applied.
 
 We also removed the red blood cells (RBCs) of all these objects, as soon as
