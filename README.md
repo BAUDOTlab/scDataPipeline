@@ -106,7 +106,10 @@ Rscript 00_pipeline_launcher.R filters -i YOUR_DATASET --manual               # 
 Rscript 00_pipeline_launcher.R ctrl -i YOUR_DATASET
 Rscript 00_pipeline_launcher.R process -i YOUR_DATASET --filter filtered --good_quality
 Rscript 00_pipeline_launcher.R dea -i YOUR_DATASET
-Rscript 00_pipeline_launcher.R da -i YOUR_DATASET -m meld
+Rscript 00_pipeline_launcher.R combine -I YOUR_DATASET,YOUR_SECOND_DATASET
+Rscript 00_pipeline_launcher.R process -i YOUR_COMBINED_DATASET
+Rscript 00_pipeline_launcher.R dea -i YOUR_COMBINED_DATASET
+Rscript 00_pipeline_launcher.R da -i YOUR_COMBINED_DATASET -m meld
 ```
 
 ## Getting Help
