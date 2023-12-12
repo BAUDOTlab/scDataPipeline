@@ -25,8 +25,20 @@ At each step, the state of the seurat object is saved in a RDS file and all requ
 
 Run the following command to install all the packages needed for the pipeline in a new environment:
 
-```
+```bash
 conda env create -f environment.yml
+conda activate scDataPipeline
+```
+
+This may take several minutes. Some packages must be installed manually in a R console:
+
+- [scCustomize](https://github.com/samuel-marsh/scCustomize)
+- [SeuratDisk](https://github.com/mojaveazure/seurat-disk)
+
+```R
+install.packages("scCustomize")
+install.packages("remotes")
+remotes::install_github("mojaveazure/seurat-disk")
 ```
 
 ### Installation
@@ -49,7 +61,7 @@ cp scDataPipeline/globalParameters* 01_requirements/
 
 ### Filling the parameter files
 
-There is two types of parameter files: [name] for single datasets and [name2] for combined datasets. Note that in both case, the file must have the exact value of `DATASET` in its name.
+There is two types of parameter files: **globalParameters_MODEL_single.toml** for single datasets and **globalParameters_MODEL_combined.toml** for combined datasets. Note that in both case, the file must have the exact value of `DATASET` in its name.
 
 #### Regarding the paths
 
