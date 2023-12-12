@@ -14,15 +14,19 @@ At each step, the state of the seurat object is saved in a RDS file and all requ
 - Downstream analysis along 3 scenarios : no regression, global cell cycle regression, and cycling cell regression.
 - Differential Expression Analysis
 - Differential Composition Analysis
-- [TBD] Differential Gene Set Expression 
+- **[TBD]** Differential Gene Set Expression 
 
 ## Getting Started
 
 ### Requirements
 
+- `conda`
+
 Run the following command to install all the packages needed for the pipeline in a new environment:
 
-```conda env create -f requirements.txt```
+```
+conda env create -f environment.yml
+```
 
 ### Installation
 
@@ -48,22 +52,42 @@ There is two types of parameter files: [name] for single datasets and [name2] fo
 
 #### Regarding the paths
 
-`PATH_ROOT` must contain the absolute path towards the root folder of our project. The other paths included in `path.input` and `path.output` are either absolute paths **OR** paths relative to `PATH_ROOT`, with the exception of `PATH_ATLAS_FILE`, which is relative to `PATH_ATLAS`.
+`PATH_ROOT` must contain the absolute path towards the root folder of our project. The other paths included in `path.input` and `path.output` **MUST BE** paths relative to `PATH_ROOT`, with the exception of `PATH_ATLAS_FILE`, which is relative to `PATH_ATLAS`.
 
 ## How to use
 
 There is only one script you need to launch each time. Go into the scDataPipeline folder, then run:
 
-```Rscript 00_pipeline_launcher.R -h```
+```
+Rscript 00_pipeline_launcher.R -h
+```
 
 To see a list of the different steps, then to see the arguments of the step you want run, for example `qc`:
 
-```Rscript 00_pipeline_launcher.R qc -h```
+```
+Rscript 00_pipeline_launcher.R qc -h
+```
 
 When running long steps such as `ctrl` or `dea`, it might be a good idea to use `nohup` and `&` to be able to still use the shell while the program is running like so:
 
-```nohup Rscript 00_pipeline_launcher.R ctrl -i [dataset_name] &```
+```
+nohup Rscript 00_pipeline_launcher.R ctrl -i [dataset_name] &
+```
 
 And then you can access the output of the script with
 
-```tail -f nohup.out```
+```
+tail -f nohup.out
+```
+
+## Getting Help
+
+Need help? Post your question on the [issue board](https://github.com/BAUDOTlab/scDataPipeline/issues) and we'll do our best to answer.
+
+## Contributing
+
+As this project is still under active development, it might be hard to contribute from outside the team. However, suggestions are always welcome!
+
+## License
+
+The scDataPipeline is distributed under the **MIT license**. See [LICENSE](./LICENSE) for more details.
