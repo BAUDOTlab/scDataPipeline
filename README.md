@@ -93,6 +93,22 @@ And then you can access the output of the script with
 tail -f nohup.out
 ```
 
+### Example workflow
+
+If you want to stick to the pipeline's defaults or have already written all your parameters in the parameter files, you can run the following lines for the complete workflow. Note that you should run all the steps one after the other, and always check the HTML report before going on. Some steps, like `qc` and `filters --manual` are designed to be rerunned multiple times to adjust the thresholds before the effective filtering of the data.
+
+```bash
+Rscript 00_pipeline_launcher.R qc -i ${data} &> ../60_LOGS/01_qc_${data}.out
+Rscript 00_pipeline_launcher.R process -i $data --filter complete
+Rscript 00_pipeline_launcher.R process -i $data --filter filtered
+Rscript 00_pipeline_launcher.R filters -i ${data}
+Rscript 00_pipeline_launcher.R filters -i ${data} --manual               # Optional step
+Rscript 00_pipeline_launcher.R ctrl -i ${data}
+Rscript 00_pipeline_launcher.R process -i $data --filter filtered --good_quality
+Rscript 00_pipeline_launcher.R dea -i ${data}
+Rscript 00_pipeline_launcher.R da -i ${data} -m meld
+```
+
 ## Getting Help
 
 Need help? Post your question on the [issue board](https://github.com/BAUDOTlab/scDataPipeline/issues) and we'll do our best to answer.
