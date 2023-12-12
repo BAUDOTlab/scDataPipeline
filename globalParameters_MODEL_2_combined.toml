@@ -1,0 +1,57 @@
+# Welcome to the config file relative to a dataset
+
+# WARNING: the title must contain the name of the DATASET as defined in the
+# file.
+
+
+# ===================
+# required parameters
+# ===================
+DATASET = "MODEL_2"
+
+
+# general parameters
+general_seed = 17
+
+# analysis gene reference
+GENE_NAME_COLUMN = 1			# 1 or 2 (see raw data features file)
+
+# scenario to select from the step dea
+REGRESSION_SCENARIO = [1]	# list of scenario(s): 1 or 2 or 3 or any combination
+
+[path]
+PATH_ROOT = "XXXXX"
+
+[path.input]
+PATH_ATLAS = "XXXXX"
+PATH_ATLAS_FILE = "XXXXX"
+# optional params
+PATH_GENES_OF_INTEREST = "XXXXX"		# path from the PATH_ROOT to the list of genes of interest
+
+[path.output]
+PATH_RDS_OBJECTS	= "50_rdsObjects"	# create path PATH_ROOT/PATH_RDS_OBJECTS
+PATH_OUT_HTML		= "51_htmlFiles"	# create path PATH_ROOT/PATH_OUT_HTML
+PATH_OUT_FIG		= "52_figures"		# create path PATH_ROOT/PATH_OUT_FIG/DATASET
+
+
+
+# ===================
+# optional parameters
+# ===================
+[process]
+NORM_METH = "LogNormalize"			# LogNormalize or SCTransform
+HVG_METH = "mvp"					# mvp, vst or disp
+HVG_NUM = false						# mvp doesn't need HVG_NUM, vst and disp does	
+DO_SCALE = false
+PCA_NPCS = 50
+PCA_PRINT = 20
+TOP_PCS = 30
+CLUST_RES = 1.0
+CLUST_METH = 4					# 1: Louvain, 2: Louvain multilevel refinement, 3: SLM or 4: Leiden
+
+[combine]
+COMB_METH = "blkS"				# Select on of "merge" or "blks" or "seqS"
+
+
+
+
