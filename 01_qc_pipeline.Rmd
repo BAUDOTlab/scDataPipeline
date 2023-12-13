@@ -522,3 +522,9 @@ export_rds(SO_subset, paste0("01_qc_", DATASET, "_filtered.rds"))
 ```{r garbage-collec1, include = FALSE}
 invisible(gc())
 ```
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```

@@ -243,3 +243,9 @@ run_chunk("dimplot-cluster-fltd}", envir = environment())
 ```{r save4-12, eval=FALSE, echo=FALSE, results='asis'}
 run_chunk("save4-1", envir = environment())
 ```
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```

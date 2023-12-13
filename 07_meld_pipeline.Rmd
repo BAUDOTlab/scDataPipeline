@@ -387,3 +387,9 @@ plt.show()
 
 plt.clf()
 ```
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```
