@@ -183,7 +183,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 
 
 
-```{r, results='asis', eval=(gn_col == 1 && atlas), echo=(gn_col==1)}
+```{r, results='asis', eval=(gn_col == 1), echo=(gn_col==1)}
 cat("
 
 # Map ensembl IDs to gene names
@@ -218,7 +218,7 @@ write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, "correspondanceENS
 duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
 ```
 
-```{r, eval=(gn_col == 1 && atlas), results='asis'}
+```{r, eval=(gn_col == 1), results='asis'}
 cat(paste0("
 The ", DATASET," dataset has **", length(ensembl.ids), "** different feature genes
 comprising ", length(manInsert), " manually inserted genes:  
@@ -242,7 +242,7 @@ Number of unique retrieved gene names: **", length(unique(geneNames108$external_
 ```
 
 
-```{r echo=FALSE, eval=atlas && dim(duplicatesGN)[1] !=0, results='asis'}
+```{r echo=FALSE, eval=dim(duplicatesGN)[1] !=0, results='asis'}
 cat("
 
 Some gene names fit multiple ensembl gene IDs. Below you can see the table of
@@ -268,7 +268,7 @@ feature list to the remaining ensembl gene IDs.
 ")
 ```
 
-```{r RenameGenesSeurat, eval=(gn_col == 1 && atlas), echo=(gn_col==1)}
+```{r RenameGenesSeurat, eval=(gn_col == 1), echo=(gn_col==1)}
 # Remove ensembl gene IDs with multiple match to gene names
 geneNamesUniq <- geneNames108[-which(geneNames108$ensembl_gene_id %in% ifelse(dim(duplicatesGN)[1] !=0, duplicatesGN$ensembl_gene_id, geneNames108$ensembl_gene_id)),]
 
@@ -483,15 +483,13 @@ invisible( lapply( names( topMarkers), function(clusterName)
 }))
 ```
 
-`r if(atlas){cat("## Celltype identity {.tabset .tabset-pills .tabset-fade}")}`
-
 ```{r addPlots-4, eval=atlas}
+cat("## Celltype identity {.tabset .tabset-pills .tabset-fade}")
 Idents(fltd) <- factor(fltd@meta.data[, colname], levels = sort(levels(as.factor(fltd@meta.data[, colname]))))
 ```
 
-`r if(atlas){cat("### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}")}`
-
 ```{r celltype-dimplot, eval=atlas, results='asis', out.width="50%"}
+cat("### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}")
 ## DimPlot the celltype
 DimPlot(fltd,
 		reduction = "umap",
@@ -531,16 +529,14 @@ invisible(sapply(levels(as.factor(fltd@meta.data[, colname])), function(act)
 }))
 ```
 
-`r if(atlas){cat("### DotPlot of the markers on celltype identity")}`
-
 ```{r celltype-dotPlot-markers, eval=atlas}
+cat("### DotPlot of the markers on celltype identity")
 ## DotPlot the n-top markers of each celltype
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
 ```
 
-`r if(atlas){cat("### DotPlot of the genes of interest on celltype identity")}`
-
 ```{r celltype-dotPlot-goi, eval=atlas}
+cat("### DotPlot of the genes of interest on celltype identity")
 if(!is.null(genes_of_interest)){
 ## DotPlot the genes of interest
 create_dot_plot(fltd, sort(goiList), title="Genes of interest in celltypes")
