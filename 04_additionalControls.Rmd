@@ -112,8 +112,8 @@ library(patchwork)
 library(knitr)
 library(stringr)
 
-source("./data_management.R")
-source("./plotting_functions.R")
+source("./data_management.R", local = TRUE)
+source("./plotting_functions.R", local = TRUE)
 ```
 
 ```{r load-colors, include = FALSE, eval=atlas}

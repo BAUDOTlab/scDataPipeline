@@ -99,8 +99,8 @@ knitr::opts_chunk$set(
 library(Seurat)
 library(ggplot2)
 
-source("./plotting_functions.R")
-source("./data_management.R")
+source("./plotting_functions.R", local = TRUE)
+source("./data_management.R", local = TRUE)
 ```
 
 ```{r variableDef1, include=FALSE}

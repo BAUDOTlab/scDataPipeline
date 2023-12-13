@@ -748,10 +748,13 @@ switch(args[1],
            }
        },
        "ctrl" = {
-           rmarkdown::render(
-               "04_additionalControls.Rmd",
-               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_", Sys.Date(), ".html"))
+           lapply(scenarios, function(scenario){
+             print(paste0("Regressing cell cycles with scenario ", scenario))
+             rmarkdown::render(
+             "04_additionalControls.Rmd",
+               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
            )
+        })
        },
        "combine" = {
           lapply(scenarios, function(scenario){
