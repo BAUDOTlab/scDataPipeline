@@ -577,3 +577,9 @@ create_dot_plot(fltd, sort(goiList), title="Genes of interest in celltypes")
 <!-- dotPlotsGoi(fltd, goiList, title="Genes of CHD-RF-KB database") -->
 <!-- ``` -->
 
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```

@@ -178,3 +178,10 @@ generate_outlier_table("outlier.nFeature")
 
 
 Furthermore, `r sum(metadata[["outlier.mito"]] == TRUE & metadata[["outlier.ribo"]] == TRUE & metadata[["outlier.nCount"]] == TRUE & metadata[["outlier.nFeature"]] == TRUE)` cells are outliers across every metrics.
+
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```

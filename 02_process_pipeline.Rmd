@@ -326,3 +326,9 @@ invisible(mapply(saveCluster, SO.list, names(SO.list)))
 invisible(gc())
 ```
 
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```
