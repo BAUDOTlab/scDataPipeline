@@ -34,9 +34,11 @@ This may take several minutes. Some packages must be installed manually in a R c
 
 - [scCustomize](https://github.com/samuel-marsh/scCustomize)
 - [SeuratDisk](https://github.com/mojaveazure/seurat-disk)
+- [Doublet Finder](https://github.com/chris-mcginnis-ucsf/DoubletFinder)
 
 ```R
 install.packages("remotes")
+remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')
 remotes::install_github("mojaveazure/seurat-disk")
 remotes::install_version("scCustomize", version="1.1.1")
 ```
