@@ -686,10 +686,12 @@ switch(args[1],
        },
        "process" = {
            if (goodQ) {
+              lapply(scenarios, function(scenario){
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
                    output_file = file.path(PATH_OUT_HTML, paste0("05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html"))
                )
+              })
            } else if (combinedD) {
               lapply(scenarios, function(scenario){
                 print(paste0("Processing scenario ", scenario, " on combined data."))

@@ -366,7 +366,7 @@ for clustering in ["clusters","prediction"]:
   plt.tight_layout()
   plt.show()
 
-scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=likelihood_cmap["clusters"],,
+scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=likelihood_cmap["clusters"],
                       title='Cluster likelihoods', ticks=False, legend=False)
 for cluster in metadata["clusters"]:
   plt.annotate(cluster, 
@@ -386,4 +386,10 @@ plt.tight_layout()
 plt.show()
 
 plt.clf()
+```
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
 ```

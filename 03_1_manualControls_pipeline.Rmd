@@ -684,3 +684,9 @@ write.table(
 
 invisible(gc())
 ```
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```

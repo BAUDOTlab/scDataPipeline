@@ -242,7 +242,7 @@ Number of unique retrieved gene names: **", length(unique(geneNames108$external_
 ```
 
 
-```{r echo=FALSE, eval=dim(duplicatesGN)[1] !=0, results='asis'}
+```{r echo=FALSE, eval=gn_col == 1 && dim(duplicatesGN)[1] !=0, results='asis'}
 cat("
 
 Some gene names fit multiple ensembl gene IDs. Below you can see the table of
@@ -577,3 +577,9 @@ create_dot_plot(fltd, sort(goiList), title="Genes of interest in celltypes")
 <!-- dotPlotsGoi(fltd, goiList, title="Genes of CHD-RF-KB database") -->
 <!-- ``` -->
 
+
+# SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```
