@@ -99,15 +99,8 @@ knitr::opts_chunk$set(
 library(Seurat)
 library(ggplot2)
 
-source("./plotting_functions.R")
-source("./data_management.R")
-```
-
-```{r load-colors, include = FALSE}
-# Create color vectors
-colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
-colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$celltype)], colors.table$celltype[!is.na(colors.table$celltype)])
-colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
+source("./plotting_functions.R", local = TRUE)
+source("./data_management.R", local = TRUE)
 ```
 
 ```{r dir-management, include=FALSE}

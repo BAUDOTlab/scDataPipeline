@@ -117,7 +117,7 @@ source("./plotting_functions.R")
 source("./data_management.R")
 ```
 
-```{r load-colors, include = FALSE}
+```{r load-colors, eval=atlas, include = FALSE}
 # Create color vectors
 colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
 colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$celltype)], colors.table$celltype[!is.na(colors.table$celltype)])
@@ -151,9 +151,9 @@ fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.nam
 fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
-# Cells annotation through label transfer from the atlas
+`r if(atlas){cat("# Cells annotation through label transfer from the atlas")}`
 
-```{r mapping-atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
+```{r mapping-atlas, eval=atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
 ```
 
 <!-- ## Impact of the additional controls on the annotation transfer -->
@@ -487,15 +487,13 @@ invisible( lapply( names( topMarkers), function(clusterName)
 }))
 ```
 
-## Celltype identity {.tabset .tabset-pills .tabset-fade}
-
-```{r setIdentity}
+```{r set-celltypeIdentity, eval=atlas}
+cat("## Celltype identity {.tabset .tabset-pills .tabset-fade}")
 Idents(fltd) <- factor(fltd@meta.data[, colname], levels = sort(levels(as.factor(fltd@meta.data[, colname]))))
 ```
 
-### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}
-
-```{r celltype-dimPlot, results='asis', out.width="50%"}
+```{r celltype-dimplot, eval=atlas, results='asis', out.width="50%"}
+cat("### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}")
 ## DimPlot the celltype
 DimPlot(fltd,
 		reduction = "umap",
@@ -535,16 +533,14 @@ invisible(sapply(levels(as.factor(fltd@meta.data[, colname])), function(act)
 }))
 ```
 
-### DotPlot of the markers on celltype identity
-
-```{r celltype-dotPlot-markers}
+```{r celltype-dotPlot-markers, eval=atlas}
+cat("### DotPlot of the markers on celltype identity")
 ## DotPlot the n-top markers of each celltype
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
 ```
 
-### DotPlot of the genes of interest on celltype identity
-
-```{r celltype-dotPlot-goi}
+```{r celltype-dotPlot-goi, eval=atlas}
+cat("### DotPlot of the genes of interest on celltype identity")
 if(!is.null(genes_of_interest)){
 ## DotPlot the genes of interest
 create_dot_plot(fltd, sort(goiList), title="Genes of interest in celltypes")

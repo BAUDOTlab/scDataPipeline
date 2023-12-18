@@ -112,11 +112,11 @@ library(patchwork)
 library(knitr)
 library(stringr)
 
-source("./data_management.R")
-source("./plotting_functions.R")
+source("./data_management.R", local = TRUE)
+source("./plotting_functions.R", local = TRUE)
 ```
 
-```{r load-colors, include = FALSE}
+```{r load-colors, include = FALSE, eval=atlas}
 # Create color vectors
 colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
 colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$celltype)], colors.table$celltype[!is.na(colors.table$celltype)])
@@ -174,15 +174,19 @@ fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.nam
 fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
-## Cells annotation through label transfer from the atlas
+`r if(atlas){cat("## Cells annotation through label transfer from the atlas")}`
 
-```{r mapping-atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
+```{r mapping-atlas, eval=atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
 ```
 
 ## Number of heterotypic doublets estimation (nExp parameter)
 
 ```{r heterotypic-proportion}
-annotations <- fltd@meta.data[, "celltype_DF"]
+if(atlas){
+  annotations <- fltd@meta.data[, "celltype_DF"]
+} else {
+  annotations <- fltd@meta.data[, paste0("RNA_snn_res.",clust_res)]
+}ssssssss
 homotypic.prop <- modelHomotypic(annotations)
 nDoublets <- round(ncol(fltd)*doublets_rate/100)
 nDoublets_nonhomo <- round(nDoublets*(1-homotypic.prop))
@@ -281,15 +285,16 @@ To explore the repartition of the identified doublets among the dataset, we also
 show the number of doublets within cell types or clusters.
 
 ```{r doubletsTable, results='asis'}
-# TABLE FOR CELL TYPES x DF CLASSIF
-celltypeMtx <- table(fltd@meta.data$celltype_DF, Idents(fltd))
-celltypeMtx <- cbind("Cell type" = rownames(celltypeMtx), celltypeMtx)
-rownames(celltypeMtx) <- NULL
+if(atlas){
+  # TABLE FOR CELL TYPES x DF CLASSIF
+  celltypeMtx <- table(fltd@meta.data$celltype_DF, Idents(fltd))
+  celltypeMtx <- cbind("Cell type" = rownames(celltypeMtx), celltypeMtx)
+  rownames(celltypeMtx) <- NULL
 
-k1 <- celltypeMtx %>%
-  knitr::kable(caption = "Doublets repartition over cell types") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
-
+  k1 <- celltypeMtx %>%
+    knitr::kable(caption = "Doublets repartition over cell types") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
 # TABLE FOR CLUSTERS x DF CLASSIF
 clusterDF <- table(fltd@meta.data[, clustOfInterest], Idents(fltd))
 clusterDF <- cbind("Cluster" = rownames(clusterDF), clusterDF)
@@ -311,8 +316,12 @@ k23 <- knitr::kables(list(k2, k3),
                      caption = paste0("Doublets repartition over Leiden clusters at resolution ", clust_res)) %>%
     kable_styling()
 
-# output the 3 tables together
-kables(list(k1, k23)) %>% kable_styling()
+if(atlas){
+  # output the 3 tables together
+  kables(list(k1, k23)) %>% kable_styling()
+} else {
+  k23
+}
 
 
 # SUBSET THE DATASET TO SINGLETS
