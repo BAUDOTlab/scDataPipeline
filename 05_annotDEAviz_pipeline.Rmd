@@ -65,7 +65,7 @@ output:
 </script>
 
 
-```{r setup04-1, include = FALSE}
+```{r setup, include = FALSE}
 options(knitr.purl.inline = TRUE)
 knitr::opts_chunk$set(
   # code evaluation
@@ -95,7 +95,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r load_lib}
+```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
 library(biomaRt)
@@ -124,7 +124,7 @@ colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$cell
 colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
 ```
 
-```{r variableDef1-1, include=FALSE, eval=combinedD}
+```{r dir-managment-1, include=FALSE, eval=combinedD}
 # PATHS
 PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
@@ -132,7 +132,7 @@ PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "08_combineData")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 ```
 
-```{r variableDef1-2, include=FALSE, eval=!combinedD}
+```{r dir-managment-2, include=FALSE, eval=!combinedD}
 # PATHS
 PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
@@ -183,7 +183,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 
 
 
-```{r, results='asis', eval=(gn_col == 1), echo=(gn_col==1)}
+```{r writeSection-ensemblIDmapping, results='asis', eval=(gn_col == 1), echo=(gn_col==1)}
 cat("
 
 # Map ensembl IDs to gene names
@@ -218,7 +218,7 @@ write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, "correspondanceENS
 duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
 ```
 
-```{r, eval=(gn_col == 1), results='asis'}
+```{r reduceGeneList, eval=(gn_col == 1), results='asis'}
 cat(paste0("
 The ", DATASET," dataset has **", length(ensembl.ids), "** different feature genes
 comprising ", length(manInsert), " manually inserted genes:  
@@ -226,7 +226,7 @@ comprising ", length(manInsert), " manually inserted genes:
 
 ***
 
-Number of unique retrieved ensembl gene IDs: 
+Number of retrieved ensembl gene IDs: 
 **", length(unique(geneNames108$ensembl_gene_id)), "**  
 *(the manually inserted genes are already added to the retrieved data)*
 
@@ -242,7 +242,7 @@ Number of unique retrieved gene names: **", length(unique(geneNames108$external_
 ```
 
 
-```{r echo=FALSE, eval=gn_col == 1 && dim(duplicatesGN)[1] !=0, results='asis'}
+```{r table-duplicateGN, echo=FALSE, eval=gn_col == 1 && dim(duplicatesGN)[1] !=0, results='asis'}
 cat("
 
 Some gene names fit multiple ensembl gene IDs. Below you can see the table of
@@ -333,7 +333,7 @@ fltd
 
 # Perform differential expression analysis
 
-```{r}
+```{r run-dea}
 clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(fltd@meta.data), value = TRUE)
 Idents(fltd) <- clustOfInterest
 
@@ -361,7 +361,7 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 
 # Additional Plots
 
-```{r addPlots-1, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
+```{r load-goiList, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
 # Load list of genes of interest
 goi <- read.table(genes_of_interest)
 goiList <- goi$V1
@@ -378,7 +378,7 @@ goiList <- goiList[goiList %in% rownames(fltd)] # remove the unknown genes
 
 ## Cluster identity {.tabset .tabset-pills .tabset-fade}
 
-```{r addPlots-3}
+```{r get-topNmarkers}
 # Parameters
 ntop <- 5
 
@@ -388,7 +388,7 @@ Idents(fltd) <- factor(fltd@meta.data[,clustOfInterest], levels = sort(as.numeri
 ```
 
 ### DimPlot of the cluster identity
-```{r cluster-dimplot, out.width="50%"}
+```{r cluster-dimPlot-markers, out.width="50%"}
 p <- DimPlot(fltd, reduction = "umap", pt.size = 0.8,
              label = FALSE) +
   ggtitle(paste0("Clusters at resolution ", clust_res, "\n", DATASET)) +
@@ -417,7 +417,7 @@ create_dot_plot(fltd, sort(goiList), title="Genes of interest in clusters")
 
 ### FeaturePlots of the markers {.tabset .tabset-pills .tabset-fade}
 
-```{r featurePlots-markers, results='asis', out.width='20%', fig.align='default'}
+```{r cluster-featurePlots-markers, results='asis', out.width='20%', fig.align='default'}
 # code with the courtesy of Lionel Spinelli and Romain Fenouil
 topMarkers = by( markers.sign, markers.sign[["cluster"]], function(x)
 {
@@ -470,7 +470,7 @@ FeaturePlot( fltd,
 
 ### ViolinPlots of the markers {.tabset .tabset-pills .tabset-fade}
 
-```{r violinPlots-markers, results='asis', out.width='20%', fig.align='default'}
+```{r clusters-violinPlots-markers, results='asis', out.width='20%', fig.align='default'}
 # with courtesy of Lionel Spinelli and Romain Fenouil
 invisible( lapply( names( topMarkers), function(clusterName)
 {
@@ -489,13 +489,13 @@ invisible( lapply( names( topMarkers), function(clusterName)
 
 ## Celltype identity {.tabset .tabset-pills .tabset-fade}
 
-```{r addPlots-4}
+```{r setIdentity}
 Idents(fltd) <- factor(fltd@meta.data[, colname], levels = sort(levels(as.factor(fltd@meta.data[, colname]))))
 ```
 
 ### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}
 
-```{r celltype-dimplot, results='asis', out.width="50%"}
+```{r celltype-dimPlot, results='asis', out.width="50%"}
 ## DimPlot the celltype
 DimPlot(fltd,
 		reduction = "umap",

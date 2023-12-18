@@ -65,7 +65,7 @@ output:
 </script>
 
 
-```{r setup04-1, include = FALSE}
+```{r setup, include = FALSE}
 options(knitr.purl.inline = TRUE)
 knitr::opts_chunk$set(
   # code evaluation
@@ -95,7 +95,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r load_lib}
+```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
 
@@ -110,7 +110,7 @@ colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$cell
 colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
 ```
 
-```{r variableDef1, include=FALSE}
+```{r dir-management, include=FALSE}
 # Split comma separated input files into a list
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "08_combineData")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
@@ -187,7 +187,7 @@ invisible(gc())
 SHOW THE TABLE OF SO$ORIG.IDENT TO CHECK THE NUMBER OF CELLS FROM EACH DATASET
 
 
-```{r save2}
+```{r export}
 saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("06_combine_", DATASET, "_scenario.", scenario, "_method.", combine_meth, ".rds")))
 invisible(gc())
 ```

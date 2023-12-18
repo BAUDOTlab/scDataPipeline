@@ -86,7 +86,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
   
   # plots
-  #fig.path = "figure/",      # is set later, in chunk setup2
+  fig.path = paste0(PATH_OUT_FIG, "/03_1_manualControls_"),      # is set later, in chunk setup2
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   fig.width = 12,
@@ -108,11 +108,8 @@ source("./plotting_functions.R")
 ```
 
 ```{r dir-managment, include = FALSE}
-if (!dir.exists(PATH_ROOT)) { dir.create(PATH_ROOT) }
-if (!dir.exists(PATH_OUT_HTML)) { dir.create(PATH_OUT_HTML) }
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "03_1_manualControls")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
-if (!dir.exists(PATH_OUT_FIG)) { dir.create(PATH_OUT_FIG, recursive = TRUE) }
 ```
 
 <!-- # Global settings -->
@@ -137,15 +134,6 @@ list(df1, df2, df3) %>%
 rm(df)
 ```
 
-```{r setup2, eval = TRUE, include = FALSE}
-knitr::opts_chunk$set(
-  # code evaluation
-  eval = TRUE,
-  
-  # figures
-  fig.path = paste0(PATH_OUT_FIG, "/03_1_manualCtrl_")
-)
-```
 
 # Load `r DATASET` data
 
@@ -464,7 +452,7 @@ The various levels of mitochondrial expression represent (values in %):
 `r mito_text`
 
 
-```{r cv_mito, results='asis', out.width='50%', fig.align='default'}
+```{r crossVal_mito, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "mito_groups"]
 
 invisible(sapply(mito_groups, function(group) {
@@ -516,7 +504,7 @@ The various levels of ribosomal expression represent (values in %):
   
 `r ribo_text`
 
-```{r cv_ribo, results='asis', out.width='50%', fig.align='default'}
+```{r crossVal_ribo, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "ribo_groups"]
 
 invisible(sapply(ribo_groups, function(group) {
@@ -569,7 +557,7 @@ The various levels of UMI read counts are:
 
 `r umi_text`
 
-```{r cv_umi, results='asis', out.width='50%', fig.align='default'}
+```{r crossVal_umi, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "umi_groups"]
 
 invisible(sapply(umi_groups, function(group) {
@@ -622,7 +610,7 @@ The various levels of feature counts are:
   
 `r feature_text`
 
-```{r cv_feature, results='asis', out.width='50%', fig.align='default'}
+```{r crossVal_feature, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "feature_groups"]
 
 invisible(sapply(feature_groups, function(group) {
@@ -666,7 +654,7 @@ invisible(sapply(feature_groups, function(group) {
 
 # Exports
 
-```{r save4}
+```{r exports}
 # Groups metadata
 keepMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 cplt@meta.data <- cbind(cellIDs = rownames(cplt@meta.data), cplt@meta.data)
