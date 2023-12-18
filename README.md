@@ -43,6 +43,7 @@ remotes::install_version("scCustomize", version="1.1.1")
 ```
 
 Note: If you encounter an error when installing scCustomize that says the version is not found, just run the command again and it will work most of the time.
+Note 2 : We are currently using a fork of DoubletFinder as the main repository has a critical bug that makes it unusable.
 
 ### Installation
 
