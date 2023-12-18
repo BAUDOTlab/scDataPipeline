@@ -185,7 +185,7 @@ metadata["clusters"] = clusters["integrated_snn_res.1"].values
 cluster_colors = mpl.colormaps["tab20"].resampled(len(np.unique(metadata["clusters"])))
 
 if r.atlas:
-  pred = pd.read_csv(Path(r.PATH_ROOT, "07_annotDEAviz", f"transferAnnotation_combinedData_{r.DATASET}.csv"), header=0)
+  pred = pd.read_csv(Path(r.PATH_ROOT, "08_combineData", f"transferAnnotation_combinedData_{r.DATASET}_scenario_{r.scenario}.csv"), header=0)
   colortable = pd.read_csv(Path(r.PATH_ATLAS, "colorsSheet.csv"), header=0)
   metadata["prediction"] = pred["predicted.id"].values
   celltype_colors = dict(zip(colortable["celltype"],colortable["celltype_color"]))
