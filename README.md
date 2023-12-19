@@ -32,13 +32,13 @@ conda activate scDataPipeline
 
 This may take several minutes. Some packages must be installed manually in a R console:
 
-- [scCustomize](https://github.com/samuel-marsh/scCustomize)
 - [SeuratDisk](https://github.com/mojaveazure/seurat-disk)
 - [Doublet Finder](https://github.com/chris-mcginnis-ucsf/DoubletFinder)
+- [scCustomize](https://github.com/samuel-marsh/scCustomize)
 
 ```R
-remotes::install_github('ekernf01/DoubletFinder', force = T)
 remotes::install_github("mojaveazure/seurat-disk")
+remotes::install_github('ekernf01/DoubletFinder', force = T)
 remotes::install_version("scCustomize", version="1.1.1")
 ```
 
