@@ -65,6 +65,8 @@ title: "Differential Abundance using MELD"
 ```{r setup, include = FALSE}
 library(knitr)
 library(reticulate)
+# we force the use of our env's python. We faced situation where reticulates were using the banse env's python
+reticulate::use_python(system("which python", intern = TRUE))
 knitr::knit_engines$set(python = reticulate::eng_python)
 options(knitr.purl.inline = TRUE)
 knitr::opts_chunk$set(
