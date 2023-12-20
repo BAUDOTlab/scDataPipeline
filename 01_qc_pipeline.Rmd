@@ -125,7 +125,7 @@ if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 if (!dir.exists(PATH_OUT_FIG)) { dir.create(PATH_OUT_FIG, recursive = TRUE) }
 ```
 
-```{r otherSettings, include=FALSE}
+```{r other-settings, include=FALSE}
 options(scipen=999)                 # to prevent scientific notation
 ```
 
@@ -194,7 +194,7 @@ data.frame(head(SO@meta.data)) %>%
 
 ## Nomenclature for cell names
 
-```{r renaming_cells}
+```{r renaming-cells}
 cell_ids <- colnames(SO)
 UMIs <- str_extract(cell_ids, "[A-Z]*")
 conditionName <-grep("condition", names(SO@meta.data), value = TRUE)
@@ -367,7 +367,7 @@ The threshold upon the feature counts is set at `r min_feat`.
 Features that are detected in `r min_cells` cells or fewer will be removed from the analysis.
 Among the `r dim(SO)[1]` features mentioned after loading, some of them were never detected.
 
-```{r histo-geneRepartition}
+```{r histo-gene-repartition}
 # Create dataframe
 df <- data.frame(rowSums(SO@assays$RNA@counts !=  0))
 df$features <- rownames(df)
@@ -457,7 +457,7 @@ invisible(apply(combn(qc_param, 2), 2, function(x) {
 
 The number of cells removed by the application of all the filters is `r dim(SO@meta.data[SO@meta.data$percent.mito > mito_high | SO@meta.data$percent.mito < mito_low | SO@meta.data$percent.ribo < ribo_low | SO@meta.data$nCount_RNA < min_counts | SO@meta.data$nCount_RNA > max_counts | SO@meta.data$nFeature_RNA < min_feat, ])[1]`.
 
-```{r filterQC, results='asis'}
+```{r filter-qc, results='asis'}
 write.table(
     rownames(SO@meta.data[SO@meta.data$percent.mito > mito_high |
                               SO@meta.data$percent.mito < mito_low |
@@ -486,13 +486,13 @@ SO_subset <- subset(SO,
 
 Before filtering, the datasets is as follows:  
 
-```{r, echo=FALSE}
+```{r print-SO-complete, echo=FALSE}
 SO
 ```
 
 After filtering, the dataset cleaned from the low quality cells is as follows:  
 
-```{r, echo=FALSE}
+```{r print-SO-filtered, echo=FALSE}
 SO_subset
 ```
 
@@ -519,7 +519,7 @@ export_rds(SO_subset, paste0("01_qc_", DATASET, "_filtered.rds"))
 ```
 
 
-```{r garbage-collec1, include = FALSE}
+```{r cleaning, include = FALSE}
 invisible(gc())
 ```
 
