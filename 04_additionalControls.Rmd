@@ -186,7 +186,7 @@ if(atlas){
   annotations <- fltd@meta.data[, "celltype_DF"]
 } else {
   annotations <- fltd@meta.data[, paste0("RNA_snn_res.",clust_res)]
-}ssssssss
+}
 homotypic.prop <- modelHomotypic(annotations)
 nDoublets <- round(ncol(fltd)*doublets_rate/100)
 nDoublets_nonhomo <- round(nDoublets*(1-homotypic.prop))
