@@ -155,7 +155,7 @@ cplt <- AddMetaData(object = cplt, metadata = metadata$percent.ribo,   col.name 
 
 # Mitochondrial exploration 
 
-```{r defineGroupsMito, out.width="50%", fig.align='default', fig.show='hold'}
+```{r define-groups-mito, out.width="50%", fig.align='default', fig.show='hold'}
 cplt@meta.data[,"mito_groups"] <- set_thresh(mito_thresholds, cplt@meta.data$percent.mito, "mito")
 # Must add an upper bound in order for the last group to be displayed
 max_mito <- max(cplt@meta.data$percent.mito)
@@ -182,12 +182,12 @@ plot2
 ```
 
 Groups' size:
-```{r groupsSizeMito}
+```{r groups-size-mito}
 mito_groups <- sort(unique(cplt$mito_groups))
 table(cplt@meta.data$mito_groups)
 ```
 
-```{r groupsMito, out.width="50%", fig.align='default', fig.show='hold'}
+```{r groups-mito, out.width="50%", fig.align='default', fig.show='hold'}
 cellsData <- data.frame(umapCoord, metadata$percent.mito, cplt@meta.data$mito_groups)
 colnames(cellsData) <- c(colnames(umapCoord), "percent.mito", "group_mito")
 
@@ -226,11 +226,11 @@ ggplot(data = cellsData,
 
 # Ribosomal exploration 
 
-```{r importVlnRibo, out.width="50%", eval=FALSE, echo=FALSE}
+```{r import-vln-ribo, out.width="50%", eval=FALSE, echo=FALSE}
 knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-riboPercentage-1.png"))
 ```
 
-```{r defineGroupsRibo, out.width="50%"}
+```{r define-groups-ribo, out.width="50%"}
 cplt@meta.data[, "ribo_groups"] <- set_thresh(ribo_thresholds, cplt@meta.data$percent.ribo, "ribo")
 max_ribo <- max(cplt@meta.data$percent.ribo)
 ribo_thresholds <- c(0,ribo_thresholds)
@@ -249,12 +249,12 @@ VlnPlot(cplt, features = c("percent.ribo")) +
 ```
 
 Groups' size:
-```{r groupsSizeRibo}
+```{r groups-size-ribo}
 ribo_groups <- sort(unique(cplt$ribo_groups))
 table(cplt@meta.data$ribo_groups)
 ```
 
-```{r groupsRibo, out.width="50%", fig.align='default', fig.show='hold'}
+```{r groups-ribo, out.width="50%", fig.align='default', fig.show='hold'}
 cellsData <- data.frame(umapCoord, metadata$percent.ribo, cplt@meta.data$ribo_groups)
 colnames(cellsData) <- c(colnames(umapCoord), "percent.ribo", "group_ribo")
 
@@ -295,11 +295,11 @@ ggplot(data = cellsData,
 
 # UMI read counts exploration 
 
-```{r importVlnUMI, out.width="50%", eval=FALSE, echo=FALSE}
+```{r import-vln-UMI, out.width="50%", eval=FALSE, echo=FALSE}
 knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-countRNA-1.png"))
 ```
 
-```{r defineGroupsUMI, out.width="50%"}
+```{r define-groups-UMI, out.width="50%"}
 cplt@meta.data[, "umi_groups"] <- set_thresh(umi_thresholds, cplt@meta.data$nCount_RNA, "umi")
 
 umi_thresholds <- c(0,umi_thresholds)
@@ -317,12 +317,12 @@ VlnPlot(cplt, features = c("nCount_RNA")) +
 ```
 
 Groups' size:
-```{r groupsSizeUMI}
+```{r groups-size-UMI}
 umi_groups <- sort(unique(cplt$umi_groups))
 table(cplt@meta.data$umi_groups)
 ```
 
-```{r groupsUMI, out.width="50%", fig.align='default', fig.show='hold'}
+```{r groups-UMI, out.width="50%", fig.align='default', fig.show='hold'}
 cellsData <- data.frame(umapCoord, cplt@meta.data$nCount_RNA, cplt@meta.data$umi_groups)
 colnames(cellsData) <- c(colnames(umapCoord), "nCount_RNA", "group_umi")
 
@@ -364,11 +364,11 @@ ggplot(data = cellsData,
 
 # Feature counts exploration 
 
-```{r importVlnfeature, out.width="50%", eval=FALSE, echo=FALSE}
+```{r import-vln-feature, out.width="50%", eval=FALSE, echo=FALSE}
 knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-featureRNA-1.png"))
 ```
 
-```{r defineGroupsfeature, out.width="50%"}
+```{r define-groups-feature, out.width="50%"}
 cplt@meta.data[, "feature_groups"] <- set_thresh(feature_thresholds, cplt@meta.data$nFeature_RNA, "feature")
 max_feature <- max(cplt@meta.data$nFeature_RNA)
 feature_thresholds <- c(0,feature_thresholds)
@@ -386,12 +386,12 @@ VlnPlot(cplt, features = c("nFeature_RNA")) +
 ```
 
 Groups' size:
-```{r groupsSizefeature}
+```{r groups-size-feature}
 feature_groups <- sort(unique(cplt$feature_groups))
 table(cplt@meta.data$feature_groups)
 ```
 
-```{r groupsFeature, out.width="50%", fig.align="default", fig.show="hold"}
+```{r groups-feature, out.width="50%", fig.align="default", fig.show="hold"}
 cellsData <- data.frame(umapCoord, cplt@meta.data$nFeature_RNA, cplt@meta.data$feature_groups)
 colnames(cellsData) <- c(colnames(umapCoord), "nFeature_RNA", "group_feature")
 
@@ -431,7 +431,7 @@ ggplot(data = cellsData,
 
 # Cross-validations
 
-```{r crossValidation}
+```{r cross-validation}
 allGroups <- c("mito_groups", "ribo_groups", "umi_groups", "feature_groups")
 invisible(apply(combn(allGroups, 2), 2, function(x) {
   cat(paste0(x[1], " and ", x[2], " co-ocurrence"))
@@ -452,7 +452,7 @@ The various levels of mitochondrial expression represent (values in %):
 `r mito_text`
 
 
-```{r crossVal_mito, results='asis', out.width='50%', fig.align='default'}
+```{r cross-val-mito, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "mito_groups"]
 
 invisible(sapply(mito_groups, function(group) {
@@ -504,7 +504,7 @@ The various levels of ribosomal expression represent (values in %):
   
 `r ribo_text`
 
-```{r crossVal_ribo, results='asis', out.width='50%', fig.align='default'}
+```{r cross-val-ribo, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "ribo_groups"]
 
 invisible(sapply(ribo_groups, function(group) {
@@ -557,7 +557,7 @@ The various levels of UMI read counts are:
 
 `r umi_text`
 
-```{r crossVal_umi, results='asis', out.width='50%', fig.align='default'}
+```{r cross-val-umi, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "umi_groups"]
 
 invisible(sapply(umi_groups, function(group) {
@@ -610,7 +610,7 @@ The various levels of feature counts are:
   
 `r feature_text`
 
-```{r crossVal_feature, results='asis', out.width='50%', fig.align='default'}
+```{r cross-val-feature, results='asis', out.width='50%', fig.align='default'}
 vars <- allGroups[allGroups != "feature_groups"]
 
 invisible(sapply(feature_groups, function(group) {

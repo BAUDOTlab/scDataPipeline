@@ -183,7 +183,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 
 
 
-```{r writeSection-ensemblIDmapping, results='asis', eval=(gn_col == 1), echo=(gn_col==1)}
+```{r write-ensemblID-mapping-section, results='asis', eval=(gn_col == 1), echo=(gn_col==1)}
 cat("
 
 # Map ensembl IDs to gene names
@@ -218,7 +218,7 @@ write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, "correspondanceENS
 duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
 ```
 
-```{r reduceGeneList, eval=(gn_col == 1), results='asis'}
+```{r reduce-gene-list, eval=(gn_col == 1), results='asis'}
 cat(paste0("
 The ", DATASET," dataset has **", length(ensembl.ids), "** different feature genes
 comprising ", length(manInsert), " manually inserted genes:  
@@ -268,7 +268,7 @@ feature list to the remaining ensembl gene IDs.
 ")
 ```
 
-```{r RenameGenesSeurat, eval=(gn_col == 1), echo=(gn_col==1)}
+```{r rename-genes-seurat, eval=(gn_col == 1), echo=(gn_col==1)}
 # Remove ensembl gene IDs with multiple match to gene names
 if (dim(duplicatesGN)[1] !=0) {
     geneNamesUniq <- geneNames108[!geneNames108$ensembl_gene_id %in% duplicatesGN$ensembl_gene_id, ]
@@ -361,7 +361,7 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 
 # Additional Plots
 
-```{r load-goiList, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
+```{r load-goi-list, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
 # Load list of genes of interest
 goi <- read.table(genes_of_interest)
 goiList <- goi$V1
@@ -388,7 +388,7 @@ Idents(fltd) <- factor(fltd@meta.data[,clustOfInterest], levels = sort(as.numeri
 ```
 
 ### DimPlot of the cluster identity
-```{r cluster-dimPlot-markers, out.width="50%"}
+```{r cluster-DimPlot-markers, out.width="50%"}
 p <- DimPlot(fltd, reduction = "umap", pt.size = 0.8,
              label = FALSE) +
   ggtitle(paste0("Clusters at resolution ", clust_res, "\n", DATASET)) +
@@ -399,14 +399,14 @@ LabelClusters(p, id = "ident",  fontface = "bold", size = 5)
 
 ### DotPlot of the markers on cluster identity
 
-```{r cluster-dotPlot-markers}
+```{r cluster-DotPlot-markers}
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in clusters"))
 ```
 
 
 ### DotPlot of the genes of interest on cluster identity
 
-```{r cluster-dotPlot-goi}
+```{r cluster-DotPlot-goi}
 if(!is.null(genes_of_interest)){
 
 create_dot_plot(fltd, sort(goiList), title="Genes of interest in clusters")
@@ -417,7 +417,7 @@ create_dot_plot(fltd, sort(goiList), title="Genes of interest in clusters")
 
 ### FeaturePlots of the markers {.tabset .tabset-pills .tabset-fade}
 
-```{r cluster-featurePlots-markers, results='asis', out.width='20%', fig.align='default'}
+```{r cluster-FeaturePlots-markers, results='asis', out.width='20%', fig.align='default'}
 # code with the courtesy of Lionel Spinelli and Romain Fenouil
 topMarkers = by( markers.sign, markers.sign[["cluster"]], function(x)
 {
@@ -453,7 +453,7 @@ invisible( lapply( names( topMarkers), function(clusterName)
 
 ### FeaturePlots of the genes of interest with cluster labels
 
-```{r cluster-featurePlot-goi, out.width='20%', fig.align='default'}
+```{r cluster-FeaturePlot-goi, out.width='20%', fig.align='default'}
 if(!is.null(genes_of_interest)){
 # FeaturePlot the genes of interest
 FeaturePlot( fltd,
@@ -470,7 +470,7 @@ FeaturePlot( fltd,
 
 ### ViolinPlots of the markers {.tabset .tabset-pills .tabset-fade}
 
-```{r clusters-violinPlots-markers, results='asis', out.width='20%', fig.align='default'}
+```{r clusters-VlnPlots-markers, results='asis', out.width='20%', fig.align='default'}
 # with courtesy of Lionel Spinelli and Romain Fenouil
 invisible( lapply( names( topMarkers), function(clusterName)
 {
@@ -487,12 +487,12 @@ invisible( lapply( names( topMarkers), function(clusterName)
 }))
 ```
 
-```{r set-celltypeIdentity, eval=atlas}
+```{r set-celltype-identity, eval=atlas}
 cat("## Celltype identity {.tabset .tabset-pills .tabset-fade}")
 Idents(fltd) <- factor(fltd@meta.data[, colname], levels = sort(levels(as.factor(fltd@meta.data[, colname]))))
 ```
 
-```{r celltype-dimplot, eval=atlas, results='asis', out.width="50%"}
+```{r celltype-DimPlot, eval=atlas, results='asis', out.width="50%"}
 cat("### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}")
 ## DimPlot the celltype
 DimPlot(fltd,
@@ -533,13 +533,13 @@ invisible(sapply(levels(as.factor(fltd@meta.data[, colname])), function(act)
 }))
 ```
 
-```{r celltype-dotPlot-markers, eval=atlas}
+```{r celltype-DotPlot-markers, eval=atlas}
 cat("### DotPlot of the markers on celltype identity")
 ## DotPlot the n-top markers of each celltype
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
 ```
 
-```{r celltype-dotPlot-goi, eval=atlas}
+```{r celltype-DotPlot-goi, eval=atlas}
 cat("### DotPlot of the genes of interest on celltype identity")
 if(!is.null(genes_of_interest)){
 ## DotPlot the genes of interest

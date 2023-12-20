@@ -108,7 +108,7 @@ library(tibble)
 source("./data_management.R", local = TRUE)
 ```
 
-```{r otherSettings, include = FALSE}
+```{r other-settings, include = FALSE}
 set.seed(general_seed)
 ```
 
@@ -225,7 +225,7 @@ SO.list <- mapply(process, SO.list, names(SO.list))
 var.feats.list <- lapply(SO.list, VariableFeatures)
 ```
 
-```{r clustering_process, out.width='50%', results='asis', warning=FALSE}
+```{r clustering-process, out.width='50%', results='asis', warning=FALSE}
 # resolutions <- clust_res
 clusterCells <- function(SO, scenario) {
     SO <- FindNeighbors(SO, dims = 1:top_pcs, verbose=FALSE)
