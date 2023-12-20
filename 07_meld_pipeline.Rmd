@@ -65,6 +65,8 @@ title: "Differential Abundance using MELD"
 ```{r setup, include = FALSE}
 library(knitr)
 library(reticulate)
+# we force the use of our env's python. We faced situation where reticulates were using the banse env's python
+reticulate::use_python(system("which python", intern = TRUE))
 knitr::knit_engines$set(python = reticulate::eng_python)
 options(knitr.purl.inline = TRUE)
 knitr::opts_chunk$set(
@@ -256,7 +258,7 @@ plt.show()
 
 ## Clusters vs MELD
 
-```{python clustering, fig.align='default'}
+```{python plot-clustering, fig.align='default'}
 #fig, axes = plt.subplots(1,3, figsize=(16,8))
 
 scprep.plot.scatter2d(umap, c=metadata["clusters"], cmap=cluster_colors,
@@ -327,7 +329,7 @@ def plot_confidence_interval(y, values, z=1.96, thresholds=[0.5,0.5], colors=["g
 ```
 
 # Confidence interval of the likelihoods
-```{python likelihood-plot-prep, include=FALSE}
+```{python likelihood-prepPlot, include=FALSE}
 #Sort the index of each cluster from lowest to highest average chd likelihood value
 metadata[f"clustersID"] = scprep.utils.sort_clusters_by_values(metadata["clusters"], metadata["cond_likelihood"])
 if r.atlas: metadata[f"predictionID"] = scprep.utils.sort_clusters_by_values(metadata["prediction"], metadata["cond_likelihood"])

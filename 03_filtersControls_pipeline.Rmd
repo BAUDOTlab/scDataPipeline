@@ -142,7 +142,7 @@ clusters <- read.table(paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_c
 
 UMAP representation of the complete `r DATASET` dataset.
 
-```{r importClustering}
+```{r import-dimplot-clustering}
 knitr::include_graphics(paste0(PATH_OUT_FIG, "/02_process_dimplot-cluster-cplt-1.png"))
 ```
 
@@ -150,28 +150,28 @@ knitr::include_graphics(paste0(PATH_OUT_FIG, "/02_process_dimplot-cluster-cplt-1
 
 ## Mitochondrial outlier cells
 
-```{r repartition-mitoOutliers}
+```{r repartition-mito-outliers}
 generate_outlier_plot("outlier.mito")
 generate_outlier_table("outlier.mito")
 ```
 
 ## Ribosomal outlier cells
 
-```{r repartition-riboOutliers}
+```{r repartition-ribo-outliers}
 generate_outlier_plot("outlier.ribo")
 generate_outlier_table("outlier.ribo")
 ```
 
 ## UMI read counts outlier cells
 
-```{r repartition-UMIreadCountsOutliers}
+```{r repartition-UMI-outliers}
 generate_outlier_plot("outlier.nCount")
 generate_outlier_table("outlier.nCount")
 ```
 
 ## Feature counts outlier cells
 
-```{r repartition-featCountsOutliers}
+```{r repartition-feature-outliers}
 generate_outlier_plot("outlier.nFeature")
 generate_outlier_table("outlier.nFeature")
 ```

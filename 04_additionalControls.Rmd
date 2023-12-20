@@ -123,7 +123,7 @@ colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$cell
 colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.table$development_stage)], colors.table$development_stage[!is.na(colors.table$development_stage)])
 ```
 
-```{r variableDef1, include=FALSE}
+```{r dir-management, include=FALSE}
 # PATHS
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_filtered_meth.", clust_meth, "_res.", clust_res, ".csv")
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "05_additionalControls")
@@ -181,7 +181,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 
 ## Number of heterotypic doublets estimation (nExp parameter)
 
-```{r homotypic-proportion}
+```{r heterotypic-proportion}
 if(atlas){
   annotations <- fltd@meta.data[, "celltype_DF"]
 } else {
@@ -231,7 +231,7 @@ According to the above plot, the value of the `pK` parameter is set to
 It is possible to corroborate the identification of doublets with a high number of UMIs.
 The plots below allow us to compare these 2 information.
 
-```{r runDF, results='hide'}
+```{r run-DF, results='hide'}
 # RUN DOUBLET FINDER
 set.seed(general_seed)
 fltd <- doubletFinder_v3(fltd,
@@ -246,7 +246,7 @@ Idents(fltd) <- col_dblts
 export_rds(fltd, paste0("03_", STEP_ID, "_doubletsIdentification_", DATASET, ".rds"))
 ```
 
-```{r plotDF, fig.show='hold', fig.align='grey', out.width="33%"}
+```{r plot-DF, fig.show='hold', fig.align='grey', out.width="33%"}
 # PLOTS
 # SINGLETS
 DimPlot(fltd,
@@ -284,7 +284,7 @@ FeaturePlot(fltd, "nCount_RNA",
 To explore the repartition of the identified doublets among the dataset, we also
 show the number of doublets within cell types or clusters.
 
-```{r doubletsTable, results='asis'}
+```{r doublets-table, results='asis'}
 if(atlas){
   # TABLE FOR CELL TYPES x DF CLASSIF
   celltypeMtx <- table(fltd@meta.data$celltype_DF, Idents(fltd))
@@ -333,9 +333,9 @@ singlets@meta.data[grep("pANN", colnames(singlets@meta.data))] <- NULL
 singlets@meta.data[clustOfInterest] <- NULL
 ``` 
 
-## Remove the red blood cells (RBCs)
+## Remove the unwanted cells based on feature expression
 
-```{r filterRBCs}
+```{r filter-out-unwanted-cells}
 filtered_list <- singlets
 to_remove <- c()
 if(!is.null(ff_list)){
@@ -364,16 +364,6 @@ if(!is.null(ff_list)){
 export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 ```
 
-```{r include=FALSE}
-if(!is.null(ff_list)) {
-cat(paste0(
-"From the **", dim(singlets)[2], "** singlet cells, **", 
-dim(singlets)[2] - dim(filtered_list)[2], "** unwanted cells
-have been removed."))
-}
-```
-
-
 
 ## Conclusion - Scenario 1
 
@@ -392,8 +382,9 @@ invisible(gc())
 # Cell cycle regressions - scenarios 2 and 3
 
 We start the scenarios 2 and 3 with the singlet cells, that still contains the
-RBCs. As considered as good quality cells, we want to keep it for the cell cycle
-regression. We will remove the RBCs after the cell cycle regression.
+unwanted cells. As considered as good quality cells, we want to keep them for
+the cell cycle regression. We will remove the unwanted cells after the cell
+cycle regression.
 
 ## Cell cycle markers - scenarios 2 and 3
 
@@ -403,7 +394,7 @@ cycling phases, they are estimated to be in the G1 phase.
 
 Below, you can see the lists of gene markers for the G2/M and S phases.
 
-```{r loadCellCyclesGenes, results='hold'}
+```{r load-cc-genes, results='hold'}
 if(gn_col == 1){
   sPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_sPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
   g2mPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_g2mPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
@@ -429,12 +420,12 @@ if(gn_col == 1){
 
 ## Assign cell-cycle scores - scenarios 2 and 3
 
-```{r tryStopMessage, echo=FALSE, message=TRUE}
+```{r try-stop-message, echo=FALSE, message=TRUE}
 try(if(table(s.genes %in% rownames(singlets))[[1]] != length(s.genes)) stop("s phase genes list is not covered by the data", call. = FALSE))
 try(if(table(g2m.genes %in% rownames(singlets))[[1]] != length(g2m.genes)) stop("g2/m phases genes list is not covered by the data", call. = FALSE))
 ```
 
-```{r cellcycleAssign, fig.show='hold'}
+```{r cc-assign-score, fig.show='hold'}
 # ASSIGN CELL CYCLE SCORES AND PHASE
 singlets <- CellCycleScoring(singlets, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
 FeatureScatter(singlets, "S.Score", "G2M.Score") +
@@ -451,7 +442,7 @@ scores that should better represent the gap between phases. It is possible to
 set up new thresholds to determine the limit between S and G1 phase and G2M and 
 G1 phase.
 
-```{r cellcycleAssign2, fig.show='hold'}
+```{r cc-assign-score-2, fig.show='hold'}
 # MANUAL PHASE ASSIGNATION BASED ON SCORES THRESHOLDS
 # inspired from https://github.com/satijalab/seurat/issues/2277#issuecomment-1117245430
 if (!(is.null(s_thresh) & is.null(g2m_thresh))) {
@@ -496,17 +487,10 @@ if (!(is.null(s_thresh) & is.null(g2m_thresh))) {
 ```
 
 
-```{r, eval=FALSE, echo=FALSE}
-knitr::opts_chunk$set(
-  # code evaluation
-  eval = FALSE
-)
-```
-
 By performing PCA on the cell cycle genes, cells segregate according to the
 estimated cell cycle phase.
 
-```{r cellcyclePCA}
+```{r cc-PCA}
 singlets <- RunPCA(singlets, features = c(s.genes, g2m.genes), seed.use = general_seed, verbose=TRUE)
 
 p1 <- DimPlot(singlets, reduction = "pca")
@@ -525,7 +509,7 @@ p1 +
 After regression on phases score, we observe mixed cells independently of the
 cell cycle.
 
-```{r global-regression}
+```{r regression-global}
 # PIPELINE
 STEP_ID <- "2"
 
@@ -554,7 +538,7 @@ invisible(gc())
 After regression on cycling cells, G2/M and S cells mix together, what is not
 the case for the G1 cells.
 
-```{r cycling-regression, fig.show='hold'}
+```{r regression-cycling, fig.show='hold'}
 # PIPELINE
 STEP_ID <- "3"
 
@@ -580,16 +564,16 @@ rm(singlets)
 invisible(gc())
 ```
 
-## Remove RBCs - scenarios 2 and 3
+## Remove unwanted cells - scenarios 2 and 3
 
-```{r removeRBCs, results='asis'}
+```{r filter-out-unwanted-cells-2, results='asis'}
 # REUSE CHUNK FOR RBCs REMOVAL
 # ON THE 2 DATASETS
 
 # GLOBAL REGRESSION
 singlets <- globalReg
 STEP_ID <- "2"
-<<filterRBCs>>
+<<filterOut-unwantedCells>>
 cat(paste0("
 On the global cell cycle regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
 cells, as they were expressing the **", paste( unlist(ff_list), collapse='', sep=','), ",** gene marker.  
@@ -602,7 +586,7 @@ invisible(gc())
 # CYCLING REGRESSION
 singlets <- cyclingReg
 STEP_ID <- "3"
-<<filterRBCs>>
+<<filterOut-unwantedCells>>
 cat(paste0("
 On the cycling phases regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
 cells.  
