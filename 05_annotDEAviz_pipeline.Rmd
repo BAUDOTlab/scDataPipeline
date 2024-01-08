@@ -363,7 +363,12 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 
 ```{r load-goi-list, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
 # Load list of genes of interest
-goi <- read.table(genes_of_interest)
+goi <- try(read.table(genes_of_interest), silent = TRUE)
+
+if (inherits(goi, "try-error")) {
+    goi <- read.table(genes_of_interest, sep=",", colClasses=c("character", "NULL"))
+}
+
 goiList <- goi$V1
 
 genesToRemove <- goiList[!(goiList %in% rownames(fltd))]
