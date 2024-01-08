@@ -213,7 +213,7 @@ geneNames108 <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"), #
 manInsert <- grep("ENS", ensembl.ids, value = TRUE, invert = TRUE)
 geneNames108 <- rbind(geneNames108, as.data.frame(cbind(ensembl_gene_id = manInsert, external_gene_name = manInsert)))
 
-write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, "correspondanceENSid_GeneName_V108.csv"), col.names = TRUE, row.names = FALSE, sep = ",")
+write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, paste0("correspondanceENSid_GeneName_V108_", DATASET, ".csv")), col.names = TRUE, row.names = FALSE, sep = ",")
 
 duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
 ```
