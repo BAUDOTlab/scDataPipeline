@@ -7,9 +7,14 @@ load_parameters <- function(config_file) {
     
     # Parse the options in the order of the model file
     # ================================================
-    
     # parse the paths variables
-    assign("PATH_ROOT", path$PATH_ROOT, envir = .GlobalEnv)
+
+    # If the environment variable SCDP_PATH_ROOT exists, we are in a docker env and use it as the root
+    if(Sys.getenv("SCDP_PATH_ROOT") != ""){
+        assign("PATH_ROOT", Sys.getenv("SCDP_PATH_ROOT"), envir = .GlobalEnv)
+    } else {
+        assign("PATH_ROOT", path$PATH_ROOT, envir = .GlobalEnv)        
+    }
 
     assign("PATH_INPUT_LABDATA",	file.path(PATH_ROOT, path$input$PATH_INPUT_LABDATA),		envir = .GlobalEnv)
 	assign("PATH_ATLAS",         	file.path(PATH_ROOT, path$input$PATH_ATLAS), 				envir = .GlobalEnv)
