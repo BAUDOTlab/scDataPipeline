@@ -98,7 +98,7 @@ knitr::opts_chunk$set(
 ```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
-library(biomaRt)
+#library(biomaRt)
 library(tidyr)
 library(Matrix)
 library(dplyr)
@@ -183,7 +183,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 
 
 
-```{r write-ensemblID-mapping-section, results='asis', eval=(gn_col == 1), echo=(gn_col==1)}
+```{r write-ensemblID-mapping-section, results='asis', eval=gn_col == 1, echo=(gn_col==1)}
 cat("
 
 # Map ensembl IDs to gene names
@@ -339,7 +339,7 @@ Idents(fltd) <- clustOfInterest
 
 DefaultAssay(fltd) <- 'RNA'
 
-markers <- FindAllMarkers2(fltd, min_fc = 0.5)
+markers <- FindAllMarkers2(fltd, method="deseq", min_fc = 0.1)
 #markers.sign <- markers[markers$p_val_adj < 0.001 & markers$avg_logFC > log(1.5), ]
 markers.sign <- markers[order(-markers$avg_log2FC), ]
 markers.sign$cluster <- factor(markers.sign$cluster, levels = as.character(sort(as.numeric(levels(markers.sign$cluster)))))
