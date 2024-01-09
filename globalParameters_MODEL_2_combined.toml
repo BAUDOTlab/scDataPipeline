@@ -27,6 +27,7 @@ PATH_ATLAS = "XXXXX"
 PATH_ATLAS_FILE = "XXXXX"
 # optional params
 PATH_GENES_OF_INTEREST = "XXXXX"		# path from the PATH_ROOT to the list of genes of interest
+PATH_MANUAL_ANNOTATION = ""				# path to a folder with manual annotation >>> change to file
 
 [path.output]
 PATH_RDS_OBJECTS	= "50_rdsObjects"	# create path PATH_ROOT/PATH_RDS_OBJECTS
