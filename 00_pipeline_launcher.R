@@ -627,6 +627,13 @@ if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea","ctrl","da")){
   atlas <- TRUE
 }
 
+if(!file.exists(PATH_MANUAL_ANNOTATION) && args[1] %in% c("da")){
+    print("No manual annotation table provided. Some parts of the report will not be generated.")
+    manAnn <- FALSE
+} else {
+    manAnn <- TRUE
+}
+
 
 if (TRUE){
     general_seed = as.numeric(general_seed)

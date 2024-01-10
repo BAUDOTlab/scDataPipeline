@@ -181,11 +181,24 @@ sample_likelihoods = replicate_normalize_densities(sample_densities, replicate_m
 metadata['cond_likelihood'] = sample_likelihoods[experimental_samples].mean(axis=1).values # store the mean of the condition's replicate
 #metadata["orig.ident"] = [1 if ident == "highDiet" else 0 for ident in metadata['orig.ident']] # Need to turn the orig idents as numbers since we compute the means later on
 
+# Clusters
 clusters = pd.read_csv(Path(r.PATH_ROOT, "08_combineData", f"clustering_{r.DATASET}_scenario.{r.scenario}_meth.{r.CLUST_METH}_res.{int(r.CLUST_RES)}.csv"), header=0)
 metadata["clusters"] = clusters["integrated_snn_res.1"].values
-
 cluster_colors = mpl.colormaps["tab20"].resampled(len(np.unique(metadata["clusters"])))
 
+# Manual annotation
+if r.manAnn:
+    # load file
+    file = pd.read_csv(Path(r.PATH_MANUAL_ANNOTATION,
+    f"manualAnnotation_{r.DATASET}_scenario.{r.scenario}.csv"), header = 0)
+    # fill metadata table
+    metadata["clusters"] = file["integrated_snn_res.1"].values
+    metadata["manualAnnot"] = file["fine_annotation"].values
+    # get colors
+    cluster_colors = mpl.colormaps["tab20"].resampled(len(np.unique(metadata["clusters"])))
+    annotation_colors = mpl.colormaps["tab20"].resampled(len(np.unique(metadata["manualAnnot"])))
+
+# Label tranfer annotations from Atlas
 if r.atlas:
   pred = pd.read_csv(Path(r.PATH_ROOT, "08_combineData", f"transferAnnotation_combinedData_{r.DATASET}_scenario_{r.scenario}.csv"), header=0)
   colortable = pd.read_csv(Path(r.PATH_ATLAS, "colorsSheet.csv"), header=0)
@@ -275,13 +288,13 @@ for cluster in metadata["clusters"]:
 plt.tight_layout()
 plt.show()
 
-if r.atlas:
-  scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
-                        title='Celltypes visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
+if r.manAnn:
+  scprep.plot.scatter2d(umap, c=metadata["manualAnnot"], cmap=annotation_colors,
+                        title='Manual annotation visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
 
-  for pred in metadata["prediction"]:
-    plt.annotate(pred, 
-      umap[metadata["prediction"]==pred].mean(axis=0),
+  for annot in metadata["manualAnnot"]:
+    plt.annotate(annot, 
+      umap[metadata["manualAnnot"]==annot].mean(axis=0),
       horizontalalignment='center',
       verticalalignment='center',
       size=8,
@@ -290,18 +303,37 @@ if r.atlas:
   plt.tight_layout()
   plt.show()
 
-# celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, "06_annotDEAviz_celltype-dimplot-1.png"))
+# if r.atlas:
+#   scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
+#                         title='Celltypes visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
+# 
+#   for pred in metadata["prediction"]:
+#     plt.annotate(pred, 
+#       umap[metadata["prediction"]==pred].mean(axis=0),
+#       horizontalalignment='center',
+#       verticalalignment='center',
+#       size=8,
+#       color="black")
+# 
+#   plt.tight_layout()
+#   plt.show()
+# 
+# # celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, "06_annotDEAviz_celltype-dimplot-1.png"))
+# # plt.imshow(celltypes_plot)
+# # plt.show()
+# 
+# celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, f"06_annotDEAviz_scenario_{r.scenario}_celltype-dimplot-1.png"))
 # plt.imshow(celltypes_plot)
 # plt.show()
 
-celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, f"06_annotDEAviz_scenario_{r.scenario}_celltype-dimplot-1.png"))
-plt.imshow(celltypes_plot)
-plt.show()
-
 plt.clf()
+
+
 ```
 
-<!-- ![celltype plot](`r PATH_OUT_FIG`/06_annotDEAviz_celltype-dimplot-1.png) -->
+```{r, out.width="50%"}
+include_graphics(paste0(PATH_OUT_FIG, "/06_annotDEAviz_scenario_", scenario, "_celltype-dimplot-1.png"))
+```
 
 ```{python plot-confidence-interval-func, include=FALSE}
 # Function adapted from https://stackoverflow.com/a/70949996
@@ -328,13 +360,19 @@ def plot_confidence_interval(y, values, z=1.96, thresholds=[0.5,0.5], colors=["g
     return {y: color}
 ```
 
-# Confidence interval of the likelihoods
-```{python likelihood-prepPlot, include=FALSE}
+# Confidence interval of the likelihood
+```{python likelihood-plot-prep, include=FALSE}
 #Sort the index of each cluster from lowest to highest average chd likelihood value
 metadata[f"clustersID"] = scprep.utils.sort_clusters_by_values(metadata["clusters"], metadata["cond_likelihood"])
-if r.atlas: metadata[f"predictionID"] = scprep.utils.sort_clusters_by_values(metadata["prediction"], metadata["cond_likelihood"])
-likelihood_cmap = {"clusters":{}, "prediction":{}}
-likelihood_colors = ["green", 'blue', "red"]
+likelihood_cmap = {"clusters":{}}
+if r.atlas:
+    metadata[f"predictionID"] = scprep.utils.sort_clusters_by_values(metadata["prediction"], metadata["cond_likelihood"])
+    likelihood_cmap["prediction"] = dict()
+if r.manAnn:
+    metadata[f"manualAnnotID"] = scprep.utils.sort_clusters_by_values(metadata["manualAnnot"], metadata["cond_likelihood"])
+    likelihood_cmap["manualAnnot"] = dict()
+
+likelihood_colors = ['blue', "red", "grey"]
 likelihood_thresholds = [0.5,0.5]
 ```
 
@@ -354,7 +392,14 @@ legend_scatter = [mpl.lines.Line2D([0], [0], marker="o", color = "white", marker
                   mpl.lines.Line2D([0], [0], marker="o", color = "white", markerfacecolor = likelihood_colors[2])]
 legend_labels =  ["Significantly depleted","Significantly enriched","No significant difference"]
 
-clustering_type = ["clusters", "prediction"] if r.atlas else ["clusters"]
+if r.atlas and r.manAnn:
+    clustering_type = ["manualAnnot", "prediction"]
+elif r.atlas:
+    clustering_type = ["clusters", "prediction"]
+elif r.manAnn:
+    clustering_type = ["manualAnnot"]
+else:
+    clustering_type = ["clusters"]
 
 for clustering in clustering_type:
   clusters, counts = np.unique(metadata[clustering], return_counts=True)
@@ -377,7 +422,12 @@ for clustering in clustering_type:
   plt.tight_layout()
   plt.show()
 
-scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=likelihood_cmap["clusters"],
+if r.manAnn:
+    clustLabels = "manualAnnot"
+else:
+    clustLabels = "clusters"
+
+scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=likelihood_cmap[clustLabels],
                       title='Cluster likelihoods', ticks=False, legend=False)
 for cluster in metadata["clusters"]:
   plt.annotate(cluster, 
