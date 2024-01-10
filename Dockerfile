@@ -7,6 +7,14 @@ RUN apt update && apt upgrade -y
 # R dependencies
 RUN apt install -y libcurl4-openssl-dev libssl-dev libpng-dev libxml2-dev libfontconfig1-dev libhdf5-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libtiff5-dev libjpeg-dev libcairo2-dev pandoc libxt6
 
+# Rstudio dependencies
+RUN apt install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libgtk-3-0 libgbm1 libasound2 curl libcurl4-gnutls-dev hdf5-tools
+
+RUN wget https://download1.rstudio.org/electron/focal/amd64/rstudio-2023.12.0-369-amd64.deb
+RUN apt install -y ./rstudio-2023.12.0-369-amd64.deb
+RUN rm ./rstudio-2023.12.0-369-amd64.deb
+RUN echo "alias rstudio='rstudio --no-sandbox'" > ~/.bash_aliases
+
 RUN Rscript -e "local({r <- getOption('repos'); \
        r['CRAN'] <- 'https://cran.biotools.fr'; \
        options(repos=r);\
@@ -58,3 +66,8 @@ RUN ln -s /usr/local/bin/pip3 /usr/bin/pip
 RUN pip install pandas numpy meld scanpy matplotlib scprep scikit-learn leidenalg
 
 CMD ["bash"]
+
+# To run the image connecting to the project's directory and give access to the X server (caution: might be a security vulnerability):
+# docker run -it --mount type=bind,source=/mnt/DATA_4TB/projects/[PROJECT ROOT],target=/home -e SCDP_PATH_ROOT="/home/" scdatapipeline
+# Add the following arguments to connect to the host's X server (might be a security vulnerability, use only if you want to use Rstudio):
+# -v /tmp/.X11-unix:/tmp/.X11-unix  -e DISPLAY="${DISPLAY}" --network="host"
