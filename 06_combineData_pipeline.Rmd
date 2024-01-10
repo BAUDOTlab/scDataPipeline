@@ -65,7 +65,7 @@ output:
 </script>
 
 
-```{r setup04-1, include = FALSE}
+```{r setup, include = FALSE}
 options(knitr.purl.inline = TRUE)
 knitr::opts_chunk$set(
   # code evaluation
@@ -95,7 +95,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r load_lib}
+```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
 
@@ -103,7 +103,7 @@ source("./plotting_functions.R", local = TRUE)
 source("./data_management.R", local = TRUE)
 ```
 
-```{r variableDef1, include=FALSE}
+```{r dir-management, include=FALSE}
 # Split comma separated input files into a list
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "08_combineData")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
@@ -180,7 +180,7 @@ invisible(gc())
 SHOW THE TABLE OF SO$ORIG.IDENT TO CHECK THE NUMBER OF CELLS FROM EACH DATASET
 
 
-```{r save2}
+```{r export}
 saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("06_combine_", DATASET, "_scenario.", scenario, "_method.", combine_meth, ".rds")))
 invisible(gc())
 ```
