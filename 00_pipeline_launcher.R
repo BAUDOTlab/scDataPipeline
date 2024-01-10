@@ -352,11 +352,12 @@ switch(args[1],
           action = "store",
           default = 1,
           type = "integer",
-          help = "Select the scenario to run:
-                1 - no regression on cell cycle
-                2 - global cell cycle regression, all phases are regressed
-                3 - cycling cell cycle regression, G2M and S phases are regressed
-				(default: 1)."
+          help = "Select the scenario(s) to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
       ),
       make_option(
           c("-t", "--top_pcs"),
@@ -513,11 +514,12 @@ switch(args[1],
               action = "store",
               default = 1,
               type = "integer",
-              help = "Select the scenario to run:
-                1 - no regression on cell cycle
-                2 - global cell cycle regression, all phases are regressed
-                3 - cycling cell cycle regression, G2M and S phases are regressed
-				(default: 1)."
+              help = "Select the scenario(s) to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
           ),
           make_option(
               c("-c", "--combineMethod"),
@@ -567,11 +569,12 @@ switch(args[1],
         action = "store",
         default = 1,
         type = "integer",
-        help = "Select the scenario to run:
+        help = "Select the scenario(s) to run:
           1 - no regression on cell cycle
           2 - global cell cycle regression, all phases are regressed
           3 - cycling cell cycle regression, G2M and S phases are regressed
-      (default: 1)."
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
         )
     )
     parsed <- OptionParser(
@@ -615,6 +618,22 @@ if (is.null(opt$options$input_list)) {
 if (grepl("\\s+", DATASET)) {
     stop("Error: DATASET contains spaces. Please ensure there are no spaces in the DATASET.")
 }
+
+
+if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea","ctrl","da")){
+  print("No atlas file provided. Some parts of the report will not be generated.")
+  atlas <- FALSE
+} else {
+  atlas <- TRUE
+}
+
+if(!file.exists(PATH_MANUAL_ANNOTATION) && args[1] %in% c("da")){
+    print("No manual annotation table provided. Some parts of the report will not be generated.")
+    manAnn <- FALSE
+} else {
+    manAnn <- TRUE
+}
+
 
 if (TRUE){
     general_seed = as.numeric(general_seed)
@@ -738,10 +757,13 @@ switch(args[1],
            }
        },
        "ctrl" = {
-           rmarkdown::render(
-               "04_additionalControls.Rmd",
-               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_", Sys.Date(), ".html"))
+           lapply(scenarios, function(scenario){
+             print(paste0("Regressing cell cycles with scenario ", scenario))
+             rmarkdown::render(
+             "04_additionalControls.Rmd",
+               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
            )
+        })
        },
        "combine" = {
           lapply(scenarios, function(scenario){
