@@ -371,7 +371,7 @@ if r.manAnn:
     metadata[f"manualAnnotID"] = scprep.utils.sort_clusters_by_values(metadata["manualAnnot"], metadata["cond_likelihood"])
     likelihood_cmap["manualAnnot"] = dict()
 
-likelihood_colors = ['blue', "red", "green"]
+likelihood_colors = ['blue', "red", "grey"]
 likelihood_thresholds = [0.5,0.5]
 ```
 
