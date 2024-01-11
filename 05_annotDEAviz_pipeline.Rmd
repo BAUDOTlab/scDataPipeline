@@ -108,7 +108,6 @@ library(DT)
 library(scales)
 library(RColorBrewer)
 library(grDevices)
-library(DElegate)
 
 # source("./extract_top_features.R")
 # source("./highlightClusterPlot.R")
@@ -339,7 +338,7 @@ Idents(fltd) <- clustOfInterest
 
 DefaultAssay(fltd) <- 'RNA'
 
-markers <- FindAllMarkers2(fltd, min_fc = 0.5)
+markers <- FindAllMarkers(fltd, only.pos = TRUE)
 #markers.sign <- markers[markers$p_val_adj < 0.001 & markers$avg_logFC > log(1.5), ]
 markers.sign <- markers[order(-markers$avg_log2FC), ]
 markers.sign$cluster <- factor(markers.sign$cluster, levels = as.character(sort(as.numeric(levels(markers.sign$cluster)))))
