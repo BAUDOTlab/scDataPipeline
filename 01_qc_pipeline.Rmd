@@ -502,7 +502,7 @@ SO_subset
 We save all the metadata information in a .csv file for the complete dataset and
 the filtered dataset as well. The metadata dataframe contains information about
 the cells with their percentage of mitochondrial and ribosomal expressions, and
-also their outlier statues regarding the different estimated caracteristics.  
+also their outlier statues regarding the different estimated characteristics.  
 
 2 .rds files are saved for the complete and the filtered datasets.
 
