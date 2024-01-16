@@ -8,13 +8,18 @@ RUN apt update && apt upgrade -y
 RUN apt install -y libcurl4-openssl-dev libssl-dev libpng-dev libxml2-dev libfontconfig1-dev libhdf5-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libtiff5-dev libjpeg-dev libcairo2-dev pandoc libxt6
 
 # Rstudio dependencies
-RUN apt install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libgtk-3-0 libgbm1 libasound2 curl libcurl4-gnutls-dev hdf5-tools
+RUN apt install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libgtk-3-0 libgbm1 libasound2 curl libcurl4-gnutls-dev hdf5-tools xauth
 
+# Install Rstudio for Ubuntu focal (20.04)
 RUN wget https://download1.rstudio.org/electron/focal/amd64/rstudio-2023.12.0-369-amd64.deb
 RUN apt install -y ./rstudio-2023.12.0-369-amd64.deb
 RUN rm ./rstudio-2023.12.0-369-amd64.deb
 RUN echo "alias rstudio='rstudio --no-sandbox'" > ~/.bash_aliases
+RUN touch /root/.Xauthority
+RUN --mount=type=secret,id=XAUTH_ID \
+    xauth add $(cat /run/secrets/XAUTH_ID) 
 
+# Install Pipeline R librairies
 RUN Rscript -e "local({r <- getOption('repos'); \
        r['CRAN'] <- 'https://cran.biotools.fr'; \
        options(repos=r);\
