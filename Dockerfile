@@ -72,7 +72,7 @@ RUN pip install pandas numpy meld scanpy matplotlib scprep scikit-learn leidenal
 
 CMD ["bash"]
 
-# To run the image connecting to the project's directory and give access to the X server (caution: might be a security vulnerability):
-# docker run -it --mount type=bind,source=/mnt/DATA_4TB/projects/[PROJECT ROOT],target=/home -e SCDP_PATH_ROOT="/home/" scdatapipeline
+# To run the image connecting to the project's directory:
+# docker run -it --mount type=bind,source=/path/to/your/project,target=/home -e SCDP_PATH_ROOT="/home/" scdatapipeline
 # Add the following arguments to connect to the host's X server (might be a security vulnerability, use only if you want to use Rstudio):
 # -v /tmp/.X11-unix:/tmp/.X11-unix  -e DISPLAY="${DISPLAY}" --network="host"
