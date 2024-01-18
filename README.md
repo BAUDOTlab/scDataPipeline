@@ -21,32 +21,17 @@ At each step, the state of the seurat object is saved in a RDS file and all requ
 
 ### Requirements
 
-- `conda`
+- [`docker`](https://docker.com)
 
-Run the following command to install all the packages needed for the pipeline in a new environment:
+Install docker with:
 
 ```bash
-conda env create -f environment.yml
-conda activate scDataPipeline
+sudo apt install docker.io
 ```
-
-This may take several minutes. Some packages must be installed manually in a R console:
-
-- [SeuratDisk](https://github.com/mojaveazure/seurat-disk)
-- [Doublet Finder](https://github.com/chris-mcginnis-ucsf/DoubletFinder)
-- [scCustomize](https://github.com/samuel-marsh/scCustomize)
-
-```R
-remotes::install_github("mojaveazure/seurat-disk")
-remotes::install_github('ekernf01/DoubletFinder', force = T)
-remotes::install_version("scCustomize", version="1.1.1")
-```
-
-Note: If you encounter an error when installing scCustomize that says the version is not found, just run the command again and it will work most of the time.
-
-Note 2 : We are currently using a fork of DoubletFinder as the main repository has a critical bug that makes it unusable.
 
 ### Installation
+
+## The pipeline
 
 To set up a new project using scDataPipeline, follow this process (you must repeat it for each new project):
 
@@ -64,6 +49,16 @@ cp scDataPipeline/globalParameters* 01_requirements/
 # Fill the 00_rawdata folder with your data
 ```
 
+## The Docker image
+
+This pipeline runs in a docker container. The base image contains R, python and all the packages required to run the pipeline, as well as rstudio server and desktop for debugging purpose. Since using Rstudio desktop from inside a container requires root privileges, you may not need/be interested in it. Build the image using the following command (a pullable image might eventually be available):
+
+```bash
+nohup docker build -t scdatapipeline . &
+```
+
+The `nohup` and `&` are not part of the docker build command, but they avoid blocking the shell since the process take a little over **one hour** to complete (most of which is R package install). the `-t` option is used to name your image. You can use any name you want, as long as it is in lowercase.
+
 ### Filling the parameter files
 
 There is two types of parameter files: **globalParameters_MODEL_single.toml** for single datasets and **globalParameters_MODEL_combined.toml** for combined datasets. Note that in both case, the file must have the exact value of `DATASET` in its name.
@@ -74,7 +69,15 @@ There is two types of parameter files: **globalParameters_MODEL_single.toml** fo
 
 ## How to use
 
-There is only one script you need to launch each time. Go into the scDataPipeline folder, then run:
+You may have noticed that the Dockerfile don't have a `COPY` command. Indeed, as we are working with omics data that can take up quite some space, we are not working directly inside the container, but on the host. It's like using docker as a virtual environment. To do that, we mount a local folder to the `home` of the container. Note that by default, anyone in a docker container has **root privileges** on the host. If that is not what you want, consider running [Rootless Docker](https://docs.docker.com/engine/security/rootless/).
+
+```bash
+docker run -it --rm --mount type=bind,source=/path/to/your/project,target=/home -e SCDP_PATH_ROOT="/home/" scdatapipeline
+```
+
+This will open you an interactive bash shell in your container. The `SCDP_PATH_ROOT` is an environment variable used to tell the pipeline that it is inside a container and should not be set on the host (or have the same value as the `PATH_ROOT` field of the configuration file). Note that when you exit the container, any content it has inside (additionnal packages installed, files created outside of `/home`...) will be deleted. If you want to be able to reopen a container at a later date, remove the `--rm` option.
+
+Once you are in the container, there is only one script you need to launch each time. Go to the `scDataPipeline` folder and run:
 
 ```
 Rscript 00_pipeline_launcher.R -h
