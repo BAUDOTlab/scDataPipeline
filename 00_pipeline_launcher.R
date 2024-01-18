@@ -3,7 +3,7 @@
 library(optparse)
 library(stringr)
 library(RcppTOML)
-
+setwd("/home/scDataPipeline")
 # Set working directory as current file
 setwd(getSrcDirectory(function(){})[1])
 
@@ -689,7 +689,7 @@ if (TRUE){
     ff_list = if (!is.null(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features)) if (exists("FILTER_FEATURES")) FILTER_FEATURES else unlist(strsplit(opt$options$filter_features, ","))
 }
 
-# combinedD <- TRUE
+combinedD <- TRUE
 
 if (combinedD) {
 	FILTER = "filtered"

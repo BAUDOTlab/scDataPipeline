@@ -29,7 +29,7 @@ output:
 
 <style>
 .zoomDiv {
-  display: none;
+  display: none;  
   position: fixed;
   top: 50%;
   left: 50%;
@@ -353,17 +353,26 @@ write.table(x = markers, file = file.path(PATH_OUT_ANALYSIS,
                                                paste0("DESeq2_", 
                                                       DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
-topNmarkers <- extract_top_features(markers.sign, topn = top_markers)
+markers$group1 <- as.numeric(markers$group1)
+topNmarkers <- extract_top_features(markers, topn = top_markers)
+datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
 
-
+names(markers)
 # write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
 #                                               paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
                                               paste0("DESeq2_", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
-datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
 ```
 
+# DE plots
+```{r de-plots}
+markers$comp <- paste0("Cluster ", markers$group1)
+markers$comp <- factor(markers$comp, levels = unique(markers$comp))
+ggplot(markers, aes(log_fc, -log10(padj))) +
+  geom_point(shape = 16, alpha = 0.2) +
+  facet_wrap(~ comp, scales = 'free')
+```
 
 # Additional Plots
 
