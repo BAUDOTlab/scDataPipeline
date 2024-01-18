@@ -367,7 +367,7 @@ export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, 
 
 ## Conclusion - Scenario 1
 
-After removing the **`r doubletsNb`** doublets cells, we also reduced our
+After removing the **`r doubletsNb`** doublet cells, we also reduced our
 dataset from cells expressing the **`r paste( unlist(ff_list), collapse='', sep=",")`** genes. It is
 equivalent to the removal of
 **`r dim(singlets)[2] - dim(filtered_list)[2]`** unwanted cells
