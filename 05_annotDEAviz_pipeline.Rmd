@@ -200,7 +200,7 @@ ensembl.ids <- rownames(fltd)
 # listEnsemblArchives() # useful to retrieve an old annotation
 
 # selection of the reference genome for annotation
-mm10 <- useEnsembl(biomart = 'genes', 
+mm10 <- useEnsembl(biomart = 'genes',
                    dataset = 'mmusculus_gene_ensembl',
                    version = 108) # ==> GRCm38.p3 reference genome
 
@@ -339,21 +339,27 @@ Idents(fltd) <- clustOfInterest
 
 DefaultAssay(fltd) <- 'RNA'
 
+set.seed(general_seed)
 markers <- FindAllMarkers2(fltd, method="deseq", min_fc = 0.1)
 #markers.sign <- markers[markers$p_val_adj < 0.001 & markers$avg_logFC > log(1.5), ]
-markers.sign <- markers[order(-markers$avg_log2FC), ]
-markers.sign$cluster <- factor(markers.sign$cluster, levels = as.character(sort(as.numeric(levels(markers.sign$cluster)))))
-markers.sign <- markers.sign[order(markers.sign$cluster), ]
-markers.sign <- markers.sign[ , c(6, 7, 2:4, 1, 5)]
-write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
-                                               paste0("markers_min.pct_logFC_default_", 
+# markers.sign <- markers[order(-markers$avg_log2FC), ]
+# markers.sign$cluster <- factor(markers.sign$cluster, levels = as.character(sort(as.numeric(levels(markers.sign$cluster)))))
+# markers.sign <- markers.sign[order(markers.sign$cluster), ]
+# markers.sign <- markers.sign[ , c(6, 7, 2:4, 1, 5)]
+# write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
+#                                                paste0("markers_min.pct_logFC_default_", 
+#                                                       DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+write.table(x = markers, file = file.path(PATH_OUT_ANALYSIS,
+                                               paste0("DESeq2_", 
                                                       DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
 topNmarkers <- extract_top_features(markers.sign, topn = top_markers)
 
 
+# write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
+#                                               paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
-                                              paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+                                              paste0("DESeq2_", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
 datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
 ```
