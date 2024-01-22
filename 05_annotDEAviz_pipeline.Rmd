@@ -98,7 +98,7 @@ knitr::opts_chunk$set(
 ```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
-library(biomaRt)
+#library(biomaRt)
 library(tidyr)
 library(Matrix)
 library(dplyr)
@@ -108,6 +108,8 @@ library(DT)
 library(scales)
 library(RColorBrewer)
 library(grDevices)
+library(data.table)
+library(gprofiler2)
 
 # source("./extract_top_features.R")
 # source("./highlightClusterPlot.R")
@@ -182,7 +184,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 
 
 
-```{r write-ensemblID-mapping-section, results='asis', eval=(gn_col == 1), echo=(gn_col==1)}
+```{r write-ensemblID-mapping-section, results='asis', eval=FALSE, echo=FALSE}
 cat("
 
 # Map ensembl IDs to gene names
@@ -217,7 +219,7 @@ write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, paste0("correspond
 duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
 ```
 
-```{r reduce-gene-list, eval=(gn_col == 1), results='asis'}
+```{r reduce-gene-list, eval=FALSE, results='asis'}
 cat(paste0("
 The ", DATASET," dataset has **", length(ensembl.ids), "** different feature genes
 comprising ", length(manInsert), " manually inserted genes:  
@@ -241,7 +243,7 @@ Number of unique retrieved gene names: **", length(unique(geneNames108$external_
 ```
 
 
-```{r table-duplicateGN, echo=FALSE, eval=gn_col == 1 && dim(duplicatesGN)[1] !=0, results='asis'}
+```{r table-duplicateGN, echo=FALSE, eval=FALSE, results='asis'}
 cat("
 
 Some gene names fit multiple ensembl gene IDs. Below you can see the table of
@@ -267,7 +269,7 @@ feature list to the remaining ensembl gene IDs.
 ")
 ```
 
-```{r rename-genes-seurat, eval=(gn_col == 1), echo=(gn_col==1)}
+```{r rename-genes-seurat, eval=FALSE, echo=FALSE}
 # Remove ensembl gene IDs with multiple match to gene names
 if (dim(duplicatesGN)[1] !=0) {
     geneNamesUniq <- geneNames108[!geneNames108$ensembl_gene_id %in% duplicatesGN$ensembl_gene_id, ]
@@ -340,10 +342,16 @@ DefaultAssay(fltd) <- 'RNA'
 
 markers <- FindAllMarkers(fltd, only.pos = TRUE)
 #markers.sign <- markers[markers$p_val_adj < 0.001 & markers$avg_logFC > log(1.5), ]
+
+corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
+
+# Add gene names
+markers$gene_name <- corr_table$GeneName[match(markers$gene, corr_table$ENSid)]
+
 markers.sign <- markers[order(-markers$avg_log2FC), ]
 markers.sign$cluster <- factor(markers.sign$cluster, levels = as.character(sort(as.numeric(levels(markers.sign$cluster)))))
 markers.sign <- markers.sign[order(markers.sign$cluster), ]
-markers.sign <- markers.sign[ , c(6, 7, 2:4, 1, 5)]
+markers.sign <- markers.sign[ , c(6, 8, 2:4, 1, 5, 7)]
 write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
                                                paste0("markers_min.pct_logFC_default_", 
                                                       DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
@@ -362,17 +370,21 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 
 ```{r load-goi-list, eval=!is.null(genes_of_interest), echo=!is.null(genes_of_interest)}
 # Load list of genes of interest
-goi <- read.table(genes_of_interest)
-goiList <- goi$V1
+goi <- readLines(genes_of_interest)
+goiList <- data.frame(GeneName = goi, ENSid = corr_table$ENSid[match(goi, corr_table$GeneName)])
 
-genesToRemove <- goiList[!(goiList %in% rownames(fltd))]
-if (length(genesToRemove) >= 1){
+# get gene_name that do not match ensembl id
+genesToRemove <- goiList$GeneName[is.na(goiList$ENSid)]
+
+if (length(genesToRemove) == dim(goiList)[1]){
+	cat("None of the genes of interest are in the dataset")
+	rm(goiList)
+} else if (length(genesToRemove) >= 1){
     cat(paste0("One or more genes of interest are not in the dataset (maybe because of the case):\n\t",
-               paste(genesToRemove, collapse = ", "), "\nThe listed genes will not be plotted"))
+               paste(genesToRemove, collapse = ", "), "\nThe listed genes will not be plotted.
+               "))
+	goiList <- na.omit(goiList) # remove the unknown genes
 }
-
-goiList <- goiList[goiList %in% rownames(fltd)] # remove the unknown genes
-
 ```
 
 ## Cluster identity {.tabset .tabset-pills .tabset-fade}
@@ -399,19 +411,15 @@ LabelClusters(p, id = "ident",  fontface = "bold", size = 5)
 ### DotPlot of the markers on cluster identity
 
 ```{r cluster-DotPlot-markers}
+topNgenes <- data.frame(ENSid = topNgenes, GeneName = corr_table$GeneName[match(topNgenes, corr_table$ENSid)])
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in clusters"))
 ```
 
+```{r cluster-DotPlot-goi, eval=exists("goiList"), echo=exists("goiList")}
+cat("### DotPlot of the genes of interest on cluster identity
+")
 
-### DotPlot of the genes of interest on cluster identity
-
-```{r cluster-DotPlot-goi}
-if(!is.null(genes_of_interest)){
-
-create_dot_plot(fltd, sort(goiList), title="Genes of interest in clusters")
-} else {
-  cat("No genes of interest provided, nothing to see here.")
-}
+create_dot_plot(fltd, goiList, title = "Genes of interest in clusters")
 ```
 
 ### FeaturePlots of the markers {.tabset .tabset-pills .tabset-fade}
@@ -443,28 +451,31 @@ invisible( lapply( names( topMarkers), function(clusterName)
     print( FeaturePlot( fltd, features = featureName, reduction = ifelse( exists("useReduction"), useReduction, "umap"), order = TRUE) +
             theme( axis.title.x = element_blank(),
                     axis.title.y = element_blank(),
-                    legend.position = "none"))
+                    legend.position = "none") +
+    labs(title = topMarkers[[clusterName]][[featureName, "gene_name"]]))
   }))
   
   cat(" \n \n") # Required for '.tabset'
 }))
 ```
 
-### FeaturePlots of the genes of interest with cluster labels
+```{r cluster-FeaturePlot-goi, out.width='20%', fig.align='default', eval=exists("goiList"), echo=exists("goiList")}
+cat("### FeaturePlots of the genes of interest with cluster labels
+")
 
-```{r cluster-FeaturePlot-goi, out.width='20%', fig.align='default'}
-if(!is.null(genes_of_interest)){
-# FeaturePlot the genes of interest
-FeaturePlot( fltd,
-    features = goiList, 
-    reduction = ifelse( exists("useReduction"), useReduction, "umap"),
+makeFeaturePlot <- function(geneOI){
+	print(FeaturePlot(fltd,
+    features = geneOI[["ENSid"]],
+    reduction = ifelse(exists("useReduction"), useReduction, "umap"),
     min.cutoff = "q01", max.cutoff = "q99",
-    order = TRUE, label = TRUE,
-    combine = FALSE)
+    order = TRUE, label = TRUE) +
+    labs(title = geneOI[["GeneName"]]))
 
-} else {
-  cat("No genes of interest provided, nothing to see here.")
 }
+
+# FeaturePlot the genes of interest
+invisible(apply(goiList, 1, makeFeaturePlot))
+
 ```
 
 ### ViolinPlots of the markers {.tabset .tabset-pills .tabset-fade}
@@ -542,7 +553,7 @@ create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cl
 cat("### DotPlot of the genes of interest on celltype identity")
 if(!is.null(genes_of_interest)){
 ## DotPlot the genes of interest
-create_dot_plot(fltd, sort(goiList), title="Genes of interest in celltypes")
+create_dot_plot(fltd, goiList, title = "Genes of interest in celltypes")
 } else {
   cat("These are not the droids you are looking for.")
 }

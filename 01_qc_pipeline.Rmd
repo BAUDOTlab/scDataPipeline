@@ -155,7 +155,7 @@ rm(df)
 # Load `r DATASET` data
 
 ```{r load-data}
-raw_data <- Read10X(data.dir = PATH_INPUT_LABDATA, gene.column = gn_col)
+raw_data <- Read10X(data.dir = PATH_INPUT_LABDATA, gene.column = ENS_ID_COLUMN)
 SO <- CreateSeuratObject(counts = raw_data, project = DATASET)
 SO
 ```
@@ -224,8 +224,7 @@ Number of unique cell identifiers: `r length(unique(colnames(SO)))`
 ## Percentage of mitochondrial reads & threshold
 
 ```{r vln-mitoPercentage, fig.align = "default", out.width = "35%", fig.show = "hold"}
-use_ensembl_ids = if(gn_col == 1) TRUE else FALSE
-SO <- Add_Mito_Ribo_Seurat(SO, species = "mouse", mito_name = "percent.mito", ribo_name = "percent.ribo", ensembl_ids = use_ensembl_ids)
+SO <- Add_Mito_Ribo_Seurat(SO, species = "mouse", mito_name = "percent.mito", ribo_name = "percent.ribo", ensembl_ids = TRUE)
 SO@meta.data$percent_mito_ribo <- NULL
 
 SO@meta.data[, "outlier.mito"] <- FALSE
@@ -239,8 +238,8 @@ plot1 <- create_violin_plot(
     threshold_high = mito_high,
     title = "Mitochondrial expression\npercentage",
     subtitle = paste0("thresholds at ", mito_low, "% and ", mito_high, "%")
-)  +
-	scale_y_continuous(labels = scales::percent_format(scale = 1))
+) +
+    scale_y_continuous(labels = scales::percent_format(scale = 1))
 
 plot2 <- plot1 +
     ggtitle("Zoom in", subtitle = paste0("thresholds at ", mito_low, "% and ", mito_high, "%")) +
@@ -278,7 +277,7 @@ create_violin_plot(
     #theshold_high = NULL,
     title = "Ribosomal expression\npercentage", 
     subtitle = paste0("threshold at ", ribo_low, "%")) +
-	scale_y_continuous(labels = scales::percent_format(scale = 1))
+    scale_y_continuous(labels = scales::percent_format(scale = 1))
 
 write.table(
     rownames(SO@meta.data[which(SO@meta.data$outlier.ribo ==  TRUE), ]),
