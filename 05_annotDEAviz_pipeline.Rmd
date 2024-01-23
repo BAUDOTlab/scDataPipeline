@@ -334,6 +334,8 @@ fltd
 # Perform differential expression analysis
 
 ```{r run-dea}
+corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
+
 clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(fltd@meta.data), value = TRUE)
 Idents(fltd) <- clustOfInterest
 
@@ -341,8 +343,6 @@ DefaultAssay(fltd) <- 'RNA'
 
 markers <- FindAllMarkers(fltd, only.pos = TRUE)
 #markers.sign <- markers[markers$p_val_adj < 0.001 & markers$avg_logFC > log(1.5), ]
-
-corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
 # Add gene names
 markers$gene_name <- corr_table$GeneName[match(markers$gene, corr_table$ENSid)]
