@@ -555,7 +555,7 @@ invisible(gc())
 # GLOBAL REGRESSION
 singlets <- globalReg
 STEP_ID <- "2"
-<<filterOut-unwantedCells>>
+<<filter-out-unwanted-cells>>
 cat(paste0("
 On the global cell cycle regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
 cells, as they were expressing the **", paste( unlist(ff_list), collapse='', sep=','), ",** gene marker.  
@@ -568,7 +568,7 @@ invisible(gc())
 # CYCLING REGRESSION
 singlets <- cyclingReg
 STEP_ID <- "3"
-<<filterOut-unwantedCells>>
+<<filter-out-unwanted-cells>>
 cat(paste0("
 On the cycling phases regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
 cells.  
