@@ -14,8 +14,8 @@ CONDITION = ["condition1", "conditionA"]
 # general parameters
 general_seed = 17
 
-# analysis gene reference
-GENE_NAME_COLUMN = 1			# 1 or 2 (see raw data features file)
+# indicate the column number representing ENSEMBL ids in your features.tsv.gz file
+ENS_ID_COLUMN = 1
 
 # scenario to select from the step dea
 REGRESSION_SCENARIO = [1]	# list of scenario(s): 1 or 2 or 3 or any combination
