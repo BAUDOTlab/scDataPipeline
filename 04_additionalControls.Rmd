@@ -111,6 +111,7 @@ library(DoubletFinder)
 library(patchwork)
 library(knitr)
 library(stringr)
+library(gprofiler2)
 
 source("./data_management.R", local = TRUE)
 source("./plotting_functions.R", local = TRUE)

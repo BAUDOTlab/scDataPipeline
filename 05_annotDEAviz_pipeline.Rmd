@@ -109,7 +109,6 @@ library(scales)
 library(RColorBrewer)
 library(grDevices)
 library(data.table)
-library(gprofiler2)
 
 # source("./extract_top_features.R")
 # source("./highlightClusterPlot.R")
