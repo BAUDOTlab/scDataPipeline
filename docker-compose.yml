@@ -1,0 +1,18 @@
+version: "2"
+
+services:
+  pipeline:
+    image: test
+    container_name: scdatapipeline_instance_${USER}
+    user: ${USERID}:${PROJECT_GID}
+    group_add: 
+      - 998
+    environment:
+      - SCDP_PATH_ROOT=/home
+    volumes:
+      # For access by each user
+      - /mnt/DATA_4TB/projects/[PROJECT_NAME]:/home
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+      - /etc/shadow:/etc/shadow:ro
+    working_dir: /home
