@@ -330,7 +330,7 @@ doubletsNb <- as.numeric(table(fltd@meta.data[, col_dblts])["Doublet"])
 singlets <- subset(fltd, idents='Singlet')
 singlets@meta.data[grep("DF.classifications", colnames(singlets@meta.data))] <- NULL
 singlets@meta.data[grep("pANN", colnames(singlets@meta.data))] <- NULL
-singlets@meta.data[clustOfInterest] <- NULL
+#singlets@meta.data[clustOfInterest] <- NULL
 ``` 
 
 ## Remove the unwanted cells based on feature expression
@@ -364,6 +364,48 @@ if(!is.null(ff_list)){
 export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 ```
 
+## Observe genes of interest 
+
+For each gene, you will be presented both a feature plot of its expression as well as all cells expressing it. 
+This is designed to remove specific cell type that you may want to remove from analysis (such as Red Blood Cells cluster) 
+without blindly removing all cells with a somatic expression of its marker gene.
+
+### Genes of interest on the UMAP {.tabset .tabset-pills .tabset-fade}
+```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
+invisible(lapply(obs_list), function(gene_name){
+  cells_gene_pos <- which(GetAssaydata(filtered_list, slot="data")[gene_name]>0)
+  Idents(filtered_list)
+  FeaturePlot(fltd, features="Hba-a1", order=T)
+
+  p <- DimPlot( filtered_list,
+         reduction = "umap",
+         cells.highlight = cells_gene_pos,
+         cols.highlight = "#FF000088", 
+         sizes.highlight = Seurat:::AutoPointSize(filtered_list)*4, 
+         order = cells_gene_pos,  # Plot highlighted cells last
+         group.by=NULL) + theme(legend.position="none")
+  LabelClusters(p, id = "ident",  fontface = "bold", size = 5)
+
+  cat(" \n \n") # Required for '.tabset'
+})
+```
+
+### Genes of interest among clusters
+
+```{r observe-genes-table}
+sorted_clust_list <- sort(unique(filtered_list[clustOfInterest]))
+df_obs <- data.frame("cluster"=sorted_clust_list)
+
+lapply(obs_list, function(gene_name) {
+  df_obs[[paste0(gene_name, "+_cells")]] <- sapply(sorted_clust_list, function(clust) {
+    sum(GetAssayData(object = filtered_list, slot = "data")[gene_name,filtered_list@meta.data[clustOfInterest]==clust]>0)
+  })
+})
+
+df_obs$total_cells <- sapply(sorted_clust_list, function(clust) {length(which(filtered_list@meta.data[clustOfInterest]==clust))})
+
+print(df_obs)
+```
 
 ## Conclusion - Scenario 1
 
@@ -573,7 +615,7 @@ invisible(gc())
 # GLOBAL REGRESSION
 singlets <- globalReg
 STEP_ID <- "2"
-<<filterOut-unwantedCells>>
+<<filter-out-unwanted-cells>>
 cat(paste0("
 On the global cell cycle regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
 cells, as they were expressing the **", paste( unlist(ff_list), collapse='', sep=','), ",** gene marker.  
@@ -586,7 +628,7 @@ invisible(gc())
 # CYCLING REGRESSION
 singlets <- cyclingReg
 STEP_ID <- "3"
-<<filterOut-unwantedCells>>
+<<filter-out-unwanted-cells>>
 cat(paste0("
 On the cycling phases regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
 cells.  
