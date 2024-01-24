@@ -372,10 +372,11 @@ without blindly removing all cells with a somatic expression of its marker gene.
 
 ### Genes of interest on the UMAP {.tabset .tabset-pills .tabset-fade}
 ```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
-invisible(lapply(obs_list), function(gene_name){
-  cells_gene_pos <- which(GetAssaydata(filtered_list, slot="data")[gene_name]>0)
-  Idents(filtered_list)
-  FeaturePlot(fltd, features="Hba-a1", order=T)
+invisible(lapply(obs_list, function(gene_name){
+  gene_name = "Hba-a1"
+  cells_gene_pos <- which(GetAssayData(filtered_list, slot="data")[gene_name,]>0)
+  Idents(filtered_list) <- clustOfInterest
+  FeaturePlot(fltd, features=gene_name, order=T)
 
   p <- DimPlot( filtered_list,
          reduction = "umap",
@@ -388,23 +389,26 @@ invisible(lapply(obs_list), function(gene_name){
 
   cat(" \n \n") # Required for '.tabset'
 })
+)
 ```
 
 ### Genes of interest among clusters
 
+print(df_obs)
 ```{r observe-genes-table}
-sorted_clust_list <- sort(unique(filtered_list[clustOfInterest]))
+sorted_clust_list <- sort(as.list(unique(filtered_list@meta.data[clustOfInterest]))[[1]])
 df_obs <- data.frame("cluster"=sorted_clust_list)
 
-lapply(obs_list, function(gene_name) {
+for(gene_name in obs_list) {
   df_obs[[paste0(gene_name, "+_cells")]] <- sapply(sorted_clust_list, function(clust) {
-    sum(GetAssayData(object = filtered_list, slot = "data")[gene_name,filtered_list@meta.data[clustOfInterest]==clust]>0)
+    sum(GetAssayData(object = filtered_list, slot = "data")[gene_name,which(filtered_list@meta.data[clustOfInterest]==clust)]>0)
   })
-})
+}
 
 df_obs$total_cells <- sapply(sorted_clust_list, function(clust) {length(which(filtered_list@meta.data[clustOfInterest]==clust))})
 
-print(df_obs)
+knitr::kable(df_obs, caption="Number of cells expressing the genes of interest in each clusters. A cell can express multiple, or even all these genes.") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
 ## Conclusion - Scenario 1
