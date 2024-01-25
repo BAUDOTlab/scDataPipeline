@@ -22,11 +22,13 @@ RUN Rscript -e "local({r <- getOption('repos'); \
 install.packages('remotes'); \
 install.packages('BiocManager'); \
 BiocManager::install('biomaRt'); \
+BiocManager::install('DESeq2'); \
+BiocManager::install('fgsea'); \
+BiocManager::install('msigdb'); \
 remotes::install_github('mojaveazure/seurat-disk'); \
 remotes::install_github('ekernf01/DoubletFinder', force = T); \
+remotes::install_github('cancerbits/DElegate'); \
 remotes::install_version('scCustomize', version='1.1.1');\
-remotes::install_version('Seurat', version='4.3.0'); \
-remotes::install_version('SeuratObject', version='4.1.3'); \
 remotes::install_version('dplyr', version='1.1.4'); \
 remotes::install_version('kableExtra', version='1.3.4'); \
 remotes::install_version('RcppTOML', version='0.2.2'); \
@@ -49,6 +51,10 @@ remotes::install_version('tidyr', version='1.3.0'); \
 remotes::install_version('RColorBrewer', version='1.1.3'); \
 remotes::install_version('ggplot2', version='3.4.4'); \
 remotes::install_version('reticulate', version='1.28'); \
+remotes::install_version('gprofiler2', version='0.2.1'); \
+remotes::install_version('data.table', version='1.14.8'); \
+remotes::install_version('Seurat', version='4.3.0'); \
+remotes::install_version('SeuratObject', version='4.1.3'); \
 remotes::install_version('knitr', version='1.42');"
 
 # python dependencies
