@@ -14,8 +14,8 @@ CONDITION = ["condition1", "conditionA"]
 # general parameters
 general_seed = 17
 
-# analysis gene reference
-GENE_NAME_COLUMN = 1			# 1 or 2 (see raw data features file)
+# indicate the column number representing ENSEMBL ids in your features.tsv.gz file
+ENS_ID_COLUMN = 1
 
 # scenario to select from the step dea
 REGRESSION_SCENARIO = [1]	# list of scenario(s): 1 or 2 or 3 or any combination
@@ -70,7 +70,7 @@ CLUST_METH = 4					# 1: Louvain, 2: Louvain multilevel refinement, 3: SLM or 4: 
 #FEATURE_THRESHOLDS = []		# list of thresholds based on observations
 
 [ctrl]
-FILTER_FEATURES = ["XXX"]    # list of the marker genes of the celltype to remove (gene name or EnsemblID). To remove red blood cells, filter "Hba-a1"
+OBSERVE_FEATURES = ["XXX"]   # list of the marker genes to observe and eventually remove at the post-ctrl process step 
 dblt_rate = 8
 S_PHASE = 0				# /!\ both parameters should be uncommented together
 G2M_PHASE = 0			# Default value can stay 0 if necessary

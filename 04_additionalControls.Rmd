@@ -111,6 +111,7 @@ library(DoubletFinder)
 library(patchwork)
 library(knitr)
 library(stringr)
+library(gprofiler2)
 
 source("./data_management.R", local = TRUE)
 source("./plotting_functions.R", local = TRUE)
@@ -243,7 +244,7 @@ fltd <- doubletFinder_v3(fltd,
 # SAVE THE OBJECT
 col_dblts <- grep("DF.classifications", colnames(fltd@meta.data), value=TRUE)
 Idents(fltd) <- col_dblts
-export_rds(fltd, paste0("03_", STEP_ID, "_doubletsIdentification_", DATASET, ".rds"))
+export_rds(fltd, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 ```
 
 ```{r plot-DF, fig.show='hold', fig.align='grey', out.width="33%"}
@@ -330,52 +331,65 @@ doubletsNb <- as.numeric(table(fltd@meta.data[, col_dblts])["Doublet"])
 singlets <- subset(fltd, idents='Singlet')
 singlets@meta.data[grep("DF.classifications", colnames(singlets@meta.data))] <- NULL
 singlets@meta.data[grep("pANN", colnames(singlets@meta.data))] <- NULL
-singlets@meta.data[clustOfInterest] <- NULL
 ``` 
 
-## Remove the unwanted cells based on feature expression
+## Preliminary study of focused genes 
 
-```{r filter-out-unwanted-cells}
-filtered_list <- singlets
-to_remove <- c()
-if(!is.null(ff_list)){
+For each gene, you will be presented both a feature plot of its expression as well as all cells expressing it. 
+This is designed to remove specific cell type that you may want to remove from analysis (such as Red Blood Cells cluster) 
+without blindly removing all cells with a somatic expression of its marker gene.
 
-  # Loop through each feature in ff_list
-  for(i in 1:length(ff_list)){
-    # Check if the feature is present in the RNA assay's var.features and print
-    # message if not
-    if(!ff_list[[i]] %in% singlets@assays[["RNA"]]@var.features){
-      cat(paste0("No gene named ", ff_list[[i]], " found, skipping...\n"))
-      to_remove <- append(to_remove, i)
-    }
-  }
+### Feature Plots of focused genes {.tabset .tabset-pills .tabset-fade}
+```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
+corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
-  # Remove features that were not found in the data
-  ff_list <- setdiff(ff_list, to_remove)
+invisible(lapply(obs_list, function(gene_name){
+  cells_gene_pos <- which(GetAssayData(singlets, slot="data")[gene_name,]>0)
 
-  # Fetch data for the selected features
-  expr <- FetchData(object = singlets, vars = ff_list)
+  cat("#### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution")
 
-  # Filter out cells where expression of all selected features is 0
-  filtered_list <- singlets[, which(FALSE == (expr > 0))]
-}
+  Idents(singlets) <- clustOfInterest
+  print(FeaturePlot(fltd, features=gene_name, order=T))
 
-# Export filtered_list to an RDS file
-export_rds(filtered_list, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+  p <- DimPlot( singlets,
+         reduction = "umap",
+         cells.highlight = cells_gene_pos,
+         cols.highlight = "#FF000088", 
+         sizes.highlight = Seurat:::AutoPointSize(singlets)*4, 
+         order = cells_gene_pos,  # Plot highlighted cells last
+         group.by=NULL) + theme(legend.position="none")
+  print(LabelClusters(p, id = "ident",  fontface = "bold", size = 5))
+
+  cat(" \n \n") # Required for '.tabset'
+})
+)
 ```
 
+### Cluster composition of focused genes
+
+```{r observe-genes-table}
+sorted_clust_list <- sort(as.list(unique(singlets@meta.data[clustOfInterest]))[[1]])
+df_obs <- data.frame("cluster"=sorted_clust_list)
+
+for(gene_name in obs_list) {
+  df_obs[[paste0(corr_table$GeneName[match(gene_name, corr_table$ENSid)], "+_cells")]] <- sapply(sorted_clust_list, function(clust) {
+    sum(GetAssayData(object = singlets, slot = "data")[gene_name,which(singlets@meta.data[clustOfInterest]==clust)]>0)
+  })
+}
+
+df_obs$total_cells <- sapply(sorted_clust_list, function(clust) {length(which(singlets@meta.data[clustOfInterest]==clust))})
+
+knitr::kable(df_obs, caption="Number of cells expressing the genes of interest in each clusters. A cell can express multiple, or even all these genes.") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
 
 ## Conclusion - Scenario 1
 
-After removing the **`r doubletsNb`** doublet cells, we also reduced our
-dataset from cells expressing the **`r paste( unlist(ff_list), collapse='', sep=",")`** genes. It is
-equivalent to the removal of
-**`r dim(singlets)[2] - dim(filtered_list)[2]`** unwanted cells
-from the singlets. Now, the scenario 1 dataset contains **`r dim(filtered_list)[2]`**
-cells. It is ready for the downstream analysis.
+We removed the **`r doubletsNb`** doublet cells and observed some genes we want to focus on.
 
 ```{r cleaning, include=FALSE}
-rm(filtered_list, doubletsNb, fltd)
+singlets@meta.data[clustOfInterest] <- NULL
+rm(doubletsNb, fltd)
 invisible(gc())
 ```
 
@@ -395,27 +409,8 @@ cycling phases, they are estimated to be in the G1 phase.
 Below, you can see the lists of gene markers for the G2/M and S phases.
 
 ```{r load-cc-genes, results='hold'}
-if(gn_col == 1){
-  sPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_sPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
-  g2mPhase <- read.table(paste0(PATH_REQUIREMENTS, "cellCycle_g2mPhase_ensemblIDs.txt"), sep = ",", header = TRUE)
-
-  # map cell cycle genes to ensembl IDs
-  s.genes <- sPhase[sPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$s.genes), "Gene.stable.ID"]
-  g2m.genes <- g2mPhase[g2mPhase$Gene.name %in% str_to_title(cc.genes.updated.2019$g2m.genes), "Gene.stable.ID"]
-
-  cat("
-  Genes of S phase:
-  ")
-  sPhase$Gene.name
-
-  cat("
-  Genes of G2/M phases:
-  ")
-  g2mPhase$Gene.name
-} else{
-  s.genes <- str_to_title(cc.genes.updated.2019$s.genes)
-  g2m.genes <- str_to_title(cc.genes.updated.2019$g2m.genes)
-}
+s.genes <- gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
+g2m.genes = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
 ```
 
 ## Assign cell-cycle scores - scenarios 2 and 3
@@ -528,7 +523,7 @@ p2 +
 
 # Call the export functions for the globalReg dataset
 export_metadata(globalReg@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
-export_rds(globalReg, paste0("03_", STEP_ID, "_cellCycleRegr_", DATASET, ".rds"))
+export_rds(globalReg, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 invisible(gc())
 ```
 
@@ -559,47 +554,15 @@ p3 +
 
 # Call the export functions for the cyclingReg dataset
 export_metadata(cyclingReg@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
-export_rds(cyclingReg, paste0("03_", STEP_ID, "_cellCycleRegr_", DATASET, ".rds"))
+export_rds(cyclingReg, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
 rm(singlets)
-invisible(gc())
-```
-
-## Remove unwanted cells - scenarios 2 and 3
-
-```{r filter-out-unwanted-cells-2, results='asis'}
-# REUSE CHUNK FOR RBCs REMOVAL
-# ON THE 2 DATASETS
-
-# GLOBAL REGRESSION
-singlets <- globalReg
-STEP_ID <- "2"
-<<filterOut-unwantedCells>>
-cat(paste0("
-On the global cell cycle regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
-cells, as they were expressing the **", paste( unlist(ff_list), collapse='', sep=','), ",** gene marker.  
-The dataset has ", dim(filtered_list)[2], " remaining cells.
-"))
-rm(singlets, globalReg, filtered_list)
-invisible(gc())
-
-
-# CYCLING REGRESSION
-singlets <- cyclingReg
-STEP_ID <- "3"
-<<filterOut-unwantedCells>>
-cat(paste0("
-On the cycling phases regressed dataset, we removed ", dim(singlets)[2] - dim(filtered_list)[2], " 
-cells.  
-The dataset has ", dim(filtered_list)[2], " remaining cells.
-"))
-rm(singlets, cyclingReg, filtered_list)
 invisible(gc())
 ```
 
 ## Conclusion - scenarios 2 and 3
 
 After deleting the doublets (see scenario 1), we applied 2 cell cycle regression
-strategies. Then, we removed the RBCs cells from the 2 resulting datasets.
+strategies.
 
 # Next step
 
@@ -612,8 +575,8 @@ For a single dataset, we get 3 objects to process:
 - object 3, where doublets were removed and a regression on cycling cells was
 applied.
 
-We also removed the red blood cells (RBCs) of all these objects, as soon as
-expression of **Hba-a1**, a marker gene, was detected.
+We also observed the distribution of genes that we want to focus on. If we want to
+remove some clusters before going on with the pipeline, we have to input them at the next step.
 
 Here, we finished the preparation of the dataset. We can go through the standard
 pipeline for single cell RNA-sequencing data analysis.
