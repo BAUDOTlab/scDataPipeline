@@ -248,12 +248,20 @@ switch(args[1],
 		  ctrl pipeline
 		  	(default: FALSE)."
       ),
-          make_option(
-              c("--combinedData"),
-              action = "store_true",
-              default = FALSE,
-              type = "logical",
-              help = "Process the dataset on combined datasets, after the
+      make_option(
+        c("--rm_clust"),
+        action = "store",
+        default = NA,
+        type = "character",
+        help = "Clusters to remove before the new clustering. All cells in the clusters will be removed. This information should be based on the observed clusters of the ctrl step.
+        This parameter is only active with --good_quality, and should be a comma-separated list of cluster numbers."
+      ),
+      make_option(
+          c("--combinedData"),
+          action = "store_true",
+          default = FALSE,
+          type = "logical",
+          help = "Process the dataset on combined datasets, after the
         combine pipeline
         (default: FALSE)"
       )
@@ -685,6 +693,8 @@ if (TRUE){
 
     ff_list = if (!is.null(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features)) if (exists("FILTER_FEATURES")) FILTER_FEATURES else unlist(strsplit(opt$options$filter_features, ","))
     obs_list = if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ","))
+
+    rm_clust = if (!is.null(goodQ) && goodQ) opt$options$rm_clust
 }
 
 # combinedD <- TRUE
