@@ -98,21 +98,61 @@ knitr::opts_chunk$set(
 ```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
-#library(biomaRt)
-library(tidyr)
-library(Matrix)
-library(dplyr)
-library(kableExtra)
-library(stringr)
-library(DT)
-library(scales)
-library(RColorBrewer)
-library(grDevices)
 library(DElegate)
+library(ggrepel)
+library(dplyr)
 
-# source("./extract_top_features.R")
-# source("./highlightClusterPlot.R")
-# source("./additionalPlots.R")
 source("./plotting_functions.R")
 source("./data_management.R")
+```
+
+```{r dir-managment-1, include=FALSE, eval=combinedD}
+# PATHS
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
+PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "09_DEG_analysis")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+```
+
+
+```{r load-data, include=FALSE}
+# LOAD DATA
+fltd <- readRDS(PATH_RDS_FILE)
+
+# LOAD CLUSTERING RESULTS
+clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
+clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(clusters), value = TRUE)
+fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.names')
+fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
+```
+
+## Differential Gene Expression by cluster {.tabset .tabset-pills .tabset-fade}
+
+```{r perform-deg}
+perform_deg <- function(clust){
+  cat(paste0("### Cluster ", clust))
+  cells <- which(fltd@meta.data[clustOfInterest] == clust)
+  cluster_data <- fltd[,cells]
+  Idents(cluster_data) = "orig.ident"
+  de_results <- findDE(object = cluster_data, method="deseq")
+  de_results <- de_results[complete.cases(de_results[,3:7]),]
+
+
+  top_DE <- filter(de_results, log_fc != 0) %>%
+    group_by(sign(log_fc)) %>%
+    slice_head(n = 5)
+  p = ggplot(de_results, aes(log_fc, -log10(padj))) +
+    geom_point(shape = 16, alpha = 0.2) +
+    geom_point(data = top_DE, shape = 16, size = 2, color = 'deeppink') +
+    geom_text_repel(data = top_DE, aes(label = feature)) +
+    ggtitle(paste0(levels(de_results$group1), " vs ", levels(de_results$group2), " for cluster ", clust))
+
+  print(p)
+
+  write.table(de_results, file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ",")
+
+  cat("\n \n")
+}
+
+mapply(perform_deg, sort(unique(fltd@meta.data[,clustOfInterest])), SIMPLIFY = FALSE)
 ```
