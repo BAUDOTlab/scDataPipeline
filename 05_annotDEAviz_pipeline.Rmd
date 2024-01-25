@@ -109,13 +109,9 @@ library(scales)
 library(RColorBrewer)
 library(grDevices)
 library(data.table)
-library(gprofiler2)
 
-# source("./extract_top_features.R")
-# source("./highlightClusterPlot.R")
-# source("./additionalPlots.R")
-source("./plotting_functions.R")
-source("./data_management.R")
+source("./plotting_functions.R", local = TRUE)
+source("./data_management.R", local = TRUE)
 ```
 
 ```{r load-colors, eval=atlas, include = FALSE}
@@ -335,6 +331,8 @@ fltd
 # Perform differential expression analysis
 
 ```{r run-dea}
+corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
+
 clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(fltd@meta.data), value = TRUE)
 Idents(fltd) <- clustOfInterest
 
@@ -342,8 +340,6 @@ DefaultAssay(fltd) <- 'RNA'
 
 markers <- FindAllMarkers(fltd, only.pos = TRUE)
 #markers.sign <- markers[markers$p_val_adj < 0.001 & markers$avg_logFC > log(1.5), ]
-
-corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
 # Add gene names
 markers$gene_name <- corr_table$GeneName[match(markers$gene, corr_table$ENSid)]
@@ -415,7 +411,7 @@ topNgenes <- data.frame(ENSid = topNgenes, GeneName = corr_table$GeneName[match(
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in clusters"))
 ```
 
-```{r cluster-DotPlot-goi, eval=exists("goiList"), echo=exists("goiList")}
+```{r cluster-DotPlot-goi, eval=exists("goiList"), echo=exists("goiList"), results='asis'}
 cat("### DotPlot of the genes of interest on cluster identity
 ")
 
@@ -459,7 +455,7 @@ invisible( lapply( names( topMarkers), function(clusterName)
 }))
 ```
 
-```{r cluster-FeaturePlot-goi, out.width='20%', fig.align='default', eval=exists("goiList"), echo=exists("goiList")}
+```{r cluster-FeaturePlot-goi, out.width='20%', fig.align='default', eval=exists("goiList"), echo=exists("goiList"), results='asis'}
 cat("### FeaturePlots of the genes of interest with cluster labels
 ")
 
@@ -497,12 +493,12 @@ invisible( lapply( names( topMarkers), function(clusterName)
 }))
 ```
 
-```{r set-celltype-identity, eval=atlas}
+```{r set-celltype-identity, eval=atlas, results='asis'}
 cat("## Celltype identity {.tabset .tabset-pills .tabset-fade}")
 Idents(fltd) <- factor(fltd@meta.data[, colname], levels = sort(levels(as.factor(fltd@meta.data[, colname]))))
 ```
 
-```{r celltype-DimPlot, eval=atlas, results='asis', out.width="50%"}
+```{r celltype-DimPlot, eval=atlas, results='asis', out.width="50%", results='asis'}
 cat("### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}")
 ## DimPlot the celltype
 DimPlot(fltd,
@@ -543,13 +539,13 @@ invisible(sapply(levels(as.factor(fltd@meta.data[, colname])), function(act)
 }))
 ```
 
-```{r celltype-DotPlot-markers, eval=atlas}
+```{r celltype-DotPlot-markers, eval=atlas, results='asis'}
 cat("### DotPlot of the markers on celltype identity")
 ## DotPlot the n-top markers of each celltype
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
 ```
 
-```{r celltype-DotPlot-goi, eval=atlas}
+```{r celltype-DotPlot-goi, eval=atlas, results='asis'}
 cat("### DotPlot of the genes of interest on celltype identity")
 if(!is.null(genes_of_interest)){
 ## DotPlot the genes of interest
