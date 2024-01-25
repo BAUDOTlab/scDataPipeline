@@ -248,12 +248,20 @@ switch(args[1],
 		  ctrl pipeline
 		  	(default: FALSE)."
       ),
-          make_option(
-              c("--combinedData"),
-              action = "store_true",
-              default = FALSE,
-              type = "logical",
-              help = "Process the dataset on combined datasets, after the
+      make_option(
+        c("--rm_clust"),
+        action = "store",
+        default = NA,
+        type = "character",
+        help = "Clusters to remove before the new clustering. All cells in the clusters will be removed. This information should be based on the observed clusters of the ctrl step.
+        This parameter is only active with --good_quality, and should be a comma-separated list of cluster numbers."
+      ),
+      make_option(
+          c("--combinedData"),
+          action = "store_true",
+          default = FALSE,
+          type = "logical",
+          help = "Process the dataset on combined datasets, after the
         combine pipeline
         (default: FALSE)"
       )
@@ -480,14 +488,6 @@ switch(args[1],
               type = "numeric",
               help = "Threshold to adjust cell cycle scoring for G2M phase
 			  	(default: 0)."
-          ),
-          make_option(
-            c("-f", "--filter_features"),
-            action = "store",
-                        type = "character",
-            help = "The list of features used to filter out unwanted cells. 
-            For example, filtering out the HBA1 gene will remove all red blood cells, as it is a gene specifically expressed by such cells.
-            The list should be in quotes and each feature must be separated by a colon."
           )
       )
       parsed <- OptionParser(
@@ -683,7 +683,9 @@ if (TRUE){
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
 
-    ff_list = if (!is.null(if (exists("FILTER_FEATURES")) FILTER_FEATURES else opt$options$filter_features)) if (exists("FILTER_FEATURES")) FILTER_FEATURES else unlist(strsplit(opt$options$filter_features, ","))
+    obs_list = if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ","))
+
+    rm_clust = if (!is.null(goodQ) && goodQ) opt$options$rm_clust
 }
 
 # combinedD <- TRUE
