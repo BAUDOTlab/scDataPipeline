@@ -2,16 +2,22 @@
 author: "CC"
 date: "2023-03-23"
 output:
-    html_document:
-        theme:
-            bootswatch: yeti
-        toc: yes
-        toc_float:
-          collapsed: false
-          smooth_scroll: true
-        number_sections: yes
+    rmdformats::material:
+        use_bookdown: true
+        thumbnails: false
         df_print: kable
         code_folding: hide
+        number_sections: yes
+    # html_document:
+    #     theme:
+    #         bootswatch: yeti
+    #     toc: yes
+    #     toc_float:
+    #       collapsed: false
+    #       smooth_scroll: true
+    #     number_sections: yes
+    #     df_print: kable
+    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
@@ -505,7 +511,7 @@ also their outlier statues regarding the different estimated characteristics.
 
 2 .rds files are saved for the complete and the filtered datasets.
 
-```{r exports, eval=TRUE}
+```{r exports, eval=FALSE}
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # Call the functions for the complete dataset
@@ -518,7 +524,7 @@ export_rds(SO_subset, paste0("01_qc_", DATASET, "_filtered.rds"))
 ```
 
 
-```{r cleaning, include = FALSE}
+```{r cleaning, include = TRUE}
 invisible(gc())
 ```
 

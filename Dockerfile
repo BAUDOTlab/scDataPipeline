@@ -55,7 +55,8 @@ remotes::install_version('gprofiler2', version='0.2.1'); \
 remotes::install_version('data.table', version='1.14.8'); \
 remotes::install_version('Seurat', version='4.3.0'); \
 remotes::install_version('SeuratObject', version='4.1.3'); \
-remotes::install_version('knitr', version='1.42');"
+remotes::install_version('knitr', version='1.42'); \
+remotes::install_version('rmdformats', version='1.0.3');"
 
 # python dependencies
 RUN apt install -y git libncurses-dev libgdbm-dev libz-dev tk-dev libsqlite3-dev libreadline-dev liblzma-dev libffi-dev libbz2-dev libgdbm-compat-dev
