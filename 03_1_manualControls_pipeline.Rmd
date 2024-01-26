@@ -8,16 +8,6 @@ output:
         df_print: kable
         code_folding: hide
         number_sections: yes
-    # html_document:
-    #     theme:
-    #         bootswatch: yeti
-    #     toc: yes
-    #     toc_float:
-    #       collapsed: false
-    #       smooth_scroll: true
-    #     number_sections: yes
-    #     df_print: kable
-    #     code_folding: hide
   pdf_document:
     number_sections: yes
     toc: yes
@@ -86,7 +76,6 @@ knitr::opts_chunk$set(
   strip.white = TRUE,
   
   # code decoration
-  #tidy = TRUE,
   tidy.opts = list(width.cutoff = 90),
   comment = "",
   attr.output = ".numberLines",
@@ -97,8 +86,6 @@ knitr::opts_chunk$set(
   dev = c("png", "pdf"),
   fig.width = 12,
   fig.height = 12,
-  #fig.asp = 1.3               # fig.height = fig.width * fig.asp
-  #out.extra = "style = "border:5px solid orange""    # orange box arround plots
   fig.align = "center"   # should be tuned to default in multiple plots chunk
 )
 ```
@@ -118,29 +105,6 @@ PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "03_1_manualControls")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 ```
 
-<!-- # Global settings -->
-  
-```{r show-params, eval=FALSE, include=FALSE}
-ul <- unlist(params)
-df <- data.frame(keyName = names(ul), value = ul, row.names = NULL)
-df <- df[! grepl("^PATH|DATASET", df$keyName), ]
-names(df) <- c("Parameters", "Values")
-df1 <- df[1:ceiling(dim(df)[1] / 3), ]
-df1$Parameters <- cell_spec(df1$Parameters, bold = TRUE)
-df2 <- df[(ceiling(dim(df)[1] / 3) + 1) : (2 * ceiling(dim(df)[1] / 3)), ]
-df2$Parameters <- cell_spec(df2$Parameters, bold = TRUE)
-df3 <- df[((2 * ceiling(dim(df)[1] / 3)) + 1):dim(df)[1], ]
-df3$Parameters <- cell_spec(df3$Parameters, bold = TRUE)
-
-
-list(df1, df2, df3) %>%
-  knitr::kable(align = "ll", row.names = FALSE, escape = FALSE) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"),
-                full_width = FALSE)
-rm(df)
-```
-
-
 # Load `r DATASET` data
 
 ```{r load-data}
@@ -149,9 +113,7 @@ metadata <- read.table(paste0(PATH_ROOT, "/03_qc/metadata_", DATASET, "_complete
 umapCoord <- read.table(paste0(PATH_ROOT, "/04_process/DR_umap_", DATASET, "_complete.csv"), header = TRUE, sep = ",")
 
 # reintegrate umap coordinates
-# umapMat <- as.matrix(umapCoord[, 2:3])
 umapMat <- as.matrix(umapCoord)
-# rownames(umapMat) <- umapCoord$cellIDs
 cplt[["umap"]] <- CreateDimReducObject(embeddings = umapMat, key = "UMAP_")
 
 # reintegrate metadata
@@ -232,10 +194,6 @@ ggplot(data = cellsData,
 
 # Ribosomal exploration 
 
-```{r import-vln-ribo, out.width="50%", eval=FALSE, echo=FALSE}
-knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-riboPercentage-1.png"))
-```
-
 ```{r define-groups-ribo, out.width="50%"}
 cplt@meta.data[, "ribo_groups"] <- set_thresh(ribo_thresholds, cplt@meta.data$percent.ribo, "ribo")
 max_ribo <- max(cplt@meta.data$percent.ribo)
@@ -301,10 +259,6 @@ ggplot(data = cellsData,
 
 # UMI read counts exploration 
 
-```{r import-vln-UMI, out.width="50%", eval=FALSE, echo=FALSE}
-knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-countRNA-1.png"))
-```
-
 ```{r define-groups-UMI, out.width="50%"}
 cplt@meta.data[, "umi_groups"] <- set_thresh(umi_thresholds, cplt@meta.data$nCount_RNA, "umi")
 
@@ -369,10 +323,6 @@ ggplot(data = cellsData,
 
 
 # Feature counts exploration 
-
-```{r import-vln-feature, out.width="50%", eval=FALSE, echo=FALSE}
-knitr::include_graphics(paste0(PATH_OUT_FIG, "/01_qc_vln-featureRNA-1.png"))
-```
 
 ```{r define-groups-feature, out.width="50%"}
 cplt@meta.data[, "feature_groups"] <- set_thresh(feature_thresholds, cplt@meta.data$nFeature_RNA, "feature")

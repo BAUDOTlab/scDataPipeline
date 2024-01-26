@@ -8,16 +8,6 @@ output:
         df_print: kable
         code_folding: hide
         number_sections: yes
-    # html_document:
-    #     theme:
-    #         bootswatch: yeti
-    #     toc: yes
-    #     toc_float:
-    #       collapsed: false
-    #       smooth_scroll: true
-    #     number_sections: yes
-    #     df_print: kable
-    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
@@ -86,7 +76,6 @@ knitr::opts_chunk$set(
   strip.white = TRUE,
 
   # code decoration
-  #tidy = TRUE,
   tidy.opts = list(width.cutoff = 90),
   comment = "",
   attr.output = ".numberLines",
@@ -97,8 +86,6 @@ knitr::opts_chunk$set(
   dev = c("png", "pdf"),
   fig.width = 12,
   fig.height = 12,
-  #fig.asp = 1.3               # fig.height = fig.width * fig.asp
-  #out.extra = "style = "border:5px solid orange""    # orange box arround plots
   fig.align = "center"   # should be tuned to default in multiple plots chunk
 )
 ```
@@ -116,13 +103,6 @@ source("./data_management.R")
 source("./plotting_functions.R")
 ```
 
-<!-- ```{r get-params, include = FALSE} -->
-<!-- bindingIsLocked("params", env = .GlobalEnv) -->
-<!-- unlockBinding("params", env = .GlobalEnv) -->
-<!-- attach(params) -->
-<!-- set.seed(general_seed) -->
-<!-- ``` -->
-
 ```{r dir-managment, include = FALSE}
 if (!dir.exists(PATH_ROOT)) { dir.create(PATH_ROOT) }
 if (!dir.exists(PATH_OUT_HTML)) { dir.create(PATH_OUT_HTML) }
@@ -134,29 +114,6 @@ if (!dir.exists(PATH_OUT_FIG)) { dir.create(PATH_OUT_FIG, recursive = TRUE) }
 ```{r other-settings, include=FALSE}
 options(scipen=999)                 # to prevent scientific notation
 ```
-
-<!-- # Global settings -->
-
-```{r show-params, eval=FALSE, include=FALSE}
-ul <- unlist(params)
-df <- data.frame(keyName = names(ul), value = ul, row.names = NULL)
-df <- df[! grepl("^PATH|DATASET", df$keyName), ]
-names(df) <- c("Parameters", "Values")
-df1 <- df[1:ceiling(dim(df)[1] / 3), ]
-df1$Parameters <- cell_spec(df1$Parameters, bold = TRUE)
-df2 <- df[(ceiling(dim(df)[1] / 3) + 1) : (2 * ceiling(dim(df)[1] / 3)), ]
-df2$Parameters <- cell_spec(df2$Parameters, bold = TRUE)
-df3 <- df[((2 * ceiling(dim(df)[1] / 3)) + 1):dim(df)[1], ]
-df3$Parameters <- cell_spec(df3$Parameters, bold = TRUE)
-
-
-list(df1, df2, df3) %>%
-  knitr::kable(align = "ll", row.names = FALSE, escape = FALSE) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"),
-                full_width = FALSE)
-rm(df)
-```
-
 
 # Load `r DATASET` data
 
@@ -280,7 +237,6 @@ create_violin_plot(
     data = SO,
     feature = "percent.ribo",
     threshold_low = ribo_low,
-    #theshold_high = NULL,
     title = "Ribosomal expression\npercentage", 
     subtitle = paste0("threshold at ", ribo_low, "%")) +
     scale_y_continuous(labels = scales::percent_format(scale = 1))

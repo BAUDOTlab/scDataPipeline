@@ -8,16 +8,6 @@ output:
         df_print: kable
         code_folding: hide
         number_sections: yes
-    # html_document:
-    #     theme:
-    #         bootswatch: yeti
-    #     toc: yes
-    #     toc_float:
-    #       collapsed: false
-    #       smooth_scroll: true
-    #     number_sections: yes
-    #     df_print: kable
-    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
@@ -123,8 +113,6 @@ All integration part removed from this report. Take the code from 06.1_combineDa
 data_load <- function(DATASET_NAME) {
     # PATHS
     PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_preprocessed_", DATASET_NAME, "_scenario.", scenario, ".rds")
-    # PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
-    
     data <- readRDS(PATH_RDS_FILE)
     
     if(scenario != 1){ # scale.data is empty in scenario 1, so we use it only for scenarios 2 and 3
@@ -189,58 +177,6 @@ SHOW THE TABLE OF SO$ORIG.IDENT TO CHECK THE NUMBER OF CELLS FROM EACH DATASET
 ```{r export}
 saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("06_combine_", DATASET, "_scenario.", scenario, "_method.", combine_meth, ".rds")))
 invisible(gc())
-```
-
-
-
-
-<!-- This code chunk will extract all code blocks from `example.Rmd` and write
-them to a temporary file, preserving chunk options. It will then read them and
-make those chunks avaliable in the current R environment when the presentation
-is knitted. -->
-
-```{r include, eval=FALSE, echo=FALSE, include = FALSE}
-SO <- ScaleData(SO, verbose = FALSE)
-SO.list <- list(SO)
-names(SO.list) <- DATASET
-```
-
-
-```{r include2, eval=FALSE, include = FALSE}
-tmp_script <- tempfile()
-knitr::purl("02_process_pipeline.Rmd", output=tmp_script, quiet = TRUE)
-knitr::read_chunk(tmp_script)
-#' Run a previously loaded chunk interactively
-#'
-#' Takes labeled code loaded with load_chunk and runs it in the /global/ envir (unless otherwise specified)
-#'
-#' @param chunkName The name of the chunk as a character string
-#' @param envir The environment in which the chunk is to be evaluated 
-run_chunk <- function(chunkName, envir=.GlobalEnv) {
-    chunkName <- unlist(lapply(as.list(substitute(.(chunkName)))[-1], as.character))
-    # eval(parse(text=knitr:::knit_code$get(chunkName)), envir=envir)
-    eval(parse(text=knitr:::knit_code$get(chunkName)), envir=envir)
-}
-```
-
-<!-- # Preprocessing workflow -->
-
-```{r preprocess-12, message=TRUE, echo=FALSE, results='asis', eval=FALSE}
-run_chunk("preprocess-1", envir = environment())
-```
-
-```{r clustering_02process2, echo=FALSE, results='asis', eval=FALSE}
-run_chunk("clustering_02process", envir = environment())
-```
-
-# Visualization
-
-```{r dimplot-cluster-fltd2, fig.align='default', echo=FALSE, results='asis', eval=FALSE}
-run_chunk("dimplot-cluster-fltd}", envir = environment())
-```
-
-```{r save4-12, eval=FALSE, echo=FALSE, results='asis'}
-run_chunk("save4-1", envir = environment())
 ```
 
 # SessionInfo
