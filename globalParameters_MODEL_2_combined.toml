@@ -12,6 +12,7 @@ DATASET = "MODEL_2"
 
 # general parameters
 general_seed = 17
+COMBINED = true
 
 # indicate the column number representing ENSEMBL ids in your features.tsv.gz file
 ENS_ID_COLUMN = 1
