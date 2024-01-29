@@ -245,7 +245,10 @@ fltd <- doubletFinder_v3(fltd,
 # SAVE THE OBJECT
 col_dblts <- grep("DF.classifications", colnames(fltd@meta.data), value=TRUE)
 Idents(fltd) <- col_dblts
-export_rds(fltd, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+
+if("1" %in% scenarios){
+  export_rds(fltd, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+}
 ```
 
 ```{r plot-DF, fig.show='hold', fig.align='grey', out.width="33%"}
@@ -384,7 +387,7 @@ knitr::kable(df_obs, caption="Number of cells expressing the genes of interest i
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
-## Conclusion - Scenario 1
+## Conclusion - `r if("1" %in% scenarios) "Scenario 1" else "Preparation"`
 
 We removed the **`r doubletsNb`** doublet cells and observed some genes we want to focus on.
 
@@ -392,6 +395,14 @@ We removed the **`r doubletsNb`** doublet cells and observed some genes we want 
 singlets@meta.data[clustOfInterest] <- NULL
 rm(doubletsNb, fltd)
 invisible(gc())
+```
+
+```{r scenario-1-early-stop, eval=scenarios == c("1")}
+cat("# SessionInfo")
+
+sessionInfo()
+
+knitr::knitr_exit()
 ```
 
 # Cell cycle regressions - scenarios 2 and 3
@@ -500,12 +511,13 @@ p1 +
     )
 ```
 
-## Global regression - scenario 2
+
+```{r regression-global, eval="2" %in% scenarios}
+cat("## Global regression - scenario 2
 
 After regression on phases score, we observe mixed cells independently of the
-cell cycle.
+cell cycle.")
 
-```{r regression-global}
 # PIPELINE
 STEP_ID <- "2"
 
@@ -529,12 +541,13 @@ invisible(gc())
 ```
 
 
-## Cycling regression - scenario 3
+```{r regression-cycling, eval="3" %in% scenarios, fig.show='hold'}
+cat("## Cycling regression - scenario 3
 
-After regression on cycling cells, G2/M and S cells mix together, what is not
+After regression on cycling cells, G2/M and S cells mix together, which is not
 the case for the G1 cells.
+")
 
-```{r regression-cycling, fig.show='hold'}
 # PIPELINE
 STEP_ID <- "3"
 
