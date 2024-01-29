@@ -100,7 +100,9 @@ library(Seurat)
 library(ggplot2)
 library(DElegate)
 library(ggrepel)
+library(DT)
 library(dplyr)
+library(knitr)
 
 source("./plotting_functions.R")
 source("./data_management.R")
@@ -126,11 +128,15 @@ fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.nam
 fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
-## Differential Gene Expression by cluster {.tabset .tabset-pills .tabset-fade}
+# Differential Gene Expression by cluster {.tabset .tabset-pills .tabset-fade}
+```{r, echo=FALSE,include = FALSE}
+# You need this code to conduct the magic dependences attaching...
+DT::datatable(matrix())
+```
 
-```{r perform-deg}
+```{r perform-deg, results='asis', out.width='100%'}
 perform_deg <- function(clust){
-  cat(paste0("### Cluster ", clust))
+  cat(paste0("## Cluster ", clust, "\n"))
   cells <- which(fltd@meta.data[clustOfInterest] == clust)
   cluster_data <- fltd[,cells]
   Idents(cluster_data) = "orig.ident"
@@ -149,10 +155,12 @@ perform_deg <- function(clust){
 
   print(p)
 
-  write.table(de_results, file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ",")
+  print(datatable(de_results[c(1:201),], rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T)))
 
-  cat("\n \n")
+  invisible(write.table(de_results, file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ","))
+
+  cat(" \n \n")
 }
 
-mapply(perform_deg, sort(unique(fltd@meta.data[,clustOfInterest])), SIMPLIFY = FALSE)
+htmltools::tagList(invisible(mapply(perform_deg, sort(unique(fltd@meta.data[,clustOfInterest])), SIMPLIFY = FALSE)))
 ```
