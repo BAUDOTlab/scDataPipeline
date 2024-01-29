@@ -23,9 +23,23 @@ output:
         toc: yes
         toc_depth: 3
         keep_tex: no
-title: |
-  | `r DATASET`
-  | Protocole 2: Processing
+---
+
+```{r}
+if (goodQ){
+    title_var <- paste0("|
+    | Step 5: Preprocessing cleaned data -- ", DATASET)
+} else if (combinedD) {
+    title_var <- paste0("|
+    | Step 8: Preprocessing [Integrating/Merging] data -- ", DATASET)
+} else {
+    title_var <- paste0("|
+    | Step 2: Preprocessing ", FILTER, " data -- ", DATASET)
+}
+```
+
+---
+title: `r title_var`
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->

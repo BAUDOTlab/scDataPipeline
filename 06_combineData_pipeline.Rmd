@@ -23,9 +23,8 @@ output:
         toc: yes
         toc_depth: 3
         keep_tex: no
-# title: |
-#   | Doublets removal
-#   | Step {{STEP_ID}}
+title: |
+  | Step 7: [Integration/Merging datasets] -- `r paste(input_datasets, collapse = " and ")`
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->

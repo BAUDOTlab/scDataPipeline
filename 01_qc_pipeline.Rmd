@@ -24,8 +24,7 @@ output:
         toc_depth: 3
         keep_tex: no
 title: |
-  | `r DATASET`
-  | Protocole 1: QC
+    | Step 1: Quality control -- `r DATASET`
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
@@ -511,7 +510,7 @@ also their outlier statues regarding the different estimated characteristics.
 
 2 .rds files are saved for the complete and the filtered datasets.
 
-```{r exports, eval=FALSE}
+```{r exports, eval=TRUE}
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # Call the functions for the complete dataset
