@@ -176,6 +176,7 @@ cat(paste0("\nRemoved ", length(Cells(SO)) - length(cells_to_keep), " cells from
 
 # If a non existent cluster name is in the list, it will just be silently ignored.
 SO <- SO[,cells_to_keep]
+SO@meta.data[clustOfInterest] <- NULL
 ```
 
 ```{r preprocess-1, eval=hvg_meth != "mvp", echo=hvg_meth != "mvp", message=TRUE}
