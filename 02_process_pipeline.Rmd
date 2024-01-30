@@ -179,7 +179,7 @@ remove_clusters <- function(SO, scenario){
 
     # If a non existent cluster name is in the list, it will just be silently ignored.
     SO <- SO[,cells_to_keep]
-
+    SO@meta.data[clustOfInterest] <- NULL
     return(SO)
 }
 SO.list <- mapply(remove_clusters, SO.list, names(SO.list), SIMPLIFY = FALSE)

@@ -8,7 +8,7 @@ source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "qc"
+#args <- "process"
 
 # Main help message
 main_help <- "
@@ -55,7 +55,7 @@ if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine", "da")) {
+if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine", "da", "deg")) {
   cat(main_help)
   quit(status = 1)
 }
@@ -585,12 +585,44 @@ switch(args[1],
       epilogue = "Add some details, examples, ...",
       formatter = IndentedHelpFormatter # TitleHelpFormatter
     )
+  },
+  "deg" = {
+    option_list8 = list(
+        make_option(
+        c("-i", "--input_dataset"),
+        action = "store",
+        default = NA,
+        type = "character",
+        help = "Name of the dataset to process
+          (required)."
+      ),
+        make_option(
+        c("-s", "--scenario"),
+        action = "store",
+        default = 1,
+        type = "integer",
+        help = "Select the scenario(s) to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
+        )
+    )
+    parsed <- OptionParser(
+      usage = "Usage: \n\t%prog deg [--flag <flag_arg>]",
+      option_list = option_list8,
+      add_help_option = TRUE,
+      description = "\nPerform differential abundance analysis on the dataset.",
+      epilogue = "Add some details, examples, ...",
+      formatter = IndentedHelpFormatter # TitleHelpFormatter
+    )
   }
 )
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "fibroWT"
+#opt$options$input_dataset <- "highDiet"
 #opt$options$input_list <- "highDiet,normalDiet"
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
@@ -787,6 +819,17 @@ switch(args[1],
                 )
               }
         })
+        })
+       },
+       "deg" = {
+        lapply(scenarios, function(scenario){
+              print(paste0("Performing DEG analysis on ", DATASET, " dataset for scenario ", scenario))
+              if(file.exists(paste0("08_DEG_analysis.Rmd"))){
+                rmarkdown::render(
+                  paste0("11_DEG_analysis.Rmd"),
+                  output_file = file.path(PATH_OUT_HTML, paste0("10_DEGanalysis_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                )
+              }
         })
        }
 )

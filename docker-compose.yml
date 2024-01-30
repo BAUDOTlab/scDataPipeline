@@ -1,18 +1,21 @@
 version: "2"
+name: scdatapipeline_project_${USER}
 
 services:
   pipeline:
-    image: test
+    image: scdatapipeline:latest
     container_name: scdatapipeline_instance_${USER}
     user: ${USERID}:${PROJECT_GID}
     group_add: 
-      - 998
+      - 998 # Has to be the docker group ID
     environment:
       - SCDP_PATH_ROOT=/home
     volumes:
       # For access by each user
       - /mnt/DATA_4TB/projects/[PROJECT_NAME]:/home
+      - /mnt/DATA_4TB/projects/singleCellAtlases:/mnt/DATA_4TB/projects/singleCellAtlases
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
       - /etc/shadow:/etc/shadow:ro
     working_dir: /home
+    tty: true
