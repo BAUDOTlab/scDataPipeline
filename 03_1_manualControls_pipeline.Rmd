@@ -1,6 +1,6 @@
 ---
 author: "CC"
-date: "2023-03-27"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
     rmdformats::material:
         use_bookdown: true
