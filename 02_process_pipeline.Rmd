@@ -31,7 +31,7 @@ if (goodQ){
     | Step 5: Preprocessing cleaned data -- ", DATASET)
 } else if (combinedD) {
     title_var <- paste0("|
-    | Step 8: Preprocessing [Integrating/Merging] data -- ", DATASET)
+    | Step 8: Preprocessing the ", ifelse(combine_meth=="merge", "merged", "integrated"), " data -- ", DATASET)
 } else {
     title_var <- paste0("|
     | Step 2: Preprocessing ", FILTER, " data -- ", DATASET)

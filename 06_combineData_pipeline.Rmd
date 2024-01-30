@@ -24,7 +24,7 @@ output:
         toc_depth: 3
         keep_tex: no
 title: |
-  | Step 7: [Integration/Merging datasets] -- `r paste(input_datasets, collapse = " and ")`
+  | Step 7: `r paste(ifelse(combine_meth=="merge", "Merging of the ", "Integration of the "), input_datasets, collapse = " and ")` datasets
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->

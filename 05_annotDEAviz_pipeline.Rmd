@@ -28,7 +28,7 @@ output:
 ```{r}
 if (combinedD){
     title_var <- paste0("|
-    | Step 9: DEA on [Integrating/Merging] data -- ", DATASET)
+    | Step 9: DEA on the ", ifelse(combine_meth=="merge", "merged", "integrated"), " data -- ", DATASET)
 } else {
     title_var <- paste0("|
     | Step 6: Differential expression analysis -- ", DATASET)
