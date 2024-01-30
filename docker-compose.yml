@@ -12,7 +12,7 @@ services:
       - SCDP_PATH_ROOT=/home
     volumes:
       # For access by each user
-      - /mnt/DATA_4TB/projects/HealthyVSFattyDiet_Rochais:/home
+      - /mnt/DATA_4TB/projects/[PROJECT_NAME]:/home
       - /mnt/DATA_4TB/projects/singleCellAtlases:/mnt/DATA_4TB/projects/singleCellAtlases
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
