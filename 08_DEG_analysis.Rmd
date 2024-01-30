@@ -1,0 +1,166 @@
+---
+author: "Céline Chevalier and Anaı̈s Baudot"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+    html_document:
+        theme:
+            bootswatch: yeti
+        toc: yes
+        toc_float:
+          collapsed: false
+          smooth_scroll: true
+        number_sections: yes
+        df_print: kable
+        code_folding: hide
+    pdf_document:
+        number_sections: yes
+        toc: yes
+        toc_depth: 3
+        keep_tex: no
+# title: |
+#   | Doublets removal
+#   | Step {{STEP_ID}}
+---
+
+<!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
+
+<!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
+<!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
+
+<style>
+.zoomDiv {
+  display: none;  
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+  box-shadow: 0px 0px 50px #888888;
+  width: fit-content;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.zoomImg {
+  width: 150%;
+}
+</style>
+
+<script type = "text/javascript">
+  $(document).ready(function() {
+    $("body").prepend("<div class = \"zoomDiv\"><img src = \"\" class = \"zoomImg\"></div>");
+    // onClick for all img except the zoomed one and link ones (filter)
+    // use "img.zoom" and out.extra = "class = \"zoom\"" in chunk to specify manually which chunk images can be zoomed
+    $("img:not(.zoomImg)").filter(":not(a *)").click(function() {
+      $(".zoomImg").attr("src", $(this).attr("src"));
+      $(".zoomDiv").show();
+    })
+    // onClick function for hiding div
+    $("img.zoomImg").click(function() {
+      $(".zoomDiv").hide();
+    })
+  })
+</script>
+
+
+```{r setup, include = FALSE}
+options(knitr.purl.inline = TRUE)
+knitr::opts_chunk$set(
+  # code evaluation
+  eval = TRUE,
+
+  # text output
+  echo = TRUE,
+  results = "hold",
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  strip.white = TRUE,
+
+  # code decoration
+  tidy.opts = list(width.cutoff = 90),
+  comment = "",
+  attr.output = ".numberLines",
+
+  # plots
+  fig.path = paste0(PATH_OUT_FIG, "/06_annotDEAviz_scenario_", scenario, "_"),
+  fig.show = "asis",         # tuned to "hold" in multiple plots chunk
+  dev = c("png", "pdf"),
+  out.width = "50%",
+  fig.width = 12,
+  fig.height = 12,
+  fig.align = "center"   # should be tuned to default in multiple plots chunk
+)
+```
+
+```{r load-libraries, include = FALSE}
+library(Seurat)
+library(ggplot2)
+library(DElegate)
+library(ggrepel)
+library(DT)
+library(dplyr)
+library(knitr)
+
+source("./plotting_functions.R")
+source("./data_management.R")
+```
+
+```{r dir-managment-1, include=FALSE, eval=combinedD}
+# PATHS
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
+PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "09_DEG_analysis")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+```
+
+
+```{r load-data, include=FALSE}
+# LOAD DATA
+fltd <- readRDS(PATH_RDS_FILE)
+
+# LOAD CLUSTERING RESULTS
+clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
+clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(clusters), value = TRUE)
+fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.names')
+fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
+```
+
+# Differential Gene Expression by cluster {.tabset .tabset-pills .tabset-fade}
+```{r, echo=FALSE,include = FALSE}
+# You need this code to conduct the magic dependences attaching...
+DT::datatable(matrix())
+```
+
+```{r perform-deg, results='asis', out.width='100%'}
+perform_deg <- function(clust){
+  cat(paste0("## Cluster ", clust, "\n"))
+  cells <- which(fltd@meta.data[clustOfInterest] == clust)
+  cluster_data <- fltd[,cells]
+  Idents(cluster_data) = "orig.ident"
+  de_results <- findDE(object = cluster_data, method="deseq")
+  de_results <- de_results[complete.cases(de_results[,3:7]),]
+
+
+  top_DE <- filter(de_results, log_fc != 0) %>%
+    group_by(sign(log_fc)) %>%
+    slice_head(n = 5)
+  p = ggplot(de_results, aes(log_fc, -log10(padj))) +
+    geom_point(shape = 16, alpha = 0.2) +
+    geom_point(data = top_DE, shape = 16, size = 2, color = 'deeppink') +
+    geom_text_repel(data = top_DE, aes(label = feature)) +
+    ggtitle(paste0(levels(de_results$group1), " vs ", levels(de_results$group2), " for cluster ", clust))
+
+  print(p)
+
+  print(datatable(de_results[c(1:201),], rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T)))
+
+  invisible(write.table(de_results, file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ","))
+
+  cat(" \n \n")
+}
+
+htmltools::tagList(invisible(mapply(perform_deg, sort(unique(fltd@meta.data[,clustOfInterest])), SIMPLIFY = FALSE)))
+```

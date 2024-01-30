@@ -105,6 +105,7 @@ library(patchwork)
 library(knitr)
 library(stringr)
 library(gprofiler2)
+library(data.table)
 
 source("./data_management.R", local = TRUE)
 source("./plotting_functions.R", local = TRUE)

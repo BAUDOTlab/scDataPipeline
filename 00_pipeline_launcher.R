@@ -55,7 +55,7 @@ if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine", "da")) {
+if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine", "da", "deg")) {
   cat(main_help)
   quit(status = 1)
 }
@@ -577,6 +577,38 @@ switch(args[1],
       epilogue = "Add some details, examples, ...",
       formatter = IndentedHelpFormatter # TitleHelpFormatter
     )
+  },
+  "deg" = {
+    option_list8 = list(
+        make_option(
+        c("-i", "--input_dataset"),
+        action = "store",
+        default = NA,
+        type = "character",
+        help = "Name of the dataset to process
+          (required)."
+      ),
+        make_option(
+        c("-s", "--scenario"),
+        action = "store",
+        default = 1,
+        type = "integer",
+        help = "Select the scenario(s) to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
+        )
+    )
+    parsed <- OptionParser(
+      usage = "Usage: \n\t%prog deg [--flag <flag_arg>]",
+      option_list = option_list8,
+      add_help_option = TRUE,
+      description = "\nPerform differential abundance analysis on the dataset.",
+      epilogue = "Add some details, examples, ...",
+      formatter = IndentedHelpFormatter # TitleHelpFormatter
+    )
   }
 )
 
@@ -671,7 +703,7 @@ if (TRUE){
     }
     # unclassified variables ---------------------
     manual = opt$options$manual
-    combinedD = if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
+    combinedD = if (exists("COMBINED")) COMBINED else if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
     obs_list = if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ","))
@@ -780,6 +812,17 @@ switch(args[1],
                 )
               }
         })
+        })
+       },
+       "deg" = {
+        lapply(scenarios, function(scenario){
+              print(paste0("Performing DEG analysis on ", DATASET, " dataset for scenario ", scenario))
+              if(file.exists(paste0("08_DEG_analysis.Rmd"))){
+                rmarkdown::render(
+                  paste0("08_DEG_analysis.Rmd"),
+                  output_file = file.path(PATH_OUT_HTML, paste0("11_DEGanalysis_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                )
+              }
         })
        }
 )
