@@ -3,13 +3,12 @@
 library(optparse)
 library(stringr)
 library(RcppTOML)
-#setwd("/home/scDataPipeline")
 
 source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-args <- "deg"
+#args <- "process"
 
 # Main help message
 main_help <- "
@@ -623,7 +622,7 @@ switch(args[1],
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-opt$options$input_dataset <- "highDiet_normalDiet"
+#opt$options$input_dataset <- "highDiet"
 #opt$options$input_list <- "highDiet,normalDiet"
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
@@ -721,7 +720,7 @@ if (TRUE){
     rm_clust = if (!is.null(goodQ) && goodQ) opt$options$rm_clust
 }
 
-combinedD <- TRUE
+# combinedD <- TRUE
 
 if (combinedD) {
 	FILTER = "filtered"
