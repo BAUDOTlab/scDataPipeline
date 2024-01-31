@@ -2,24 +2,29 @@
 author: "Céline Chevalier and Anaı̈s Baudot"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
-    html_document:
-        theme:
-            bootswatch: yeti
-        toc: yes
-        toc_float:
-          collapsed: false
-          smooth_scroll: true
-        number_sections: yes
+    rmdformats::material:
+        use_bookdown: true
+        thumbnails: false
         df_print: kable
         code_folding: hide
+        number_sections: yes
+    # html_document:
+    #     theme:
+    #         bootswatch: yeti
+    #     toc: yes
+    #     toc_float:
+    #       collapsed: false
+    #       smooth_scroll: true
+    #     number_sections: yes
+    #     df_print: kable
+    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
         toc_depth: 3
         keep_tex: no
-# title: |
-#   | Doublets removal
-#   | Step {{STEP_ID}}
+title: |
+  | Step 7: `r paste(ifelse(combine_meth=="merge", "Merging of the ", "Integration of the "), input_datasets, collapse = " and ")` datasets
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->

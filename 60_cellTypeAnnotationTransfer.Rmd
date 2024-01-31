@@ -1,6 +1,11 @@
 ---
 output:
-    html_document
+    rmdformats::material:
+        use_bookdown: true
+        thumbnails: false
+        df_print: kable
+        code_folding: hide
+        number_sections: yes
 ---
 
 ```{r mapping-atlas{{STEP_ID}}}
