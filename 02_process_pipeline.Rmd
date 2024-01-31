@@ -169,7 +169,7 @@ The preprocessing workflow consists in the steps of
 
 - clustering.
 
-```{r remove-clusters, eval=goodQ && !is.null(rm_clus), results="asis"}
+```{r remove-clusters, eval=goodQ && !is.null(rm_clust), results="asis"}
 cat("## Removal of the selected clusters")
 
 cat(paste0("Removing the following clusters: ", rm_clust, "\n"))
