@@ -46,7 +46,7 @@ title: `r title_var`
 
 <style>
 .zoomDiv {
-  display: none;
+  display: none;  
   position: fixed;
   top: 50%;
   left: 50%;
@@ -125,6 +125,7 @@ library(DT)
 library(scales)
 library(RColorBrewer)
 library(grDevices)
+library(DElegate)
 library(data.table)
 
 source("./plotting_functions.R", local = TRUE)
@@ -214,7 +215,7 @@ ensembl.ids <- rownames(fltd)
 # listEnsemblArchives() # useful to retrieve an old annotation
 
 # selection of the reference genome for annotation
-mm10 <- useEnsembl(biomart = 'genes', 
+mm10 <- useEnsembl(biomart = 'genes',
                    dataset = 'mmusculus_gene_ensembl',
                    version = 108) # ==> GRCm38.p3 reference genome
 
@@ -355,29 +356,34 @@ Idents(fltd) <- clustOfInterest
 
 DefaultAssay(fltd) <- 'RNA'
 
-markers <- FindAllMarkers(fltd, only.pos = TRUE)
-#markers.sign <- markers[markers$p_val_adj < 0.001 & markers$avg_logFC > log(1.5), ]
+set.seed(general_seed)
+fc_threshold <- 0
+padj_threshold <- 0.001
+markers <- FindAllMarkers2(fltd, method="deseq", min_fc = fc_threshold)
+markers.sign <- markers[markers$padj < padj_threshold, ]
 
 # Add gene names
-markers$gene_name <- corr_table$GeneName[match(markers$gene, corr_table$ENSid)]
+markers$gene_name <- corr_table$GeneName[match(markers$feature, corr_table$ENSid)]
 
-markers.sign <- markers[order(-markers$avg_log2FC), ]
-markers.sign$cluster <- factor(markers.sign$cluster, levels = as.character(sort(as.numeric(levels(markers.sign$cluster)))))
+markers.sign <- markers[order(-markers$log_fc), ]
+markers.sign$cluster <- factor(markers.sign$group1, levels = as.character(sort(as.numeric(levels(as.factor(markers.sign$group1))))))
 markers.sign <- markers.sign[order(markers.sign$cluster), ]
-markers.sign <- markers.sign[ , c(6, 8, 2:4, 1, 5, 7)]
+markers.sign <- markers.sign[ , c(12, 11, 3, 7, 8, 5, 6, 1)]
 write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
-                                               paste0("markers_min.pct_logFC_default_", 
+                                               paste0("DESeq2_ markers_min_fc_", fc_threshold, "_pad_", padj_threshold, "_", 
                                                       DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
+markers.sign$cluster <- as.numeric(markers.sign$cluster)
 topNmarkers <- extract_top_features(markers.sign, topn = top_markers)
-
-
-write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
-                                              paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
-
 datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
-```
 
+names(markers)
+# write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
+#                                               paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
+                                              paste0("DESeq2_topmarkers", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+
+```
 
 # Additional Plots
 
@@ -407,7 +413,7 @@ if (length(genesToRemove) == dim(goiList)[1]){
 ntop <- 5
 
 topNmarkers <- extract_top_features(markers.sign, topn = ntop)
-topNgenes <- unique(topNmarkers$gene)
+topNgenes <- unique(topNmarkers$feature)
 Idents(fltd) <- factor(fltd@meta.data[,clustOfInterest], levels = sort(as.numeric(levels(as.factor(fltd@meta.data[,clustOfInterest])))))
 ```
 
@@ -442,12 +448,14 @@ create_dot_plot(fltd, goiList, title = "Genes of interest in clusters")
 topMarkers = by( markers.sign, markers.sign[["cluster"]], function(x)
 {
   # Filter markers based on adjusted PValue
-  x = x[ x[["p_val_adj"]] < 0.005, , drop = FALSE]
+  x = x[ x[["padj"]] < 0.005, , drop = FALSE]
   # Sort by decreasing logFC
-  x = x[ order(abs(x[["avg_log2FC"]]), decreasing = TRUE), , drop = FALSE ]
+  x = x[ order(abs(x[["log_fc"]]), decreasing = TRUE), , drop = FALSE ]
+  rownames(x) <- x[["feature"]]
   # Return top ones
   return( if(is.null(  top_markers )) head( x, n =  10 ) else head( x, n =  min(top_markers, 10) ))
 })
+
 
 clustersColor <- setNames(hue_pal()(length(names(topMarkers))), names(topMarkers))
 
@@ -459,7 +467,7 @@ invisible( lapply( names( topMarkers), function(clusterName)
   highlightClusterPlot(clusterName, seuratObject = fltd, reduction = ifelse( exists("useReduction"), useReduction, "umap"))
   
   # Plots expression on projected cells
-  invisible( lapply( topMarkers[[clusterName]][["gene"]], function(featureName)
+  invisible( lapply( topMarkers[[clusterName]][["feature"]], function(featureName)
   {
     print( FeaturePlot( fltd, features = featureName, reduction = ifelse( exists("useReduction"), useReduction, "umap"), order = TRUE) +
             theme( axis.title.x = element_blank(),
