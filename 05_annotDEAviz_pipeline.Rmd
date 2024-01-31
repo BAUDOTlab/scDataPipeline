@@ -8,16 +8,6 @@ output:
         df_print: kable
         code_folding: hide
         number_sections: yes
-    # html_document:
-    #     theme:
-    #         bootswatch: yeti
-    #     toc: yes
-    #     toc_float:
-    #       collapsed: false
-    #       smooth_scroll: true
-    #     number_sections: yes
-    #     df_print: kable
-    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
@@ -115,7 +105,6 @@ knitr::opts_chunk$set(
 ```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
-#library(biomaRt)
 library(tidyr)
 library(Matrix)
 library(dplyr)
@@ -195,156 +184,6 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 <!--     CenterTitle() + -->
 <!--     labs(x = "Cell type annotation before additional controls", y = paste0("Cell type annotation after additional controls")) -->
 <!-- ``` -->
-
-
-
-```{r write-ensemblID-mapping-section, results='asis', eval=FALSE, echo=FALSE}
-cat("
-
-# Map ensembl IDs to gene names
-
-Presentation of Biomart, selection of the reference genome.
-")
-
-ensembl.ids <- rownames(fltd)
-
-# # explore the biomart database
-# listEnsembl()
-# ensembl <- useEnsembl(biomart = "genes")
-# datasets <- listDatasets(ensembl)
-# listEnsemblArchives() # useful to retrieve an old annotation
-
-# selection of the reference genome for annotation
-mm10 <- useEnsembl(biomart = 'genes',
-                   dataset = 'mmusculus_gene_ensembl',
-                   version = 108) # ==> GRCm38.p3 reference genome
-
-geneNames108 <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"), #, "external_transcript_name"),
-                     filters = "ensembl_gene_id",
-                     values = ensembl.ids,
-                     mart = mm10)
-
-# Check for manually inserted genes
-manInsert <- grep("ENS", ensembl.ids, value = TRUE, invert = TRUE)
-geneNames108 <- rbind(geneNames108, as.data.frame(cbind(ensembl_gene_id = manInsert, external_gene_name = manInsert)))
-
-write.table(geneNames108, file = file.path(PATH_OUT_ANALYSIS, paste0("correspondanceENSid_GeneName_V108_", DATASET, ".csv")), col.names = TRUE, row.names = FALSE, sep = ",")
-
-duplicatesGN <- geneNames108[which(duplicated(geneNames108$external_gene_name) | duplicated(geneNames108$external_gene_name, fromLast = TRUE)),]
-```
-
-```{r reduce-gene-list, eval=FALSE, results='asis'}
-cat(paste0("
-The ", DATASET," dataset has **", length(ensembl.ids), "** different feature genes
-comprising ", length(manInsert), " manually inserted genes:  
-", toString(manInsert), "
-
-***
-
-Number of retrieved ensembl gene IDs: 
-**", length(unique(geneNames108$ensembl_gene_id)), "**  
-*(the manually inserted genes are already added to the retrieved data)*
-
-List of the **", length(setdiff(ensembl.ids, geneNames108$ensembl_gene_id)), "**
-not found ensembl gene IDs:  
-", toString(setdiff(ensembl.ids, geneNames108$ensembl_gene_id)), "
-
-***
-
-Number of unique retrieved gene names: **", length(unique(geneNames108$external_gene_name)), "**
-
-"))
-```
-
-
-```{r table-duplicateGN, echo=FALSE, eval=FALSE, results='asis'}
-cat("
-
-Some gene names fit multiple ensembl gene IDs. Below you can see the table of
-the redundant gene names and the corresponding ensembl gene IDs.
-")
-# datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
-if(gn_col == 1){
-duplicatesGN %>%
-    rename(gene_names = external_gene_name) %>%
-    arrange(gene_names) %>%
-    knitr::kable(row.names = FALSE, align = "ll") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"),
-                full_width = FALSE, position = "center") %>%
-  column_spec(1, width = "12em") %>%
-  column_spec(2, width = "12em")
-}
-
-cat("
-<br>
-
-We removed all ensembl gene IDs mapped to multiple gene names. We reduce the
-feature list to the remaining ensembl gene IDs.
-")
-```
-
-```{r rename-genes-seurat, eval=FALSE, echo=FALSE}
-# Remove ensembl gene IDs with multiple match to gene names
-if (dim(duplicatesGN)[1] !=0) {
-    geneNamesUniq <- geneNames108[!geneNames108$ensembl_gene_id %in% duplicatesGN$ensembl_gene_id, ]
-} else {
-    geneNamesUniq <- geneNames108
-}
-
-SOsubset <- subset(fltd, features = geneNamesUniq$ensembl_gene_id)
-
-# Function to rename genes in seurat object
-renameFeatures <- function(SO = NULL, assay = "RNA", newNames = NULL) {
-
-	# Focus on a specific assay
-	obj <- SO@assays[[assay]]
-
-	# Replacement labels must have the same length with the data
-	if (length(newNames$external_gene_name) == nrow(obj)) {
-
-		# Replace the names in the counts and data matrices
-		if (length(obj@counts)) obj@counts@Dimnames[[1]]    <- newNames$external_gene_name
-        if (length(obj@data)) obj@data@Dimnames[[1]]        <- newNames$external_gene_name
-	
-		# Replace the names in the scales matrix
-		if (length(obj@scale.data)) dimnames(obj@scale.data)[[1]] <- newNames$external_gene_name
-
-		# Replace the names in the variable features matrices
-		if (length(obj@var.features) > 0) {
-
-			# rename variable features with gene names
-			ensemblFeat <- data.frame(hvg = obj@var.features)
-    	    geneFeat <- ensemblFeat %>%
-				left_join(newNames, by = join_by(hvg == ensembl_gene_id))
-    	    obj@var.features <- geneFeat$external_gene_name
-
-			# change rownames of the variable features meta data table
-			# WORKS ONLY WHEN DUPLICATES ARE REMOVED
-			tmp.meta.features <- obj@meta.features %>%
-				tibble::rownames_to_column("ensembl_gene_id") %>%
-    	        right_join(newNames, ., by = "ensembl_gene_id") %>%
-    	        tibble::column_to_rownames("external_gene_name") %>%
-    	        select(-(ensembl_gene_id))
-			obj@meta.features <- tmp.meta.features
-		}
-
-	} else {
-	   cat("Error: Unequal gene sets: nrow(RNA) != nrow(newnames)")
-	}
-
-	# Return the object
-	SO@assays[[assay]] <- obj
-
-	return(SO)
-}
-
-
-fltd <- renameFeatures(SOsubset, DefaultAssay(SOsubset), geneNamesUniq)
-if (DefaultAssay(fltd) == "integrated") fltd <- renameFeatures(fltd, "RNA", geneNamesUniq)
-
-fltd
-```
-
 
 # Perform differential expression analysis
 
@@ -496,7 +335,6 @@ makeFeaturePlot <- function(geneOI){
 
 # FeaturePlot the genes of interest
 invisible(apply(goiList, 1, makeFeaturePlot))
-
 ```
 
 ### ViolinPlots of the markers {.tabset .tabset-pills .tabset-fade}

@@ -12,16 +12,6 @@ output:
         df_print: kable
         code_folding: hide
         number_sections: yes
-    # html_document:
-    #     theme:
-    #         bootswatch: yeti
-    #     toc: yes
-    #     toc_float:
-    #       collapsed: false
-    #       smooth_scroll: true
-    #     number_sections: yes
-    #     df_print: kable
-    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
@@ -73,9 +63,6 @@ output:
 </script>
 
 <br>
-
-<!-- This report has been created in the context of the single-cell RNA sequencing -->
-<!-- analysis used in the [@Argiro_2023](https://www.biorxiv.org/content/10.1101/2023.05.15.540476v1) article. -->
 
 ```{r setup, include=FALSE, eval=TRUE}
 options(knitr.purl.inline = TRUE)

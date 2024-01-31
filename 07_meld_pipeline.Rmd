@@ -8,16 +8,6 @@ output:
         df_print: kable
         code_folding: hide
         number_sections: yes
-    # html_document:
-    #     theme:
-    #         bootswatch: yeti
-    #     toc: yes
-    #     toc_float:
-    #       collapsed: false
-    #       smooth_scroll: true
-    #     number_sections: yes
-    #     df_print: kable
-    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
@@ -89,7 +79,6 @@ knitr::opts_chunk$set(
   strip.white = TRUE,
 
   # code decoration
-  #tidy = TRUE,
   tidy.opts = list(width.cutoff = 90),
   comment = "",
   attr.output = ".numberLines",
@@ -101,8 +90,6 @@ knitr::opts_chunk$set(
   out.width = "50%",
   fig.width = 12,
   fig.height = 12,
-  #fig.asp = 1.3               # fig.height = fig.width * fig.asp
-  #out.extra = "style = "border:5px solid orange""    # orange box arround plots
   fig.align = "center"   # should be tuned to default in multiple plots chunk
 )
 ```
@@ -140,7 +127,6 @@ import sklearn
 from pathlib import Path
 np.random.seed(42)
 mpl.use("agg", force = True)
-# PATH_OUT_FIG = r.PATH_OUT_FIG.joinpath("07_MELD")
 ```
 
 ```{python load-data, include = FALSE}
@@ -186,7 +172,6 @@ sample_likelihoods = replicate_normalize_densities(sample_densities, replicate_m
 
 ```{python metadata-prep, include=FALSE}
 metadata['cond_likelihood'] = sample_likelihoods[experimental_samples].mean(axis=1).values # store the mean of the condition's replicate
-#metadata["orig.ident"] = [1 if ident == "highDiet" else 0 for ident in metadata['orig.ident']] # Need to turn the orig idents as numbers since we compute the means later on
 
 # Clusters
 clusters = pd.read_csv(Path(r.PATH_ROOT, "08_combineData", f"clustering_{r.DATASET}_scenario.{r.scenario}_meth.{r.CLUST_METH}_res.{int(r.CLUST_RES)}.csv"), header=0)
@@ -243,7 +228,6 @@ if(len(experimental_samples) > 1):
         plt.tight_layout()
         plt.show()
 else:
-    #fig, axes = plt.subplots(1,2, figsize=(13,6))    
     scprep.plot.scatter2d(umap, c=sample_likelihoods[experimental_samples[0]], cmap=meld.get_meld_cmap(),
                             vmin=0, vmax=1,
                             title=experimental_samples[0], ticks=False)
@@ -279,8 +263,6 @@ plt.show()
 ## Clusters vs MELD
 
 ```{python plot-clustering, fig.align='default'}
-#fig, axes = plt.subplots(1,3, figsize=(16,8))
-
 scprep.plot.scatter2d(umap, c=metadata["clusters"], cmap=cluster_colors,
                       title='Cluster visualisation', ticks=False, discrete=True, legend=True)
 
@@ -310,32 +292,7 @@ if r.manAnn:
   plt.tight_layout()
   plt.show()
 
-# if r.atlas:
-#   scprep.plot.scatter2d(umap, c=metadata["prediction"], cmap=celltype_colors,
-#                         title='Celltypes visualisation', ticks=False, legend=False) # Legend is finicky, will either try to correctly display or delete the chunk
-# 
-#   for pred in metadata["prediction"]:
-#     plt.annotate(pred, 
-#       umap[metadata["prediction"]==pred].mean(axis=0),
-#       horizontalalignment='center',
-#       verticalalignment='center',
-#       size=8,
-#       color="black")
-# 
-#   plt.tight_layout()
-#   plt.show()
-# 
-# # celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, "06_annotDEAviz_celltype-dimplot-1.png"))
-# # plt.imshow(celltypes_plot)
-# # plt.show()
-# 
-# celltypes_plot = mpl.image.imread(Path(r.PATH_OUT_FIG, f"06_annotDEAviz_scenario_{r.scenario}_celltype-dimplot-1.png"))
-# plt.imshow(celltypes_plot)
-# plt.show()
-
 plt.clf()
-
-
 ```
 
 ```{r, out.width="50%"}

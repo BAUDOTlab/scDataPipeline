@@ -8,16 +8,6 @@ output:
         df_print: kable
         code_folding: hide
         number_sections: yes
-    # html_document:
-    #     theme:
-    #         bootswatch: yeti
-    #     toc: yes
-    #     toc_float:
-    #       collapsed: false
-    #       smooth_scroll: true
-    #     number_sections: yes
-    #     df_print: kable
-    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
@@ -111,8 +101,6 @@ knitr::opts_chunk$set(
   out.width = "50%",
   fig.width = 12,
   fig.height = 12,
-  #fig.asp = 1.3               # fig.height = fig.width * fig.asp
-  #out.extra = "style = "border:5px solid orange""    # orange box arround plots
   fig.align = "center"   # should be tuned to default in multiple plots chunk
 )
 ```
@@ -256,8 +244,6 @@ var.feats.list <- VariableFeatures(SO)
 ```
 
 ```{r clustering-process, out.width='50%', results='asis', warning=FALSE}
-# resolutions <- clust_res
-
 SO <- FindNeighbors(SO, dims = 1:top_pcs, verbose=FALSE)
 SO <- FindClusters(
     SO,
