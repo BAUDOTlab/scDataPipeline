@@ -8,7 +8,7 @@ source("load_parameters.R")
 source("checkDirHierarchy.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "qc"
+# args <- ""
 
 # Main help message
 main_help <- "
@@ -55,7 +55,7 @@ if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine", "da")) {
+if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine", "da", "deg")) {
   cat(main_help)
   quit(status = 1)
 }
@@ -297,7 +297,6 @@ switch(args[1],
         make_option(
           c("-m", "--mito_thresholds"),
           action = "store",
-          # default = 0,
           type = "character",
           help = "ONLY USED WITH --manual
           The list of the thresholds for mitochondrial expression, as a comma-separated list."
@@ -305,7 +304,6 @@ switch(args[1],
         make_option(
           c("-r", "--ribo_thresholds"),
           action = "store",
-          # default = 0,
           type = "character",
           help = "ONLY USED WITH --manual
           The list of the thresholds for ribosomal expression, as a comma-separated list."
@@ -313,7 +311,6 @@ switch(args[1],
         make_option(
           c("-u", "--umi_thresholds"),
           action = "store",
-          # default = 0,
           type = "character",
           help = "ONLY USED WITH --manual
           The list of the thresholds for read counts, as a comma-separated list."
@@ -321,7 +318,6 @@ switch(args[1],
         make_option(
           c("-f", "--feature_thresholds"),
           action = "store",
-          # default = 0,
           type = "character",
           help = "ONLY USED WITH --manual
           The list of the thresholds for the number of features, as a comma-separated list."
@@ -476,7 +472,6 @@ switch(args[1],
           make_option(
               c("-S", "--s_phase"),
               action = "store",
-              # default = NA,
               type = "numeric",
               help = "Threshold to adjust cell cycle scoring for S phase
 			  	(default: 0)."
@@ -484,7 +479,6 @@ switch(args[1],
           make_option(
               c("-G", "--g2m_phase"),
               action = "store",
-              # default = NA,
               type = "numeric",
               help = "Threshold to adjust cell cycle scoring for G2M phase
 			  	(default: 0)."
@@ -560,9 +554,7 @@ switch(args[1],
         type = "character",
         help = "Comma separated list of the methods to use for differential abundance analysis:
         - 'meld' performs the MELD method
-        - 'sccomp' performs the SCCOMP method
-        - 'all' performs the MELD and SCCOMP methods sequentially (default)
-        (required)."
+            (required)."
       ),
       make_option(
         c("-S", "--scenario"),
@@ -585,13 +577,45 @@ switch(args[1],
       epilogue = "Add some details, examples, ...",
       formatter = IndentedHelpFormatter # TitleHelpFormatter
     )
+  },
+  "deg" = {
+    option_list8 = list(
+        make_option(
+        c("-i", "--input_dataset"),
+        action = "store",
+        default = NA,
+        type = "character",
+        help = "Name of the dataset to process
+          (required)."
+      ),
+        make_option(
+        c("-s", "--scenario"),
+        action = "store",
+        default = 1,
+        type = "integer",
+        help = "Select the scenario(s) to run:
+          1 - no regression on cell cycle
+          2 - global cell cycle regression, all phases are regressed
+          3 - cycling cell cycle regression, G2M and S phases are regressed
+      (default: 1).
+      If you select multiple scenarios (separeted with a comma), they will run sequentially."
+        )
+    )
+    parsed <- OptionParser(
+      usage = "Usage: \n\t%prog deg [--flag <flag_arg>]",
+      option_list = option_list8,
+      add_help_option = TRUE,
+      description = "\nPerform differential abundance analysis on the dataset.",
+      epilogue = "Add some details, examples, ...",
+      formatter = IndentedHelpFormatter # TitleHelpFormatter
+    )
   }
 )
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "fibroWT"
-#opt$options$input_list <- "highDiet,normalDiet"
+# opt$options$input_dataset <- ""
+# opt$options$input_list <- ""
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
 PATH_REQUIREMENTS <- "../01_requirements/"
@@ -674,17 +698,15 @@ if (TRUE){
     combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
     # da variables --------------------------------
     da_meth = if (exists("DA_METH")) DA_METH else opt$options$daMethod
-    if(!is.null(da_meth) && da_meth == "all"){
-      da_meth = list("meld","sccomp")
+    if(!is.null(da_meth) && da_meth == "all") {
+      da_meth = list("meld")
     }
     # unclassified variables ---------------------
     manual = opt$options$manual
-    combinedD = if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
+    combinedD = if (exists("COMBINED")) COMBINED else if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
-
     obs_list = if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ","))
-
     rm_clust = if (!is.null(goodQ) && goodQ) opt$options$rm_clust
 }
 
@@ -743,7 +765,15 @@ switch(args[1],
            }
        },
        "dea" = {
-           if (FILTER == "filtered") {
+           if (combinedD) {
+              lapply(scenarios, function(scenario){
+                print(paste0("Performing DEA analysis on scenario ", scenario))
+                rmarkdown::render(
+                    "05_annotDEAviz_pipeline.Rmd",
+                    output_file = file.path(PATH_OUT_HTML, paste0("09_annotDEAviz_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                )
+              })
+           } else {
               lapply(scenarios, function(scenario){
                 print(paste0("Performing DEA analysis on scenario ", scenario))
                 rmarkdown::render(
@@ -751,11 +781,6 @@ switch(args[1],
                     output_file = file.path(PATH_OUT_HTML, paste0("06_annotDEAviz_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
                 )
               })
-           } else if (FILTER == "complete") {
-               rmarkdown::render(
-                   "04_1_deg_pipeline.Rmd",
-                   output_file = file.path(PATH_OUT_HTML, paste0("04_1_deg_", DATASET, "_", Sys.Date(), ".html"))
-               )   
            }
        },
        "ctrl" = {
@@ -783,11 +808,21 @@ switch(args[1],
               if(file.exists(paste0("07_",meth,"_pipeline.Rmd"))){
                 rmarkdown::render(
                   paste0("07_",meth,"_pipeline.Rmd"),
-                  output_file = file.path(PATH_OUT_HTML, paste0("09_DAanalysis_", DATASET, "_meth_", meth, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                  output_file = file.path(PATH_OUT_HTML, paste0("10_DAanalysis_", DATASET, "_meth_", meth, "_scenario_", scenario, "_", Sys.Date(), ".html"))
                 )
               }
         })
         })
+       },
+       "deg" = {
+        lapply(scenarios, function(scenario){
+              print(paste0("Performing DEG analysis on ", DATASET, " dataset for scenario ", scenario))
+              if(file.exists(paste0("08_DEG_analysis.Rmd"))){
+                rmarkdown::render(
+                  paste0("08_DEG_analysis.Rmd"),
+                  output_file = file.path(PATH_OUT_HTML, paste0("11_DEGanalysis_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                )
+              }
+        })
        }
 )
-

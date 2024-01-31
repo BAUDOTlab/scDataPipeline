@@ -1,21 +1,17 @@
 ---
 title: |
-    | Additional controls: `r DATASET`
-    | doublets removal and cell cycle regression
+    | Step 4: Doublets removal, cell cycle regression
+    | and gene overview -- `r DATASET`
 author: "Céline Chevalier and Anaı̈s Baudot"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 # bibliography: ../requirements/references.bib
 output:
-    html_document:
-        theme:
-            bootswatch: yeti
-        toc: yes
-        toc_float:
-          collapsed: false
-          smooth_scroll: true
-        number_sections: yes
+    rmdformats::material:
+        use_bookdown: true
+        thumbnails: false
         df_print: kable
         code_folding: hide
+        number_sections: yes
     pdf_document:
         number_sections: yes
         toc: yes
@@ -67,9 +63,6 @@ output:
 </script>
 
 <br>
-
-<!-- This report has been created in the context of the single-cell RNA sequencing -->
-<!-- analysis used in the [@Argiro_2023](https://www.biorxiv.org/content/10.1101/2023.05.15.540476v1) article. -->
 
 ```{r setup, include=FALSE, eval=TRUE}
 options(knitr.purl.inline = TRUE)
