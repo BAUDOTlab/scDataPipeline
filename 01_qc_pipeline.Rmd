@@ -1,25 +1,30 @@
 ---
 author: "CC"
-date: "2023-03-23"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
-    html_document:
-        theme:
-            bootswatch: yeti
-        toc: yes
-        toc_float:
-          collapsed: false
-          smooth_scroll: true
-        number_sections: yes
+    rmdformats::material:
+        use_bookdown: true
+        thumbnails: false
         df_print: kable
         code_folding: hide
+        number_sections: yes
+    # html_document:
+    #     theme:
+    #         bootswatch: yeti
+    #     toc: yes
+    #     toc_float:
+    #       collapsed: false
+    #       smooth_scroll: true
+    #     number_sections: yes
+    #     df_print: kable
+    #     code_folding: hide
     pdf_document:
         number_sections: yes
         toc: yes
         toc_depth: 3
         keep_tex: no
 title: |
-  | `r DATASET`
-  | Protocole 1: QC
+    | Step 1: Quality control -- `r DATASET`
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
@@ -518,7 +523,7 @@ export_rds(SO_subset, paste0("01_qc_", DATASET, "_filtered.rds"))
 ```
 
 
-```{r cleaning, include = FALSE}
+```{r cleaning, include = TRUE}
 invisible(gc())
 ```
 
