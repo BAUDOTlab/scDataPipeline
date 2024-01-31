@@ -1,6 +1,6 @@
 ---
 author: "CC"
-date: "2023-03-27"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
     rmdformats::material:
         use_bookdown: true
@@ -14,8 +14,7 @@ output:
     toc_depth: 3
     keep_tex: no
 title: |
-  | `r DATASET`
-  | Protocole 3.1: manual controls
+  | Step 3.1: Cell populations orverview -- `r DATASET`
 ---
   
   <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
@@ -43,8 +42,7 @@ title: |
   width: 150%;
 }
 </style>
-  
-  <script type = "text/javascript">
+    <script type = "text/javascript">
   $(document).ready(function() {
     $("body").prepend("<div class = \"zoomDiv\"><img src = \"\" class = \"zoomImg\"></div>");
     // onClick for all img except the zoomed one and link ones (filter)

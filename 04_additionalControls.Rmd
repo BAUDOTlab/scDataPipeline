@@ -1,7 +1,7 @@
 ---
 title: |
-    | Additional controls: `r DATASET`
-    | doublets removal and cell cycle regression
+    | Step 4: Doublets removal, cell cycle regression
+    | and gene overview -- `r DATASET`
 author: "Céline Chevalier and Anaı̈s Baudot"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 # bibliography: ../requirements/references.bib

@@ -1,6 +1,6 @@
 ---
 author: "CC"
-date: "2023-03-27"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
     rmdformats::material:
         use_bookdown: true
@@ -14,8 +14,7 @@ output:
         toc_depth: 3
         keep_tex: no
 title: |
-  | `r DATASET`
-  | Protocole 3: control filtered cells
+  | Step 3: Filtering overview -- `r DATASET`
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->

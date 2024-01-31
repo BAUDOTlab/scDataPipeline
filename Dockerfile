@@ -53,10 +53,12 @@ remotes::install_version('reticulate', upgrade='never', version='1.28'); \
 remotes::install_version('gprofiler2', upgrade='never', version='0.2.1'); \
 remotes::install_version('data.table', upgrade='never', version='1.14.8'); \
 remotes::install_version('knitr', upgrade='never', version='1.42'); \
+remotes::install_version('rmdformats', version='1.0.3'); \
 BiocManager::install('DESeq2'); \
 BiocManager::install('fgsea'); \
 BiocManager::install('msigdb');"
 # BiocManager::install('biomaRt'); \
+
 
 # python dependencies
 RUN apt install -y git libncurses-dev libgdbm-dev libz-dev tk-dev libsqlite3-dev libreadline-dev liblzma-dev libffi-dev libbz2-dev libgdbm-compat-dev
