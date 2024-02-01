@@ -33,7 +33,7 @@ title: `r title_var`
 
 <!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
 <!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
-
+<!-- 
 <style>
 .zoomDiv {
   display: none;  
@@ -69,7 +69,7 @@ title: `r title_var`
       $(".zoomDiv").hide();
     })
   })
-</script>
+</script> -->
 
 
 ```{r setup, include = FALSE}
