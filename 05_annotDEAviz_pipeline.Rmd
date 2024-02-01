@@ -195,33 +195,39 @@ Idents(fltd) <- clustOfInterest
 
 DefaultAssay(fltd) <- 'RNA'
 
+# Run DEA analysis
 set.seed(general_seed)
 fc_threshold <- 0
 padj_threshold <- 0.001
 markers <- FindAllMarkers2(fltd, method="deseq", min_fc = fc_threshold)
+
+# filter in significant marker genes and order them
 markers.sign <- markers[markers$padj < padj_threshold, ]
-
-# Add gene names
-markers$gene_name <- corr_table$GeneName[match(markers$feature, corr_table$ENSid)]
-
-markers.sign <- markers[order(-markers$log_fc), ]
+markers.sign <- markers.sign[order(-markers.sign$log_fc), ]
 markers.sign$cluster <- factor(markers.sign$group1, levels = as.character(sort(as.numeric(levels(as.factor(markers.sign$group1))))))
 markers.sign <- markers.sign[order(markers.sign$cluster), ]
+
+# Add gene names and cluster column
+markers.sign$gene_name <- corr_table$GeneName[match(markers.sign$feature, corr_table$ENSid)]
+
+
+# Order the output table
 markers.sign <- markers.sign[ , c(12, 11, 3, 7, 8, 5, 6, 1)]
+
+# Export the table
 write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
                                                paste0("DESeq2_markers_min_fc_", fc_threshold, "_pad_", padj_threshold, "_", 
                                                       DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
+# Display top markers
 markers.sign$cluster <- as.numeric(markers.sign$cluster)
 topNmarkers <- extract_top_features(markers.sign, topn = top_markers)
 datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
 
-names(markers)
 # write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
 #                                               paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
                                               paste0("DESeq2_topmarkers", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
-
 ```
 
 # Additional Plots
