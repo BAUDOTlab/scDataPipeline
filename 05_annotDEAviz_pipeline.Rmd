@@ -216,7 +216,7 @@ markers.sign$cluster <- factor(markers.sign$group1, levels = as.character(sort(a
 markers.sign <- markers.sign[order(markers.sign$cluster), ]
 markers.sign <- markers.sign[ , c(12, 11, 3, 7, 8, 5, 6, 1)]
 write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
-                                               paste0("DESeq2_ markers_min_fc_", fc_threshold, "_pad_", padj_threshold, "_", 
+                                               paste0("DESeq2_markers_min_fc_", fc_threshold, "_pad_", padj_threshold, "_", 
                                                       DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
 markers.sign$cluster <- as.numeric(markers.sign$cluster)
