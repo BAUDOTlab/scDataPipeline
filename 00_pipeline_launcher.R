@@ -6,6 +6,7 @@ library(RcppTOML)
 
 source("load_parameters.R")
 source("checkDirHierarchy.R")
+source("data_management.R")
 
 args <- commandArgs(trailingOnly = TRUE)
 # args <- ""
@@ -635,6 +636,9 @@ if (is.null(opt$options$input_list)) {
 	matching_file <- file_list[matching_element]
     
 	load_parameters(paste0(PATH_REQUIREMENTS, matching_file))
+
+  # 5) Merge the feature.tsv files
+  merge_features(input_datasets)
 	# DATASET <- paste0(input_datasets, collapse = "_") # don't know if I need to keep it ???
 }
 

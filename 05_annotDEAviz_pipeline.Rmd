@@ -188,7 +188,14 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 # Perform differential expression analysis
 
 ```{r run-dea}
-corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
+#Set the maximum amount of data able to be passed to future workers at 850Mb
+options(future.globals.maxSize = 850 * 1024^2)
+if(combinedD){
+  feature_file <- file.path(PATH_ROOT, "00_rawData", "combined_features.tsv.gz")
+} else {
+  feature_file <- file.path(PATH_INPUT_LABDATA, "features.tsv.gz")
+}
+corr_table <- as.data.frame(fread(feature_file, header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
 clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(fltd@meta.data), value = TRUE)
 Idents(fltd) <- clustOfInterest
@@ -199,7 +206,7 @@ set.seed(general_seed)
 fc_threshold <- 0
 padj_threshold <- 0.001
 markers <- FindAllMarkers2(fltd, method="deseq", min_fc = fc_threshold)
-markers.sign <- markers[markers$padj < padj_threshold, ]
+markers <- markers[markers$padj < padj_threshold, ]
 
 # Add gene names
 markers$gene_name <- corr_table$GeneName[match(markers$feature, corr_table$ENSid)]
@@ -215,8 +222,6 @@ write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
 markers.sign$cluster <- as.numeric(markers.sign$cluster)
 topNmarkers <- extract_top_features(markers.sign, topn = top_markers)
 datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
-
-names(markers)
 # write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
 #                                               paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
