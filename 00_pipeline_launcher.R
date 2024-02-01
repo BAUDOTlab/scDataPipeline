@@ -711,7 +711,7 @@ if (TRUE){
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
     obs_list = if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ","))
-    rm_clust = if (!is.null(goodQ) && goodQ) opt$options$rm_clust
+    rm_clust = if (!is.null(goodQ) && goodQ) unlist(strsplit(opt$options$rm_clust, ","))
 }
 
 # combinedD <- TRUE
