@@ -46,12 +46,12 @@ extract_top_features <- function(df, topn = 20) {
 	# if "group1" is in the column names, sort by group1, then sort by padj
 	if ("cluster" %in% names(df)) {
 		markers <- df %>%
-			dplyr::arrange(cluster, log_fc)
+			dplyr::arrange(cluster, desc(log_fc))
 		topn <- markers %>%
 			group_by(cluster) %>%
 			top_n(n = topn, wt = log_fc)
 		topnMarkers <- topn %>%
-			dplyr::arrange(cluster, log_fc)
+			dplyr::arrange(cluster, desc(log_fc))
 	} else { # else sort by padj
 		markers <- df %>%
 			dplyr::arrange(padj)
@@ -61,4 +61,24 @@ extract_top_features <- function(df, topn = 20) {
 			dplyr::arrange(log_fc)
 	}
 	return(topnMarkers)
+}
+
+merge_features <- function(dataset_list) {
+	library(data.table)
+
+	outfile.path <- file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz"))
+	if(exists(outfile.path)) return()
+
+	features.list <- lapply(dataset_list, function(dataset) {
+		config <- parseToml(paste0(PATH_REQUIREMENTS, "globalParameters_", dataset,".toml"))
+		features <- as.data.frame(fread(file.path(PATH_ROOT, config$path$input$PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
+		
+		return(features)
+	})
+
+	combined.features <- unique(Reduce(function(x, y) rbind(x, y, all=TRUE), features.list))
+	
+	outfile <- gzfile(outfile.path, "w")
+	write.table(combined.features, outfile, col.names=FALSE, sep = "\t", row.names=FALSE)
+	close(outfile)
 }

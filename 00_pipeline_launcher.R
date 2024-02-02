@@ -6,6 +6,7 @@ library(RcppTOML)
 
 source("load_parameters.R")
 source("checkDirHierarchy.R")
+source("data_management.R")
 
 args <- commandArgs(trailingOnly = TRUE)
 # args <- ""
@@ -26,10 +27,12 @@ Pipeline Order:
 8) process (last time)
 9) dea (last time aswell)
 10) da
+11) deg
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the
-                        following: qc, process, filters, ctrl, dea, combine
+                        following: qc, process, filters, ctrl, dea, combine, da,
+                        deg
 
 Flag Argument:
     --flag <flag_arg>   There are optional arguments according to the required
@@ -253,8 +256,11 @@ switch(args[1],
         action = "store",
         default = NA,
         type = "character",
-        help = "Clusters to remove before the new clustering. All cells in the clusters will be removed. This information should be based on the observed clusters of the ctrl step.
-        This parameter is only active with --good_quality, and should be a comma-separated list of cluster numbers."
+        help = "Clusters to remove before the new clustering. All cells in the
+        clusters will be removed. This information should be based on the
+        observed clusters of the ctrl step.
+        This parameter is only active with --good_quality, and should be a
+        comma-separated list of cluster numbers."
       ),
       make_option(
           c("--combinedData"),
@@ -618,6 +624,7 @@ opt <- parse_args(parsed, positional_arguments = TRUE)
 # opt$options$input_list <- ""
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
+# opt$options$rm_clust <- ""
 PATH_REQUIREMENTS <- "../01_requirements/"
 if (is.null(opt$options$input_list)) {
     load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".toml"))
@@ -635,6 +642,9 @@ if (is.null(opt$options$input_list)) {
 	matching_file <- file_list[matching_element]
     
 	load_parameters(paste0(PATH_REQUIREMENTS, matching_file))
+
+  # 5) Merge the feature.tsv files
+  merge_features(input_datasets)
 	# DATASET <- paste0(input_datasets, collapse = "_") # don't know if I need to keep it ???
 }
 
@@ -707,7 +717,7 @@ if (TRUE){
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
     obs_list = if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ","))
-    rm_clust = if (!is.null(goodQ) && goodQ) opt$options$rm_clust
+    rm_clust = if (!is.null(goodQ) && goodQ) unlist(strsplit(opt$options$rm_clust, ","))
 }
 
 # combinedD <- TRUE
