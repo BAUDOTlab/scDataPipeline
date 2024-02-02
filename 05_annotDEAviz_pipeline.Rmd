@@ -356,7 +356,7 @@ invisible( lapply( names( topMarkers), function(clusterName)
   text( x = 0.5, y = 0.5, paste( "Cluster", clusterName), cex = 2, col = clustersColor[clusterName])
   
   # Violinplot for expression value of marker genes by cluster (+ number of 'zero' and 'not zero' cells)
-  invisible( lapply( topMarkers[[clusterName]][["gene"]], violinFeatureByCluster, seuratObject = fltd, clustersColor = clustersColor))
+  invisible( lapply( topMarkers[[clusterName]][["feature"]], violinFeatureByCluster, seuratObject = fltd, clustersColor = clustersColor))
   
   cat(" \n \n") # Required for '.tabset'
 }))
