@@ -6,6 +6,7 @@ library(RcppTOML)
 
 source("load_parameters.R")
 source("checkDirHierarchy.R")
+source("data_management.R")
 
 args <- commandArgs(trailingOnly = TRUE)
 # args <- ""
@@ -635,6 +636,9 @@ if (is.null(opt$options$input_list)) {
 	matching_file <- file_list[matching_element]
     
 	load_parameters(paste0(PATH_REQUIREMENTS, matching_file))
+
+  # 5) Merge the feature.tsv files
+  merge_features(input_datasets)
 	# DATASET <- paste0(input_datasets, collapse = "_") # don't know if I need to keep it ???
 }
 
@@ -707,7 +711,7 @@ if (TRUE){
     goodQ = opt$options$good_quality
     gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
     obs_list = if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ","))
-    rm_clust = if (!is.null(goodQ) && goodQ) opt$options$rm_clust
+    rm_clust = if (!is.null(goodQ) && goodQ) unlist(strsplit(opt$options$rm_clust, ","))
 }
 
 # combinedD <- TRUE

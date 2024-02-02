@@ -179,9 +179,10 @@ clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names =
 clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(clusters), value = TRUE)
 
 remove_clusters <- function(SO, scenario){
+    SO = SO.list[[1]]
     SO@meta.data <- merge(SO@meta.data, clusters[clustOfInterest], by = 'row.names')
     SO@meta.data <- tibble::column_to_rownames(SO@meta.data, "Row.names")
-    cells_to_keep <- which(SO@meta.data[clustOfInterest] != rm_clust)
+    cells_to_keep <- which(!unlist(SO@meta.data[clustOfInterest]) %in% rm_clust)
 
     cat(paste0("\nRemoved ", length(Cells(SO)) - length(cells_to_keep), " cells from scenario ", scenario, "\n"))
 
