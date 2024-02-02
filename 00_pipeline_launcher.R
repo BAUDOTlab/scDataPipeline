@@ -27,10 +27,12 @@ Pipeline Order:
 8) process (last time)
 9) dea (last time aswell)
 10) da
+11) deg
 
 Required Argument:
     <pipelineName>      This argument is required and must be one of the
-                        following: qc, process, filters, ctrl, dea, combine
+                        following: qc, process, filters, ctrl, dea, combine, da,
+                        deg
 
 Flag Argument:
     --flag <flag_arg>   There are optional arguments according to the required
@@ -254,8 +256,11 @@ switch(args[1],
         action = "store",
         default = NA,
         type = "character",
-        help = "Clusters to remove before the new clustering. All cells in the clusters will be removed. This information should be based on the observed clusters of the ctrl step.
-        This parameter is only active with --good_quality, and should be a comma-separated list of cluster numbers."
+        help = "Clusters to remove before the new clustering. All cells in the
+        clusters will be removed. This information should be based on the
+        observed clusters of the ctrl step.
+        This parameter is only active with --good_quality, and should be a
+        comma-separated list of cluster numbers."
       ),
       make_option(
           c("--combinedData"),
@@ -619,6 +624,7 @@ opt <- parse_args(parsed, positional_arguments = TRUE)
 # opt$options$input_list <- ""
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
+# opt$options$rm_clust <- ""
 PATH_REQUIREMENTS <- "../01_requirements/"
 if (is.null(opt$options$input_list)) {
     load_parameters(paste0(PATH_REQUIREMENTS, "globalParameters_", opt$options$input_dataset,".toml"))

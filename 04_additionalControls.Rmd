@@ -24,7 +24,7 @@ output:
 
 <!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
 <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
-
+<!-- 
 <style>
 .zoomDiv {
   display: none;
@@ -60,7 +60,7 @@ output:
       $('.zoomDiv').hide();
     });
   });
-</script>
+</script> -->
 
 <br>
 
@@ -169,7 +169,7 @@ fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.nam
 fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
-`r if(atlas){cat("## Cells annotation through label transfer from the atlas")}`
+`r if(atlas){cat("## Cells annotation through label transfer from the atlas \n")}`
 
 ```{r mapping-atlas, eval=atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
 ```
@@ -343,7 +343,7 @@ corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz
 invisible(lapply(obs_list, function(gene_name){
   cells_gene_pos <- which(GetAssayData(singlets, slot="data")[gene_name,]>0)
 
-  cat("#### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution")
+  cat("#### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution \n")
 
   Idents(singlets) <- clustOfInterest
   print(FeaturePlot(fltd, features=gene_name, order=T))

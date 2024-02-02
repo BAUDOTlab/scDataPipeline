@@ -15,7 +15,7 @@ output:
         keep_tex: no
 ---
 
-```{r}
+```{r, echo=FALSE}
 if (goodQ){
     title_var <- paste0("|
     | Step 5: Preprocessing cleaned data -- ", DATASET)
@@ -36,7 +36,7 @@ title: `r title_var`
 
 <!-- Jquery import conflicts with DT::datatable so needs to be commented here -->
 <!-- <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> -->
-
+<!-- 
 <style>
 .zoomDiv {
   display: none;
@@ -72,7 +72,7 @@ title: `r title_var`
       $(".zoomDiv").hide();
     })
   })
-</script>
+</script> -->
 
 
 ```{r setup, include = FALSE}
@@ -143,6 +143,10 @@ names(SO) <- FILTER
 ```{r load-data-2, eval=goodQ, echo=goodQ}
 SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/04_", scenario, "_goodQualityCells_", DATASET, ".rds"))
 names(SO) <- scenarios
+
+PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_filtered_meth.", clust_meth, "_res.", clust_res, ".csv")
+clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
+clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(clusters), value = TRUE)
 ```
 
 ```{r load-data-3, eval=combinedD, echo=combinedD}
@@ -150,6 +154,21 @@ SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/06_combine_", DATASET, "_scenario.", sc
 names(SO) <- scenario
 ```
 
+```{r remove-clusters, eval=goodQ && !is.null(rm_clust), results="asis"}
+cat("# Removal of the selected clusters\n")
+
+cat(paste0("Removing the following clusters: ", paste(rm_clust, collapse = ', '), "\n"))
+
+SO@meta.data <- merge(SO@meta.data, clusters[clustOfInterest], by = 'row.names')
+SO@meta.data <- tibble::column_to_rownames(SO@meta.data, "Row.names")
+cells_to_keep <- which(SO@meta.data[clustOfInterest] != rm_clust)
+
+cat(paste0("\nRemoved ", length(Cells(SO)) - length(cells_to_keep), " cells from scenario ", scenario, "\n"))
+
+# If a non existent cluster name is in the list, it will just be silently ignored.
+SO <- SO[,cells_to_keep]
+SO@meta.data[clustOfInterest] <- NULL
+```
 
 # Preprocessing workflow
 
@@ -166,26 +185,6 @@ The preprocessing workflow consists in the steps of
 - non-linear dimension reduction for visualization, and
 
 - clustering.
-
-```{r remove-clusters, eval=goodQ && !is.null(rm_clust), results="asis"}
-cat("## Removal of the selected clusters")
-
-cat(paste0("Removing the following clusters: ", rm_clust, "\n"))
-
-PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_filtered_meth.", clust_meth, "_res.", clust_res, ".csv")
-clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
-clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(clusters), value = TRUE)
-
-SO@meta.data <- merge(SO@meta.data, clusters[clustOfInterest], by = 'row.names')
-SO@meta.data <- tibble::column_to_rownames(SO@meta.data, "Row.names")
-cells_to_keep <- which(SO@meta.data[clustOfInterest] != rm_clust)
-
-cat(paste0("\nRemoved ", length(Cells(SO)) - length(cells_to_keep), " cells from scenario ", scenario, "\n"))
-
-# If a non existent cluster name is in the list, it will just be silently ignored.
-SO <- SO[,cells_to_keep]
-SO@meta.data[clustOfInterest] <- NULL
-```
 
 ```{r preprocess-1, eval=hvg_meth != "mvp", echo=hvg_meth != "mvp", message=TRUE}
 
