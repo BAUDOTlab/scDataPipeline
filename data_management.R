@@ -66,7 +66,7 @@ extract_top_features <- function(df, topn = 20) {
 merge_features <- function(dataset_list) {
 	library(data.table)
 
-	outfile.path <- file.path(PATH_ROOT, "00_rawData", paste0("combined_", paste(unlist(dataset_list), collapse="_"), "_features.tsv.gz"))
+	outfile.path <- file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz"))
 	if(exists(outfile.path)) return()
 
 	features.list <- lapply(dataset_list, function(dataset) {

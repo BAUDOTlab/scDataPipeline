@@ -191,7 +191,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 #Set the maximum amount of data able to be passed to future workers at 850Mb
 options(future.globals.maxSize = 850 * 1024^2)
 if(combinedD){
-  feature_file <- file.path(PATH_ROOT, "00_rawData", "combined_features.tsv.gz")
+  feature_file <- file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz")
 } else {
   feature_file <- file.path(PATH_INPUT_LABDATA, "features.tsv.gz")
 }
