@@ -1,0 +1,20 @@
+version: "2"
+name: scdatapipeline_project_${USER}
+
+services:
+  pipeline:
+    image: scdatapipeline
+    container_name: scdatapipeline_instance_${USER}
+    user: ${USERID}:${PROJECT_GID}
+    group_add: 
+      - 998
+    environment:
+      - SCDP_PATH_ROOT=/home
+    volumes:
+      # For access by each user
+      - /mnt/DATA_4TB/projects/LmnaKI_CardioVSFibro_Rochais:/home
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+      - /etc/shadow:/etc/shadow:ro
+    working_dir: /home
+    tty: true
