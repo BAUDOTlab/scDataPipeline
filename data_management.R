@@ -46,12 +46,12 @@ extract_top_features <- function(df, topn = 20) {
 	# if "group1" is in the column names, sort by group1, then sort by padj
 	if ("cluster" %in% names(df)) {
 		markers <- df %>%
-			dplyr::arrange(cluster, log_fc)
+			dplyr::arrange(cluster, desc(log_fc))
 		topn <- markers %>%
 			group_by(cluster) %>%
 			top_n(n = topn, wt = log_fc)
 		topnMarkers <- topn %>%
-			dplyr::arrange(cluster, log_fc)
+			dplyr::arrange(cluster, desc(log_fc))
 	} else { # else sort by padj
 		markers <- df %>%
 			dplyr::arrange(padj)

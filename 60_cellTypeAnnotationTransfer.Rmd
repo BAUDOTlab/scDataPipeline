@@ -9,7 +9,7 @@ output:
 ---
 
 ```{r mapping-atlas{{STEP_ID}}}
-atlas.subset <- readRDS(file.path(PATH_ATLAS_FILE))
+atlas.subset <- readRDS(PATH_ATLAS_FILE)
 
 # metadata column name
 if (!combinedD) {
