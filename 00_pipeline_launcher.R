@@ -9,7 +9,7 @@ source("checkDirHierarchy.R")
 source("data_management.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- ""
+args <- "da"
 
 # Main help message
 main_help <- "
@@ -621,7 +621,7 @@ switch(args[1],
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
 # opt$options$input_dataset <- ""
-# opt$options$input_list <- ""
+opt$options$input_list <- "cardioWT,cardioKO"
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
 # opt$options$rm_clust <- ""
@@ -661,7 +661,7 @@ if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea","ctrl","da")){
   atlas <- TRUE
 }
 
-if(!file.exists(PATH_MANUAL_ANNOTATION) && args[1] %in% c("da")){
+if(!exists("PATH_MANUAL_ANNOTATION") && args[1] %in% c("da")){
     print("No manual annotation table provided. Some parts of the report will not be generated.")
     manAnn <- FALSE
 } else {
