@@ -297,7 +297,7 @@ plt.clf()
 ```
 
 ```{r, out.width="50%"}
-include_graphics(paste0(PATH_OUT_FIG, "/06_annotDEAviz_scenario_", scenario, "_celltype-dimplot-1.png"))
+include_graphics(paste0(PATH_OUT_FIG, "/06_annotDEAviz_scenario_", scenario, "_celltype-DimPlot-1.png"))
 ```
 
 ```{python plot-confidence-interval-func, include=FALSE}
