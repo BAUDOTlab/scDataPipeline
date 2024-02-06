@@ -9,7 +9,7 @@ source("checkDirHierarchy.R")
 source("data_management.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-args <- "da"
+#args <- ""
 
 # Main help message
 main_help <- "
