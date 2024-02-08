@@ -178,7 +178,9 @@ fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.nam
 fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
-`r if(atlas){cat("## Cells annotation through label transfer from the atlas \n")}`
+```{r, eval=atlas, echo=FALSE, results="asis"}
+cat("## Cells annotation through label transfer from the atlas \n")
+```
 
 ```{r mapping-atlas, eval=atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
 ```
