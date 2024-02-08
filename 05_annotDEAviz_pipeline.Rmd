@@ -183,7 +183,6 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 cat("# Cells annotation through label transfer from the atlas\n")
 ```
 
-
 ```{r mapping-atlas, eval=atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
 ```
 
