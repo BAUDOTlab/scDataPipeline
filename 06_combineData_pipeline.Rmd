@@ -122,8 +122,8 @@ data_load <- function(DATASET_NAME) {
     return(data)
 }
 
-SO.list <- lapply(input_datasets, data_load)
-names(SO.list) <- input_datasets
+SO.list <- lapply(sort(input_datasets), data_load)
+names(SO.list) <- sort(input_datasets)
 ```
 
 
