@@ -103,6 +103,9 @@ library(ggrepel)
 library(DT)
 library(dplyr)
 library(knitr)
+library(fgsea)
+library(msigdbr)
+library(data.table)
 
 source("./plotting_functions.R")
 source("./data_management.R")
@@ -174,13 +177,6 @@ for a collection of gene sets. P-value estimation is based on an adaptive multi-
 
 <a href="https://www.biorxiv.org/content/10.1101/060012v3">Preprint available here.</a>
 
-```{r loading-libraries, include = FALSE}
-# Load libraries
-library(dplyr)
-library(fgsea)
-library(msigdbr)
-library(data.table)
-```
 
 Threshold of padj < 0.001 is used to filter the pathways.
 
