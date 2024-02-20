@@ -99,6 +99,13 @@ library(ggplot2)
 library(cowplot)
 
 source("./plotting_functions.R")
+source("./checkDirHierarchy.R")
+```
+
+```{r checkPaths}
+checkPath(paste0(PATH_ROOT, "/03_qc/metadata_", DATASET, "_complete.csv"))
+checkPath(paste0(PATH_ROOT, "/04_process/DR_umap_", DATASET, "_complete.csv"))
+checkPath(paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_complete_meth.", clust_meth, "_res.",clust_res,".csv"))
 ```
 
 # Load `r DATASET` data
@@ -112,6 +119,7 @@ clusters <- read.table(paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_c
 UMAP representation of the complete `r DATASET` dataset.
 
 ```{r import-dimplot-clustering}
+checkPath(paste0(PATH_OUT_FIG, "/02_process_dimplot-cluster-cplt-1.png"))
 knitr::include_graphics(paste0(PATH_OUT_FIG, "/02_process_dimplot-cluster-cplt-1.png"))
 ```
 

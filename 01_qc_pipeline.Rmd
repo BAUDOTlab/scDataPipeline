@@ -100,6 +100,7 @@ library(ggside)
 
 source("./data_management.R")
 source("./plotting_functions.R")
+source("./checkDirHierarchy.R")
 ```
 
 ```{r dir-managment, include = FALSE}
@@ -108,10 +109,12 @@ if (!dir.exists(PATH_OUT_HTML)) { dir.create(PATH_OUT_HTML) }
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "03_qc")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 if (!dir.exists(PATH_OUT_FIG)) { dir.create(PATH_OUT_FIG, recursive = TRUE) }
+
+checkPath(PATH_INPUT_LABDATA)
 ```
 
 ```{r other-settings, include=FALSE}
-options(scipen=999)                 # to prevent scientific notation
+options(scipen = 999)                 # to prevent scientific notation
 ```
 
 # Load `r DATASET` data

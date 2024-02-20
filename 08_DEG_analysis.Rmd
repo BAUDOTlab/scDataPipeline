@@ -104,16 +104,21 @@ library(DT)
 library(dplyr)
 library(knitr)
 
-source("./plotting_functions.R")
-source("./data_management.R")
+source("./plotting_functions.R", local = TRUE)
+source("./data_management.R", local = TRUE)
+source("./checkDirHierarchy.R", local = TRUE)
 ```
 
-```{r dir-managment-1, include=FALSE, eval=combinedD}
+```{r dir-managment, include=FALSE, eval=combinedD}
 # PATHS
-PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "09_DEG_analysis")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+
+# check file existence
+checkPath(PATH_CLUSTER_TABLE)
+checkPath(PATH_RDS_FILE)
 ```
 
 
@@ -135,13 +140,13 @@ DT::datatable(matrix())
 ```
 
 ```{r perform-deg, results='asis', out.width='100%'}
-perform_deg <- function(clust){
+perform_deg <- function(clust) {
   cat(paste0("## Cluster ", clust, "\n"))
   cells <- which(fltd@meta.data[clustOfInterest] == clust)
-  cluster_data <- fltd[,cells]
-  Idents(cluster_data) = "orig.ident"
-  de_results <- findDE(object = cluster_data, method="deseq")
-  de_results <- de_results[complete.cases(de_results[,3:7]),]
+  cluster_data <- fltd[, cells]
+  Idents(cluster_data) <- "orig.ident"
+  de_results <- findDE(object = cluster_data, method = "deseq")
+  de_results <- de_results[complete.cases(de_results[, 3:7]), ]
 
 
   top_DE <- filter(de_results, log_fc != 0) %>%

@@ -15,14 +15,15 @@ load_parameters <- function(config_file) {
     } else {
         assign("PATH_ROOT", path$PATH_ROOT, envir = .GlobalEnv)
     }
+    normalizePath(PATH_ROOT, mustWork = TRUE)
 
     # Function to check for the presence of input and output paths, and then
     # assign their full paths to global environment variables
-    checkAndAssignPath <- function(pathName, pathValue) {
+    assignPath <- function(pathName, pathValue) {
         if (pathName %in% names(path$input) || pathName %in% names(path$output)) {
             fullPath <- file.path(PATH_ROOT, pathValue)
             assign(pathName, fullPath, envir = .GlobalEnv)
-            cat(paste("Realpath of", pathName, ":", normalizePath(fullPath), "\n"))
+            #cat(paste("Realpath of", pathName, ":", normalizePath(fullPath), "\n"))
             return(TRUE)
         } else {
             cat(paste("The", pathName, "is not provided\n"))
@@ -31,15 +32,15 @@ load_parameters <- function(config_file) {
     }
 
     # Check and assign specific paths
-    checkAndAssignPath("PATH_INPUT_LABDATA", path$input$PATH_INPUT_LABDATA)
-    checkAndAssignPath("PATH_ATLAS", path$input$PATH_ATLAS)
-    checkAndAssignPath("PATH_ATLAS_FILE", path$input$PATH_ATLAS_FILE)
-    checkAndAssignPath("PATH_RDS_OBJECTS", path$output$PATH_RDS_OBJECTS)
-    checkAndAssignPath("PATH_OUT_HTML", path$output$PATH_OUT_HTML)
-    checkAndAssignPath("PATH_OUT_FIG", file.path(path$output$PATH_OUT_FIG, DATASET))
-    checkAndAssignPath("PATH_GENES_OF_INTEREST", path$input$PATH_GENES_OF_INTEREST)
+    assignPath("PATH_INPUT_LABDATA", path$input$PATH_INPUT_LABDATA)
+    assignPath("PATH_ATLAS", path$input$PATH_ATLAS)
+    assignPath("PATH_ATLAS_FILE", path$input$PATH_ATLAS_FILE)
+    assignPath("PATH_RDS_OBJECTS", path$output$PATH_RDS_OBJECTS)
+    assignPath("PATH_OUT_HTML", path$output$PATH_OUT_HTML)
+    assignPath("PATH_OUT_FIG", file.path(path$output$PATH_OUT_FIG, DATASET))
+    assignPath("PATH_GENES_OF_INTEREST", path$input$PATH_GENES_OF_INTEREST)
     if (exists("PATH_MANUAL_ANNOTATION")) {
-        checkAndAssignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
+        assignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
     }
 
     # parse the qc variables
