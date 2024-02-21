@@ -187,14 +187,14 @@ Threshold of padj < 0.001 is used to filter the pathways.
 
 ```{r perform_fgsea, include = FALSE}
 
-file_names <- list.files(path = file.path(PATH_ROOT, "09_DEG_analysis"), pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
+file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
 
 # Define the path to the folder containing the input files
-input_folder <- file.path(PATH_ROOT, "09_DEG_analysis")
+input_folder <- PATH_OUT_ANALYSIS
 
 # Create the output parent folder if it doesn't exist
 output_parent_folder <- file.path(PATH_ROOT, "10_fgsea_analysis")
-dir.create(output_parent_folder, showWarnings = FALSE)
+if (!dir.exists(output_parent_folder)) { dir.create(output_parent_folder) }
 
 # Define databases and corresponding subfolders
 databases <- c("Reactome", "KEGG", "GOBP", "GOCC")
@@ -218,7 +218,7 @@ perform_fgsea_analysis <- function(csv_paths, database) {
   # Iterate through databases
   for (db in databases) {
     output_folder <- file.path(output_parent_folder, db)
-    dir.create(output_folder, showWarnings = FALSE, recursive = TRUE)
+    if (!dir.exists(output_folder)) { dir.create(output_folder) }
 
     ### Run FGSEA ###
     msigdbr_species()
