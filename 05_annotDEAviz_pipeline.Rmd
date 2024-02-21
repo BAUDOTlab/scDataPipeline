@@ -119,9 +119,13 @@ library(data.table)
 
 source("./plotting_functions.R", local = TRUE)
 source("./data_management.R", local = TRUE)
+source("./checkDirHierarchy.R", local = TRUE)
 ```
 
 ```{r load-colors, eval=atlas, include = FALSE}
+checkPath(file.path(PATH_ATLAS, "colorsSheet.csv"))
+checkPath(PATH_ATLAS_FILE)
+
 # Create color vectors
 colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
 colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$celltype)], colors.table$celltype[!is.na(colors.table$celltype)])
@@ -130,18 +134,38 @@ colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.tabl
 
 ```{r dir-managment-1, include=FALSE, eval=combinedD}
 # PATHS
-PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "08_combineData")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+feature_file <- file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz"))
+
+# check file existence
+checkPath(PATH_CLUSTER_TABLE)
+checkPath(PATH_RDS_FILE)
+checkPath(feature_file)
+
+if (!is.null(genes_of_interest)) {
+    checkPath(genes_of_interest)
+}
 ```
 
 ```{r dir-managment-2, include=FALSE, eval=!combinedD}
 # PATHS
-PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/06_process/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/05_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "07_annotDEAviz")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+feature_file <- file.path(PATH_INPUT_LABDATA, "features.tsv.gz")
+
+# check file existence
+checkPath(PATH_CLUSTER_TABLE)
+checkPath(PATH_RDS_FILE)
+checkPath(feature_file)
+
+if (!is.null(genes_of_interest)) {
+    checkPath(genes_of_interest)
+}
 ```
 
 ```{r load-data, include=FALSE}
@@ -192,11 +216,6 @@ cat("# Cells annotation through label transfer from the atlas\n")
 ```{r run-dea}
 #Set the maximum amount of data able to be passed to future workers at 850Mb
 options(future.globals.maxSize = 850 * 1024^2)
-if(combinedD){
-  feature_file <- file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz"))
-} else {
-  feature_file <- file.path(PATH_INPUT_LABDATA, "features.tsv.gz")
-}
 corr_table <- as.data.frame(fread(feature_file, header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
 clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(fltd@meta.data), value = TRUE)

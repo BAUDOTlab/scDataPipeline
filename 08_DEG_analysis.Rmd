@@ -107,16 +107,21 @@ library(fgsea)
 library(msigdbr)
 library(data.table)
 
-source("./plotting_functions.R")
-source("./data_management.R")
+source("./plotting_functions.R", local = TRUE)
+source("./data_management.R", local = TRUE)
+source("./checkDirHierarchy.R", local = TRUE)
 ```
 
-```{r dir-managment-1, include=FALSE, eval=combinedD}
+```{r dir-managment, include=FALSE, eval=combinedD}
 # PATHS
-PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "09_DEG_analysis")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+
+# check file existence
+checkPath(PATH_CLUSTER_TABLE)
+checkPath(PATH_RDS_FILE)
 ```
 
 
@@ -138,13 +143,13 @@ DT::datatable(matrix())
 ```
 
 ```{r perform-deg, results='asis', out.width='100%'}
-perform_deg <- function(clust){
+perform_deg <- function(clust) {
   cat(paste0("## Cluster ", clust, "\n"))
   cells <- which(fltd@meta.data[clustOfInterest] == clust)
-  cluster_data <- fltd[,cells]
-  Idents(cluster_data) = "orig.ident"
-  de_results <- findDE(object = cluster_data, method="deseq")
-  de_results <- de_results[complete.cases(de_results[,3:7]),]
+  cluster_data <- fltd[, cells]
+  Idents(cluster_data) <- "orig.ident"
+  de_results <- findDE(object = cluster_data, method = "deseq")
+  de_results <- de_results[complete.cases(de_results[, 3:7]), ]
 
 
   top_DE <- filter(de_results, log_fc != 0) %>%
@@ -182,14 +187,14 @@ Threshold of padj < 0.001 is used to filter the pathways.
 
 ```{r perform_fgsea, include = FALSE}
 
-file_names <- list.files(path = file.path(PATH_ROOT, "09_DEG_analysis"), pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
+file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
 
 # Define the path to the folder containing the input files
-input_folder <- file.path(PATH_ROOT, "09_DEG_analysis")
+input_folder <- PATH_OUT_ANALYSIS
 
 # Create the output parent folder if it doesn't exist
 output_parent_folder <- file.path(PATH_ROOT, "10_fgsea_analysis")
-dir.create(output_parent_folder, showWarnings = FALSE)
+if (!dir.exists(output_parent_folder)) { dir.create(output_parent_folder) }
 
 # Define databases and corresponding subfolders
 databases <- c("Reactome", "KEGG", "GOBP", "GOCC")
@@ -213,7 +218,7 @@ perform_fgsea_analysis <- function(csv_paths, database) {
   # Iterate through databases
   for (db in databases) {
     output_folder <- file.path(output_parent_folder, db)
-    dir.create(output_folder, showWarnings = FALSE, recursive = TRUE)
+    if (!dir.exists(output_folder)) { dir.create(output_folder) }
 
     ### Run FGSEA ###
     msigdbr_species()

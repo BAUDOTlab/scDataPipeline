@@ -103,16 +103,40 @@ In other words, it gives for each cell, how likely it is to be observed in one c
 <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8122059/">Original paper available here.</a>
 ```{r load-r-libraries, include=FALSE}
 source("./conversions.R")
+source("./checkDirHierarchy.R", local = TRUE)
+```
+
+```{r dir-management, include=FALSE}
+# PATHS
+PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", CLUST_METH, "_res.", CLUST_RES, ".csv")
+PATH_RDS_FILE <- file.path(PATH_RDS_OBJECTS, paste0("07_preprocessed_", DATASET, "_scenario.", scenario, ".rds"))
+PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "05_additionalControls")
+if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+
+# check file existence
+checkPath(PATH_CLUSTER_TABLE)
+checkPath(PATH_RDS_FILE)
+checkPath(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"))
+
+if (atlas) {
+    PATH_LABEL_TRANSFER <- paste0(PATH_ROOT, "/08_combineData/transferAnnotation_combinedData_", DATASET, "_scenario_", scenario, ".csv")
+    
+    checkPath(PATH_LABEL_TRANSFER)
+    checkPath(file.path(PATH_ATLAS, "colorsSheet.csv"))
+}
+
+if (manAnn) {
+    checkPath(PATH_MANUAL_ANNOTATION)
+}
 ```
 
 # Load `r DATASET` data for scenario `r scenario` and compute MELD
 
 ```{r convert-to-h5ad, include=FALSE}
-input_file <- file.path(PATH_RDS_OBJECTS, paste0("07_preprocessed_", DATASET, "_scenario.", scenario, ".rds"))
-converted_file <- gsub("\\.rds",".h5ad", input_file)
+converted_file <- gsub("\\.rds", ".h5ad", PATH_RDS_FILE)
 # Run the conversion if the converted file does not exist or the input file is newer
-if(!(file.exists(converted_file) && file.info(input_file)$mtime < file.info(converted_file)$mtime)){
-  seurat_to_h5ad(input_file)
+if(!(file.exists(converted_file) && file.info(PATH_RDS_FILE)$mtime < file.info(converted_file)$mtime)){
+  seurat_to_h5ad(PATH_RDS_FILE)
 }
 ```
 
@@ -131,7 +155,7 @@ mpl.use("agg", force = True)
 ```
 
 ```{python load-data, include = FALSE}
-adata = sc.read_h5ad(Path(r.input_file).with_suffix(".h5ad"))
+adata = sc.read_h5ad(Path(r.PATH_RDS_FILE).with_suffix(".h5ad"))
 
 # Get the loadings of the different reductions, the metadata and raw data as a dataframe. We will mostly be using the umap to project the data.
 umap = adata.obsm["X_umap"]
@@ -175,7 +199,7 @@ sample_likelihoods = replicate_normalize_densities(sample_densities, replicate_m
 metadata['cond_likelihood'] = sample_likelihoods[experimental_samples].mean(axis=1).values # store the mean of the condition's replicate
 
 # Clusters
-clusters = pd.read_csv(Path(r.PATH_ROOT, "08_combineData", f"clustering_{r.DATASET}_scenario.{r.scenario}_meth.{r.CLUST_METH}_res.{int(r.CLUST_RES)}.csv"), header=0)
+clusters = pd.read_csv(r.PATH_CLUSTER_TABLE, header=0)
 metadata["clusters"] = clusters["integrated_snn_res.1"].values
 cluster_colors = mpl.colormaps["tab20"].resampled(len(np.unique(metadata["clusters"])))
 
@@ -193,7 +217,7 @@ if r.manAnn:
 
 # Label tranfer annotations from Atlas
 if r.atlas:
-  pred = pd.read_csv(Path(r.PATH_ROOT, "08_combineData", f"transferAnnotation_combinedData_{r.DATASET}_scenario_{r.scenario}.csv"), header=0)
+  pred = pd.read_csv(r.PATH_LABEL_TRANSFER, header=0)
   colortable = pd.read_csv(Path(r.PATH_ATLAS, "colorsSheet.csv"), header=0)
   metadata["prediction"] = pred["predicted.id"].values
   celltype_colors = dict(zip(colortable["celltype"],colortable["celltype_color"]))
@@ -297,6 +321,7 @@ plt.clf()
 ```
 
 ```{r, out.width="50%"}
+checkPath(paste0(PATH_OUT_FIG, "/06_annotDEAviz_scenario_", scenario, "_celltype-DimPlot-1.png"))
 include_graphics(paste0(PATH_OUT_FIG, "/06_annotDEAviz_scenario_", scenario, "_celltype-DimPlot-1.png"))
 ```
 
