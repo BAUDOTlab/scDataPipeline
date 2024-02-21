@@ -109,9 +109,13 @@ library(data.table)
 
 source("./data_management.R", local = TRUE)
 source("./plotting_functions.R", local = TRUE)
+source("./checkDirHierarchy.R", local = TRUE)
 ```
 
 ```{r load-colors, include = FALSE, eval=atlas}
+checkPath(file.path(PATH_ATLAS, "colorsSheet.csv"))
+checkPath(PATH_ATLAS_FILE)
+
 # Create color vectors
 colors.table <- read.csv(file.path(PATH_ATLAS, "colorsSheet.csv"), header=T, comment.char="", as.is=T)
 colors.celltype <- setNames(colors.table$celltype_color[!is.na(colors.table$celltype)], colors.table$celltype[!is.na(colors.table$celltype)])
@@ -121,8 +125,14 @@ colors.stage <- setNames(colors.table$development_stage_color[!is.na(colors.tabl
 ```{r dir-management, include=FALSE}
 # PATHS
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_filtered_meth.", clust_meth, "_res.", clust_res, ".csv")
+PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_preprocessed_", DATASET, "_filtered.rds")
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "05_additionalControls")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+
+# check file existence
+checkPath(PATH_CLUSTER_TABLE)
+checkPath(PATH_RDS_FILE)
+checkPath(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"))
 ```
 
 # Introduction
@@ -159,7 +169,6 @@ msg <- "before CC regression"
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # LOAD DATA
-PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/02_preprocessed_", DATASET, "_filtered.rds")
 fltd <- readRDS(PATH_RDS_FILE)
 
 # LOAD CLUSTERING RESULTS
