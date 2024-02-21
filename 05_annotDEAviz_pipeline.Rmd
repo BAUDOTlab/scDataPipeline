@@ -15,7 +15,7 @@ output:
         keep_tex: no
 ---
 
-```{r, echo=FALSE}
+```{r}
 if (combinedD){
     title_var <- paste0("|
     | Step 9: DEA on the ", ifelse(combine_meth=="merge", "merged", "integrated"), " data -- ", DATASET)
@@ -179,9 +179,7 @@ fltd@meta.data <- merge(fltd@meta.data, clusters[clustOfInterest], by = 'row.nam
 fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
-```{r, eval=atlas, echo=FALSE, results="asis"}
-cat("# Cells annotation through label transfer from the atlas\n")
-```
+`r if(atlas){cat("# Cells annotation through label transfer from the atlas \n")}`
 
 ```{r mapping-atlas, eval=atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
 ```
