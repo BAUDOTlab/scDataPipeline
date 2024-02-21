@@ -621,7 +621,7 @@ switch(args[1],
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
 # opt$options$input_dataset <- ""
-# opt$options$input_list <- ""
+opt$options$input_list <- "cardioWT,cardioKO"
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
 # opt$options$rm_clust <- ""
