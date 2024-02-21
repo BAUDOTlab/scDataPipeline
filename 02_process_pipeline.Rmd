@@ -114,6 +114,7 @@ library(ggplot2)
 library(tibble)
 
 source("./data_management.R", local = TRUE)
+source("./checkDirHierarchy.R", local = TRUE)
 ```
 
 ```{r other-settings, include = FALSE}
@@ -131,6 +132,11 @@ if (goodQ){
 }
 
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
+source("./checkDirHierarchy.R", local = TRUE)
+if (goodQ) {
+    PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_filtered_meth.", clust_meth, "_res.", clust_res, ".csv")
+    checkPath(PATH_CLUSTER_TABLE)
+}
 ```
 
 # Load `r DATASET` data
@@ -146,7 +152,6 @@ SO.list <- lapply(c("1", "2", "3"), function(scenario){
 })
 names(SO.list) <- c("1", "2", "3")
 
-PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/04_process/clustering_", DATASET, "_filtered_meth.", clust_meth, "_res.", clust_res, ".csv")
 clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
 clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(clusters), value = TRUE)
 ```

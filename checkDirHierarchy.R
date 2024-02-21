@@ -14,3 +14,12 @@ createDirectory <- function(path, message, recursive = FALSE) {
         dir.create(path, recursive = recursive)
     }
 }
+
+
+# Function to check the existence of a file
+checkPath <- function(filePath) {
+    res <- try(normalizePath(filePath, mustWork = TRUE), silent = TRUE)
+    if (inherits(res, "try-error")) {
+        stop(res)
+    }
+}

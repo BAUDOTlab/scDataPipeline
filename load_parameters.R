@@ -10,23 +10,38 @@ load_parameters <- function(config_file) {
     # parse the paths variables
 
     # If the environment variable SCDP_PATH_ROOT exists, we are in a docker env and use it as the root
-    if(Sys.getenv("SCDP_PATH_ROOT") != ""){
+    if (Sys.getenv("SCDP_PATH_ROOT") != "") {
         assign("PATH_ROOT", Sys.getenv("SCDP_PATH_ROOT"), envir = .GlobalEnv)
     } else {
-        assign("PATH_ROOT", path$PATH_ROOT, envir = .GlobalEnv)        
+        assign("PATH_ROOT", path$PATH_ROOT, envir = .GlobalEnv)
+    }
+    normalizePath(PATH_ROOT, mustWork = TRUE)
+
+    # Function to check for the presence of input and output paths, and then
+    # assign their full paths to global environment variables
+    assignPath <- function(pathName, pathValue) {
+        if (pathName %in% names(path$input) || pathName %in% names(path$output)) {
+            fullPath <- file.path(PATH_ROOT, pathValue)
+            assign(pathName, fullPath, envir = .GlobalEnv)
+            #cat(paste("Realpath of", pathName, ":", normalizePath(fullPath), "\n"))
+            return(TRUE)
+        } else {
+            cat(paste("The", pathName, "is not provided\n"))
+            return(FALSE)
+        }
     }
 
-    assign("PATH_INPUT_LABDATA",	file.path(PATH_ROOT, path$input$PATH_INPUT_LABDATA),		envir = .GlobalEnv)
-	assign("PATH_ATLAS",         	file.path(PATH_ROOT, path$input$PATH_ATLAS), 				envir = .GlobalEnv)
-    assign("PATH_ATLAS_FILE",       file.path(PATH_ATLAS, path$input$PATH_ATLAS_FILE), 		    envir = .GlobalEnv)
-    assign("PATH_RDS_OBJECTS",  	file.path(PATH_ROOT, path$output$PATH_RDS_OBJECTS), 		envir = .GlobalEnv)
-    assign("PATH_OUT_HTML",     	file.path(PATH_ROOT, path$output$PATH_OUT_HTML), 			envir = .GlobalEnv)
-    assign("PATH_OUT_FIG",      	file.path(PATH_ROOT, path$output$PATH_OUT_FIG, DATASET),	envir = .GlobalEnv)
-    assign("PATH_GENES_OF_INTEREST",file.path(PATH_ROOT, path$input$PATH_GENES_OF_INTEREST),	envir = .GlobalEnv)
+    # Check and assign specific paths
+    assignPath("PATH_INPUT_LABDATA", path$input$PATH_INPUT_LABDATA)
+    assignPath("PATH_ATLAS", path$input$PATH_ATLAS)
+    assignPath("PATH_ATLAS_FILE", path$input$PATH_ATLAS_FILE)
+    assignPath("PATH_RDS_OBJECTS", path$output$PATH_RDS_OBJECTS)
+    assignPath("PATH_OUT_HTML", path$output$PATH_OUT_HTML)
+    assignPath("PATH_OUT_FIG", file.path(path$output$PATH_OUT_FIG, DATASET))
+    assignPath("PATH_GENES_OF_INTEREST", path$input$PATH_GENES_OF_INTEREST)
     if (exists("PATH_MANUAL_ANNOTATION")) {
-        assign("PATH_MANUAL_ANNOTATION",file.path(PATH_ROOT, path$input$PATH_MANUAL_ANNOTATION),	envir = .GlobalEnv)
+        assignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
     }
-    
 
     # parse the qc variables
     if (exists("qc") && is.list(qc)) {
