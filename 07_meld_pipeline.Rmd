@@ -14,7 +14,7 @@ output:
         toc_depth: 3
         keep_tex: no
 title: |
-  | Step 10: Differential abundance analysis"
+  | Step 10: Differential abundance analysis -- `r DATASET` 
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->

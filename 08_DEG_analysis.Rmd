@@ -2,24 +2,19 @@
 author: "Céline Chevalier and Anaı̈s Baudot"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
-    html_document:
-        theme:
-            bootswatch: yeti
-        toc: yes
-        toc_float:
-          collapsed: false
-          smooth_scroll: true
-        number_sections: yes
+    rmdformats::material:
+        use_bookdown: true
+        thumbnails: false
         df_print: kable
         code_folding: hide
+        number_sections: yes
     pdf_document:
         number_sections: yes
         toc: yes
         toc_depth: 3
         keep_tex: no
-# title: |
-#   | Doublets removal
-#   | Step {{STEP_ID}}
+title: |
+    | Step 11: DEA between conditions -- `r DATASET`
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
@@ -112,7 +107,7 @@ source("./data_management.R", local = TRUE)
 source("./checkDirHierarchy.R", local = TRUE)
 ```
 
-```{r dir-managment, include=FALSE, eval=combinedD}
+```{r dir-managment, include=FALSE}
 # PATHS
 PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, "_scenario.", scenario, "_meth.", clust_meth, "_res.", clust_res, ".csv")
 PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
@@ -137,6 +132,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
 # Differential Gene Expression by cluster {.tabset .tabset-pills .tabset-fade}
+
 ```{r, echo=FALSE,include = FALSE}
 # You need this code to conduct the magic dependences attaching...
 DT::datatable(matrix())
@@ -144,30 +140,39 @@ DT::datatable(matrix())
 
 ```{r perform-deg, results='asis', out.width='100%'}
 perform_deg <- function(clust) {
-  cat(paste0("## Cluster ", clust, "\n"))
-  cells <- which(fltd@meta.data[clustOfInterest] == clust)
-  cluster_data <- fltd[, cells]
-  Idents(cluster_data) <- "orig.ident"
-  de_results <- findDE(object = cluster_data, method = "deseq")
-  de_results <- de_results[complete.cases(de_results[, 3:7]), ]
+    cat(paste0("## Cluster ", clust, "\n"))
+    cells <- which(fltd@meta.data[clustOfInterest] == clust)
+    cluster_data <- fltd[, cells]
+    Idents(cluster_data) <- "orig.ident"
 
+    if (length(table(cluster_data$orig.ident)) > 1 & as.integer(table(cluster_data$orig.ident)[1]) >= 30 & as.integer(table(cluster_data$orig.ident)[2]) >= 30) {
+        de_results <- findDE(object = cluster_data, method = "deseq")
+        de_results <- de_results[complete.cases(de_results[, 3:7]), ]
+    
+        top_DE <- filter(de_results, log_fc != 0) %>%
+            group_by(sign(log_fc)) %>%
+            slice_head(n = 5)
+        p = ggplot(de_results, aes(log_fc, -log10(padj))) +
+            geom_point(shape = 16, alpha = 0.2) +
+            geom_point(data = top_DE, shape = 16, size = 2, color = 'deeppink') +
+            geom_text_repel(data = top_DE, aes(label = feature)) +
+            ggtitle(paste0(levels(de_results$group1), " vs ", levels(de_results$group2), " for cluster ", clust))
 
-  top_DE <- filter(de_results, log_fc != 0) %>%
-    group_by(sign(log_fc)) %>%
-    slice_head(n = 5)
-  p = ggplot(de_results, aes(log_fc, -log10(padj))) +
-    geom_point(shape = 16, alpha = 0.2) +
-    geom_point(data = top_DE, shape = 16, size = 2, color = 'deeppink') +
-    geom_text_repel(data = top_DE, aes(label = feature)) +
-    ggtitle(paste0(levels(de_results$group1), " vs ", levels(de_results$group2), " for cluster ", clust))
+        print(p)
+    
+        print(datatable(de_results[c(1:201),], rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T)))
+    
+        invisible(write.table(de_results, file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ","))
 
-  print(p)
+    } else if (length(table(cluster_data$orig.ident)) > 1 & (as.integer(table(cluster_data$orig.ident)[1]) < 30 | as.integer(table(cluster_data$orig.ident)[2]) < 30)) {
+        cat(paste0("Too few cells (< 30) in at least one group to perform cell aggregates: cluster ", clust))
+        warning(paste0("Too few cells (< 30) in at least one group to perform cell aggregates: cluster ", clust))
+    } else {
+        cat(paste0("Did not find two or more group levels: cluster ", clust))
+        warning(paste0("Did not find two or more group levels: cluster ", clust))
+    }
 
-  print(datatable(de_results[c(1:201),], rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T)))
-
-  invisible(write.table(de_results, file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ","))
-
-  cat(" \n \n")
+    cat(" \n \n")
 }
 
 htmltools::tagList(invisible(mapply(perform_deg, sort(unique(fltd@meta.data[,clustOfInterest])), SIMPLIFY = FALSE)))

@@ -56,7 +56,7 @@ remotes::install_version('knitr', upgrade='never', version='1.42'); \
 remotes::install_version('rmdformats', version='1.0.3'); \
 BiocManager::install('DESeq2'); \
 BiocManager::install('fgsea'); \
-BiocManager::install('msigdb');"
+BiocManager::install('msigdbr');"
 # BiocManager::install('biomaRt'); \
 
 
