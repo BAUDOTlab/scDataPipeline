@@ -9,7 +9,7 @@ source("checkDirHierarchy.R")
 source("data_management.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-#args <- ""
+args <- "dea"
 
 # Main help message
 main_help <- "
@@ -621,7 +621,7 @@ switch(args[1],
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
 # opt$options$input_dataset <- ""
-# opt$options$input_list <- "cardioWT,cardioKO"
+# opt$options$input_list <- ""
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
 # opt$options$rm_clust <- ""
@@ -720,7 +720,7 @@ if (TRUE){
     rm_clust = if (!is.null(goodQ) && goodQ) unlist(strsplit(opt$options$rm_clust, ","))
 }
 
-# combinedD <- TRUE
+combinedD <- TRUE
 
 if (combinedD) {
 	FILTER = "filtered"
