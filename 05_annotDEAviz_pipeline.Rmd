@@ -225,7 +225,7 @@ DefaultAssay(fltd) <- 'RNA'
 
 # Run DEA analysis
 set.seed(general_seed)
-fc_threshold <- 0
+fc_threshold <- log(1.5)
 padj_threshold <- 0.001
 # markers <- FindAllMarkers2(fltd, method="deseq", min_fc = fc_threshold)
 
