@@ -19,9 +19,14 @@ load_parameters <- function(config_file) {
 
     # Function to check for the presence of input and output paths, and then
     # assign their full paths to global environment variables
-    assignPath <- function(pathName, pathValue) {
+    assignPath <- function(pathName, pathValue, relativeTo = PATH_ROOT) {
         if (pathName %in% names(path$input) || pathName %in% names(path$output)) {
-            fullPath <- file.path(PATH_ROOT, pathValue)
+            # Only use the relative path if the base path doesn't exist
+            if(!file.exists(pathValue)){
+                fullPath <- file.path(relativeTo, pathValue)
+            } else {
+                fullPath <- pathValue
+            }
             assign(pathName, fullPath, envir = .GlobalEnv)
             #cat(paste("Realpath of", pathName, ":", normalizePath(fullPath), "\n"))
             return(TRUE)
@@ -34,7 +39,7 @@ load_parameters <- function(config_file) {
     # Check and assign specific paths
     assignPath("PATH_INPUT_LABDATA", path$input$PATH_INPUT_LABDATA)
     assignPath("PATH_ATLAS", path$input$PATH_ATLAS)
-    assignPath("PATH_ATLAS_FILE", path$input$PATH_ATLAS_FILE)
+    assignPath("PATH_ATLAS_FILE", path$input$PATH_ATLAS_FILE, PATH_ATLAS)
     assignPath("PATH_RDS_OBJECTS", path$output$PATH_RDS_OBJECTS)
     assignPath("PATH_OUT_HTML", path$output$PATH_OUT_HTML)
     assignPath("PATH_OUT_FIG", file.path(path$output$PATH_OUT_FIG, DATASET))
