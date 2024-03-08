@@ -8,11 +8,11 @@ output:
         df_print: kable
         code_folding: hide
         number_sections: yes
-  pdf_document:
-    number_sections: yes
-    toc: yes
-    toc_depth: 3
-    keep_tex: no
+    pdf_document:
+        number_sections: yes
+        toc: yes
+        toc_depth: 3
+        keep_tex: no
 title: |
   | Step 3.1: Cell populations orverview -- `r DATASET`
 ---
