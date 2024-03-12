@@ -1,20 +1,19 @@
 ---
+title: "Step 1: Quality Control -- `r DATASET`"
 author: "CC"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
-    rmdformats::material:
-        use_bookdown: true
-        thumbnails: false
-        df_print: kable
-        code_folding: hide
-        number_sections: yes
-    pdf_document:
-        number_sections: yes
-        toc: yes
-        toc_depth: 3
-        keep_tex: no
-title: |
-    | Step 1: Quality control -- `r DATASET`
+  rmdformats::material:
+    use_bookdown: true
+    thumbnails: false
+    df_print: kable
+    code_folding: hide
+    number_sections: yes
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    keep_tex: no
 ---
 
 <!-- Javascript for zooming on figures (adapted from: https://stackoverflow.com/questions/40401680) -->
@@ -469,7 +468,7 @@ also their outlier statues regarding the different estimated characteristics.
 
 2 .rds files are saved for the complete and the filtered datasets.
 
-```{r exports, eval=FALSE}
+```{r exports}
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
 
 # Call the functions for the complete dataset

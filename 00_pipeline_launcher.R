@@ -654,15 +654,15 @@ if (grepl("\\s+", DATASET)) {
 }
 
 
-if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea","ctrl","da")){
-  print("No atlas file provided. Some parts of the report will not be generated.")
+if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea", "ctrl", "da")){
+  print(paste("The provided path of the atlas file:", PATH_ATLAS_FILE, "is not valid. Some parts of the report will not be generated."))
   atlas <- FALSE
 } else {
   atlas <- TRUE
 }
 
 if(!exists("PATH_MANUAL_ANNOTATION") && args[1] %in% c("da")){
-    print("No manual annotation table provided. Some parts of the report will not be generated.")
+    print(paste("The provided path for the manual annotation table:", PATH_MANUAL_ANNOTATION, "is not valid. Some parts of the report will not be generated."))
     manAnn <- FALSE
 } else {
     manAnn <- TRUE
