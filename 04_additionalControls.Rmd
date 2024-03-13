@@ -344,12 +344,14 @@ For each gene, you will be presented both a feature plot of its expression as we
 This is designed to remove specific cell type that you may want to remove from analysis (such as Red Blood Cells cluster) 
 without blindly removing all cells with a somatic expression of its marker gene.
 
+
+
 ### Feature Plots of focused genes {.tabset .tabset-pills .tabset-fade}
 ```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
 corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
-# Create a variable to store gene names present in the assay data
-available_genes <- rownames(GetAssayData(singlets, slot = "data"))
+### Define available genes at the beginning
+available_genes <- rownames(GetAssayData(object = singlets, slot = "data"))
 
 invisible(lapply(obs_list, function(gene_name){
   # Check if gene_name is in the available_genes
@@ -376,16 +378,11 @@ invisible(lapply(obs_list, function(gene_name){
   }
 })
 )
-```
 
 ### Cluster composition of focused genes
-
 ```{r observe-genes-table}
 sorted_clust_list <- sort(as.list(unique(singlets@meta.data[clustOfInterest]))[[1]])
 df_obs <- data.frame("cluster" = sorted_clust_list)
-
-# Create a variable to store gene names present in the assay data
-available_genes <- rownames(GetAssayData(object = singlets, slot = "data"))
 
 for(gene_name in obs_list) {
   if (gene_name %in% available_genes) {
@@ -395,9 +392,9 @@ for(gene_name in obs_list) {
       sum(GetAssayData(object = singlets, slot = "data")[gene_name, which(singlets@meta.data[clustOfInterest] == clust)] > 0)
     })
   } else {
-    # If the gene is not present, fill with NA or zeros
-    gene_cells_column_name <- paste0("Missing_", gene_name, "+_cells")  # Adjusted column name for missing genes
-    df_obs[[gene_cells_column_name]] <- rep(NA, length(sorted_clust_list))  # Use NA or 0 depending on how you want to represent missing data
+    # If the gene is not present, handle accordingly
+    gene_cells_column_name <- paste0("Missing_", gene_name, "+_cells")
+    df_obs[[gene_cells_column_name]] <- rep(NA, length(sorted_clust_list))
   }
 }
 
