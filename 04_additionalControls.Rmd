@@ -378,6 +378,7 @@ invisible(lapply(obs_list, function(gene_name){
   }
 })
 )
+```
 
 ### Cluster composition of focused genes
 ```{r observe-genes-table}
