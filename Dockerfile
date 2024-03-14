@@ -1,7 +1,6 @@
 FROM rocker/rstudio:4.1.3
 
 WORKDIR /home
-COPY ~/init.sh /init.sh
 
 RUN apt update && apt upgrade -y
 
@@ -53,10 +52,12 @@ remotes::install_version('reticulate', upgrade='never', version='1.28'); \
 remotes::install_version('gprofiler2', upgrade='never', version='0.2.1'); \
 remotes::install_version('data.table', upgrade='never', version='1.14.8'); \
 remotes::install_version('knitr', upgrade='never', version='1.42'); \
-remotes::install_version('rmdformats', version='1.0.3'); \
-BiocManager::install('DESeq2'); \
-BiocManager::install('fgsea'); \
-BiocManager::install('msigdbr');"
+remotes::install_version('rmdformats', upgrade='never', version='1.0.3'); \
+remotes::install_version('R.utils', upgrade='never', version='2.12.2'); \
+remotes::install_version('gghighlight', upgrade='never', version='0.4.0'); \
+BiocManager::install('DESeq2', force=TRUE); \
+BiocManager::install('fgsea', force=TRUE); \
+BiocManager::install('msigdbr', force=TRUE);"
 # BiocManager::install('biomaRt'); \
 
 
