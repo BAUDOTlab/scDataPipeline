@@ -1,21 +1,22 @@
 version: "2"
-name: scdatapipeline_project_${USER}
+name: scdatapipeline_project_${USER}    # Name of the project as appears when the container is running. Must be unique to each users
 
 services:
   pipeline:
     image: scdatapipeline:latest
-    container_name: scdatapipeline_instance_${USER}
-    user: ${USERID}:${PROJECT_GID}
+    container_name: scdatapipeline_instance_${USER}   # Name of the container as shown by docker container ls. 
+    user: ${USERID}:${PROJECT_GID}   # The identity of the user inside the container. Files created on the host from the container will have this permissions
+                                     # USERID can be found by running `id -u`	while the project ID can either be the user gid (id -g) or any other group the user belongs to
     group_add: 
-      - 998 # Has to be the docker group ID
+      - 998     # Docker group ID on the host. It might not be 998 on your environment, use `getent group docker` to get the right id.
     environment:
-      - SCDP_PATH_ROOT=/home
+      - SCDP_PATH_ROOT=/home/[PROJECT_NAME]    # Override the value of PATH_ROOT inside the container
     volumes:
-      # For access by each user
-      - /mnt/DATA_4TB/projects/[PROJECT_NAME]:/home
-      - /mnt/DATA_4TB/projects/singleCellAtlases:/mnt/DATA_4TB/projects/singleCellAtlases
-      - /etc/passwd:/etc/passwd:ro
+      - /path/to/projects/[PROJECT_NAME]:/home/[PROJECT_NAME]                     # Mount the project's root under /home/[PROJECT_NAME] inside the container
+      - /path/to/projects/singleCellAtlases:/path/to/projects/singleCellAtlases   # Example mount of external files, such as a folder containing the atlases. 
+                                                                                  # For convenience, the path should be the same on the host and the container
+      - /etc/passwd:/etc/passwd:ro                                                # The three following line allows for the user to be the same on the host and the container
       - /etc/group:/etc/group:ro
       - /etc/shadow:/etc/shadow:ro
-    working_dir: /home
-    tty: true
+    working_dir: /home/[PROJECT_NAME]   # Make the working directory of the container the project's root
+    tty: true   # Required to access the container from tools such as Visual Studio Code's dev containers
