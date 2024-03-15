@@ -159,7 +159,7 @@ SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/06_combine_", DATASET, "_scenario.", sc
 names(SO) <- scenario
 ```
 
-```{r remove-clusters, eval=goodQ && !is.null(rm_clust), results="asis"}
+```{r remove-clusters, eval=goodQ && !is.na(rm_clust), results="asis"}
 # We might want to keep all cells and just flag those that are not of interest
 cat("# Removal of the selected clusters\n")
 
