@@ -167,7 +167,6 @@ cat("# Removal of the selected clusters\n")
 cat(paste0("Removing the following clusters: ", paste(rm_clust, collapse = ', '), "\n"))
 
 remove_clusters <- function(SO, scenario){
-    SO = SO.list[[1]]
     SO@meta.data <- merge(SO@meta.data, clusters[clustOfInterest], by = 'row.names')
     SO@meta.data <- tibble::column_to_rownames(SO@meta.data, "Row.names")
     cells_to_keep <- which(!unlist(SO@meta.data[clustOfInterest]) %in% rm_clust)
