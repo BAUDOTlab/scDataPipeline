@@ -161,7 +161,7 @@ SO.list <- list(readRDS(paste0(PATH_RDS_OBJECTS, "/06_combine_", DATASET, "_scen
 names(SO.list) <- scenario
 ```
 
-```{r remove-clusters, eval=goodQ && !is.null(rm_clust), results="asis"}
+```{r remove-clusters, eval=goodQ && !is.na(rm_clust), results="asis"}
 cat("# Removal of the selected clusters\n")
 
 cat(paste0("Removing the following clusters: ", paste(rm_clust, collapse = ', '), "\n"))
