@@ -160,6 +160,7 @@ names(SO) <- scenario
 ```
 
 ```{r remove-clusters, eval=goodQ && !is.null(rm_clust), results="asis"}
+# We might want to keep all cells and just flag those that are not of interest
 cat("# Removal of the selected clusters\n")
 
 cat(paste0("Removing the following clusters: ", paste(rm_clust, collapse = ', '), "\n"))
@@ -192,7 +193,8 @@ The preprocessing workflow consists in the steps of
 - clustering.
 
 ```{r preprocess-1, eval=hvg_meth != "mvp", echo=hvg_meth != "mvp", message=TRUE}
-
+# Normalization is done at the cell level, so we only need to do it once on individual datasets
+# By default, we don't scale the data and just use the centering property of ScaleData
 if (combinedD) {
     SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
 
@@ -218,10 +220,12 @@ var.feats.list <- VariableFeatures(SO)
 ```
 
 ```{r preprocess-2, eval=hvg_meth == "mvp", echo=hvg_meth == "mvp", message=TRUE}
-
-if (!goodQ) {
-    SO <- NormalizeData(SO, normalization.method = norm_meth, verbose=FALSE)
+if (combinedD) {
     SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
+
+} else if (!goodQ) {
+SO <- NormalizeData(SO, normalization.method = norm_meth, verbose=FALSE)
+SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
 }
 
 SO <- FindVariableFeatures(SO, selection.method = hvg_meth, verbose=FALSE)

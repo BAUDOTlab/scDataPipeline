@@ -145,6 +145,8 @@ perform_deg <- function(clust) {
     cluster_data <- fltd[, cells]
     Idents(cluster_data) <- "orig.ident"
 
+    # For DESeq2 to work properly, the cluster must be big enough to have cells from both conditions in a sufficient amount, as they
+    # will be split in 3 subgroups. 30 is a very lax threshold, and results from clusters barely passing the check may not be trustworthy
     if (length(table(cluster_data$orig.ident)) > 1 & as.integer(table(cluster_data$orig.ident)[1]) >= 30 & as.integer(table(cluster_data$orig.ident)[2]) >= 30) {
         de_results <- findDE(object = cluster_data, method = "deseq")
         de_results <- de_results[complete.cases(de_results[, 3:7]), ]
@@ -177,7 +179,6 @@ perform_deg <- function(clust) {
 
 htmltools::tagList(invisible(mapply(perform_deg, sort(unique(fltd@meta.data[,clustOfInterest])), SIMPLIFY = FALSE)))
 ```
-
 
 
 # Gene set enrichment analysis {.tabset .tabset-pills .tabset-fade}

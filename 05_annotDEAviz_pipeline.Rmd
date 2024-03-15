@@ -225,8 +225,12 @@ DefaultAssay(fltd) <- 'RNA'
 
 # Run DEA analysis
 set.seed(general_seed)
+# These parameters should be moved to the config file eventually
 fc_threshold <- 0
 padj_threshold <- 0.001
+# Performs DEA analysis with the "each vs rest" method :
+# For each cluster, the cells are randomly split in 3 groups of pseudoreplicates then aggregated as pseudobulk
+# Then the rest of the cells are pooled together, split and pseudobulked in the same way, before running DESeq2 to find the DE genes.
 markers <- FindAllMarkers2(fltd, method="deseq", min_fc = fc_threshold)
 
 # filter in significant marker genes and order them
