@@ -376,11 +376,12 @@ invisible(lapply(obs_list, function(gene_name){
 sorted_clust_list <- sort(as.list(unique(singlets@meta.data[clustOfInterest]))[[1]])
 df_obs <- data.frame("cluster"=sorted_clust_list)
 
-for(gene_name in obs_list) {
+# For each gene to observe, we get the number of cells expressing it for each cluster
+sapply(obs_list, function(gene_name){
   df_obs[[paste0(corr_table$GeneName[match(gene_name, corr_table$ENSid)], "+_cells")]] <- sapply(sorted_clust_list, function(clust) {
     sum(GetAssayData(object = singlets, slot = "data")[gene_name,which(singlets@meta.data[clustOfInterest]==clust)]>0)
   })
-}
+})
 
 df_obs$total_cells <- sapply(sorted_clust_list, function(clust) {length(which(singlets@meta.data[clustOfInterest]==clust))})
 
