@@ -526,7 +526,7 @@ For each gene, you will be presented both a feature plot of its expression as we
 This is designed to remove specific cell type that you may want to remove from analysis (such as Red Blood Cells cluster) 
 without blindly removing all cells with a somatic expression of its marker gene.
 
-The umap plots are based on the umpa coordinates of the scenario 1 (ie. not regressed data).
+The umap plots are based on the umap coordinates of the scenario 1 (ie. not regressed data).
 
 ## Feature Plots of focused genes {.tabset .tabset-pills .tabset-fade}
 ```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
