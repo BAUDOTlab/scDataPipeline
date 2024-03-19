@@ -258,7 +258,7 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 # write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
 #                                               paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
-                                              paste0("DESeq2_topmarkers", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+                                              paste0("DESeq2_top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 ```
 
 # Additional Plots

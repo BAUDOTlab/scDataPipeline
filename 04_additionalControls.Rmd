@@ -338,76 +338,6 @@ singlets@meta.data[grep("DF.classifications", colnames(singlets@meta.data))] <- 
 singlets@meta.data[grep("pANN", colnames(singlets@meta.data))] <- NULL
 ``` 
 
-## Preliminary study of focused genes 
-
-For each gene, you will be presented both a feature plot of its expression as well as all cells expressing it. 
-This is designed to remove specific cell type that you may want to remove from analysis (such as Red Blood Cells cluster) 
-without blindly removing all cells with a somatic expression of its marker gene.
-
-
-
-### Feature Plots of focused genes {.tabset .tabset-pills .tabset-fade}
-```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
-corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
-
-### Define available genes at the beginning
-available_genes <- rownames(GetAssayData(object = singlets, slot = "data"))
-
-invisible(lapply(obs_list, function(gene_name){
-  # Check if gene_name is in the available_genes
-  if (gene_name %in% available_genes) {
-    cells_gene_pos <- which(GetAssayData(singlets, slot="data")[gene_name,]>0)
-
-    cat("#### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution \n")
-
-    Idents(singlets) <- clustOfInterest
-    print(FeaturePlot(fltd, features=gene_name, order=T))
-
-    p <- DimPlot( singlets,
-           reduction = "umap",
-           cells.highlight = cells_gene_pos,
-           cols.highlight = "#FF000088", 
-           sizes.highlight = Seurat:::AutoPointSize(singlets)*4, 
-           order = cells_gene_pos,  # Plot highlighted cells last
-           group.by=NULL) + theme(legend.position="none")
-    print(LabelClusters(p, id = "ident",  fontface = "bold", size = 5))
-
-    cat(" \n \n") # Required for '.tabset'
-  } else {
-    cat("#### ", gene_name, " is not available in the dataset \n \n")
-  }
-})
-)
-```
-
-### Cluster composition of focused genes
-```{r observe-genes-table}
-sorted_clust_list <- sort(as.list(unique(singlets@meta.data[clustOfInterest]))[[1]])
-df_obs <- data.frame("cluster" = sorted_clust_list)
-
-# For each gene to observe, we get the number of cells expressing it for each cluster
-sapply(obs_list, function(gene_name){
-  if (gene_name %in% available_genes) {
-    # Proceed with calculations if gene_name is present in the data
-    gene_cells_column_name <- paste0(corr_table$GeneName[match(gene_name, corr_table$ENSid)], "+_cells")
-    df_obs[[paste0(corr_table$GeneName[match(gene_name, corr_table$ENSid)], "+_cells")]] <- sapply(sorted_clust_list, function(clust) {
-      sum(GetAssayData(object = singlets, slot = "data")[gene_name, which(singlets@meta.data[clustOfInterest] == clust)]>0)
-    })
-  } else {
-    # If the gene is not present, handle accordingly
-    gene_cells_column_name <- paste0("Missing_", gene_name, "+_cells")
-    df_obs[[gene_cells_column_name]] <- rep(NA, length(sorted_clust_list))
-  }
-})
-
-df_obs$total_cells <- sapply(sorted_clust_list, function(clust) {
-  length(which(singlets@meta.data[clustOfInterest] == clust))
-})
-
-knitr::kable(df_obs, caption = "Number of cells expressing the genes of interest in each cluster. A cell can express multiple, or even all, these genes.") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
-```
-
 ## Conclusion - Scenario 1
 
 We removed the **`r doubletsNb`** doublet cells and observed some genes we want to focus on.
@@ -588,6 +518,78 @@ invisible(gc())
 
 After deleting the doublets (see scenario 1), we applied 2 cell cycle regression
 strategies.
+
+
+# Preliminary study of focused genes 
+
+For each gene, you will be presented both a feature plot of its expression as well as all cells expressing it. 
+This is designed to remove specific cell type that you may want to remove from analysis (such as Red Blood Cells cluster) 
+without blindly removing all cells with a somatic expression of its marker gene.
+
+The umap plots are based on the umap coordinates of the scenario 1 (ie. not regressed data).
+
+## Feature Plots of focused genes {.tabset .tabset-pills .tabset-fade}
+```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
+corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
+
+### Define available genes at the beginning
+available_genes <- rownames(GetAssayData(object = singlets, slot = "data"))
+
+invisible(lapply(obs_list, function(gene_name){
+  # Check if gene_name is in the available_genes
+  if (gene_name %in% available_genes) {
+    cells_gene_pos <- which(GetAssayData(singlets, slot = "data")[gene_name, ] > 0)
+
+    cat("### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution\n")
+
+    Idents(singlets) <- clustOfInterest
+    print(FeaturePlot(fltd, features=gene_name, order=T))
+
+    p <- DimPlot( singlets,
+           reduction = "umap",
+           cells.highlight = cells_gene_pos,
+           cols.highlight = "#FF000088", 
+           sizes.highlight = Seurat:::AutoPointSize(singlets)*4, 
+           order = cells_gene_pos,  # Plot highlighted cells last
+           group.by=NULL) + theme(legend.position="none")
+    print(LabelClusters(p, id = "ident",  fontface = "bold", size = 5))
+
+    cat(" \n \n") # Required for '.tabset'
+  } else {
+    cat("#### ", gene_name, " is not available in the dataset \n \n")
+  }
+})
+)
+```
+
+## Cluster composition of focused genes
+```{r observe-genes-table}
+sorted_clust_list <- sort(as.list(unique(singlets@meta.data[clustOfInterest]))[[1]])
+df_obs <- data.frame("cluster" = sorted_clust_list)
+
+for(gene_name in obs_list) {
+  if (gene_name %in% available_genes) {
+    # Proceed with calculations if gene_name is present
+    gene_cells_column_name <- paste0(corr_table$GeneName[match(gene_name, corr_table$ENSid)], "+_cells")
+    df_obs[[gene_cells_column_name]] <- sapply(sorted_clust_list, function(clust) {
+      sum(GetAssayData(object = singlets, slot = "data")[gene_name, which(singlets@meta.data[clustOfInterest] == clust)] > 0)
+    })
+  } else {
+    # If the gene is not present, handle accordingly
+    gene_cells_column_name <- paste0("Missing_", gene_name, "+_cells")
+    df_obs[[gene_cells_column_name]] <- rep(NA, length(sorted_clust_list))
+  }
+}
+
+df_obs$total_cells <- sapply(sorted_clust_list, function(clust) {
+  length(which(singlets@meta.data[clustOfInterest] == clust))
+})
+
+knitr::kable(df_obs, caption = "Number of cells expressing the genes of interest in each cluster") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+A cell can express multiple, or even all, these genes.
 
 # Next step
 

@@ -161,14 +161,13 @@ SO.list <- list(readRDS(paste0(PATH_RDS_OBJECTS, "/06_combine_", DATASET, "_scen
 names(SO.list) <- scenario
 ```
 
-```{r remove-clusters, eval=goodQ && !is.null(rm_clust), results="asis"}
-# We might want to keep all cells and just flag those that are not of interest
+
+```{r remove-clusters, eval=goodQ && !is.na(rm_clust), results="asis"}
 cat("# Removal of the selected clusters\n")
 
 cat(paste0("Removing the following clusters: ", paste(rm_clust, collapse = ', '), "\n"))
 
 remove_clusters <- function(SO, scenario){
-    SO = SO.list[[1]]
     SO@meta.data <- merge(SO@meta.data, clusters[clustOfInterest], by = 'row.names')
     SO@meta.data <- tibble::column_to_rownames(SO@meta.data, "Row.names")
     cells_to_keep <- which(!unlist(SO@meta.data[clustOfInterest]) %in% rm_clust)
