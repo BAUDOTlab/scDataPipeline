@@ -391,7 +391,7 @@ sapply(obs_list, function(gene_name){
     # Proceed with calculations if gene_name is present in the data
     gene_cells_column_name <- paste0(corr_table$GeneName[match(gene_name, corr_table$ENSid)], "+_cells")
     df_obs[[paste0(corr_table$GeneName[match(gene_name, corr_table$ENSid)], "+_cells")]] <- sapply(sorted_clust_list, function(clust) {
-      sum(GetAssayData(object = singlets, slot = "data")[gene_name,which(singlets@meta.data[clustOfInterest]==clust)]>0)
+      sum(GetAssayData(object = singlets, slot = "data")[gene_name, which(singlets@meta.data[clustOfInterest] == clust)]>0)
     })
   } else {
     # If the gene is not present, handle accordingly
