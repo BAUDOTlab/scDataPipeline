@@ -756,9 +756,10 @@ switch(args[1],
                })
                
            } else {
-               rmarkdown::render(
-                   "02_process_pipeline.Rmd",
-                   output_file = file.path(PATH_OUT_HTML, paste0("02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html"))
+              scenario = "1" # rubberband fix
+              rmarkdown::render(
+                "02_process_pipeline.Rmd",
+                output_file = file.path(PATH_OUT_HTML, paste0("02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html"))
                )
            }
        },
@@ -795,10 +796,10 @@ switch(args[1],
            }
        },
        "ctrl" = {
-             print(paste0("Performing additionnal controls for scenario ", scenario))
+             print(paste0("Performing additionnal controls for scenarios ", scenarios))
              rmarkdown::render(
              "04_additionalControls.Rmd",
-               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_scenarios_", paste(scenarios, sep="-"), "_", Sys.Date(), ".html"))
            )
        },
        "combine" = {

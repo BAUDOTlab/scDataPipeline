@@ -143,12 +143,12 @@ if (goodQ) {
 
 ```{r load-data-1, eval=!goodQ & !combinedD, echo=!goodQ & !combinedD}
 SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/01_qc_", DATASET, "_", FILTER, ".rds"))
-names(SO) <- FILTER
+#names(SO) <- FILTER
 ```
 
 ```{r load-data-2, eval=goodQ, echo=goodQ}
 SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/04_", scenario, "_goodQualityCells_", DATASET, ".rds"))
-names(SO) <- scenarios
+#names(SO) <- scenarios
 
 clusters <- read.table(PATH_CLUSTER_TABLE, header = TRUE, sep = ",", row.names = "cellIDs")
 clustOfInterest <- grep(paste0("RNA_snn_res.", clust_res), names(clusters), value = TRUE)
@@ -296,7 +296,7 @@ of the dataset. We also save the clustering information as a csv file.
 
 ```{r exports}
 # variable features
-saveHVG <- function(var.feats.dataset, scenario) {
+saveHVG <- function(var.feats.dataset) {
     if (!goodQ) {
         write.table(
             var.feats.dataset,
@@ -309,7 +309,7 @@ saveHVG <- function(var.feats.dataset, scenario) {
     }
 }
 
-invisible(mapply(saveHVG, var.feats.list, names(var.feats.list)))
+invisible(saveHVG(var.feats.list))
 
 # PCA and UMAP tables
 
@@ -324,16 +324,16 @@ if (goodQ) {
     defaultMDnames <- c(defaultMDnames, "celltype_DF")
 }
 
-function(SO, scenario) {
-    export_metadata(
-        SO@meta.data,
-        paste0(
-            "clustering_", DATASET, "_",
-            ifelse(!goodQ & !combinedD, FILTER, paste0("scenario.", scenario)),
-            "_meth.", clust_meth,
-            "_res.", clust_res,
-            ".csv"))
-}
+
+export_metadata(
+    SO@meta.data,
+    paste0(
+        "clustering_", DATASET, "_",
+        ifelse(!goodQ & !combinedD, FILTER, paste0("scenario.", scenario)),
+        "_meth.", clust_meth,
+        "_res.", clust_res,
+        ".csv"))
+
 
 invisible(gc())
 ```
