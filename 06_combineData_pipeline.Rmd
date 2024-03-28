@@ -93,6 +93,7 @@ knitr::opts_chunk$set(
 ```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
+library(kableExtra)
 
 source("./plotting_functions.R", local = TRUE)
 source("./data_management.R", local = TRUE)
@@ -107,8 +108,7 @@ if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 
 # Load the data
 
-All integration part removed from this report. Take the code from 06.1_combineData_pipeline.Rmd.
-```{r load-data, include=FALSE}
+```{r load-data, echo=FALSE}
 # Load data
 data_load <- function(DATASET_NAME) {
     # PATHS
@@ -127,14 +127,15 @@ data_load <- function(DATASET_NAME) {
 
 SO.list <- lapply(sort(input_datasets), data_load)
 names(SO.list) <- sort(input_datasets)
+SO.list
 ```
 
+```{r, eval=combine_meth!="merge", echo=FALSE, results="asis"}
+cat("# Integrate the data")
+```
 
+```{r integrate-sep-data, eval=combine_meth!="merge", echo=combine_meth!="merge"}
 
-```{r integrate-sep-data, eval=combine_meth!="merge", echo=combine_meth!="merge", results='asis'}
-cat("
-# Integrate the data
-")
 
 set.seed(general_seed)
 
@@ -157,23 +158,31 @@ if (combine_meth == "blkS"){
 
 rm(SO.list)
 invisible(gc())
+
+cells_origin <- as.data.frame(table(SO@meta.data$orig.ident))
+names(cells_origin) <- c("origin", "#cells")
+knitr::kable(cells_origin, caption = "Number of cells originating from each condition") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
-
-```{r merge-sep-data, eval=combine_meth=="merge", echo=combine_meth=="merge"}
+```{r, eval=combine_meth=="merge", echo=FALSE, results="asis"}
 cat("
 # Merge the data
 ")
+```
 
+```{r merge-sep-data, eval=combine_meth=="merge", echo=combine_meth=="merge"}
 SO <- merge(x = SO.list[[1]], y = SO.list[2:length(SO.list)], merge.data = T)
 SO
 
 rm(SO.list)
 invisible(gc())
+
+cells_origin <- as.data.frame(table(SO@meta.data$orig.ident))
+names(cells_origin) <- c("origin", "#cells")
+knitr::kable(cells_origin, caption = "Number of cells originating from each condition") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
-
-
-SHOW THE TABLE OF SO$ORIG.IDENT TO CHECK THE NUMBER OF CELLS FROM EACH DATASET
 
 
 ```{r export}
