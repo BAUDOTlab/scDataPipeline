@@ -174,6 +174,26 @@ SO <- SO[,cells_to_keep]
 SO@meta.data[clustOfInterest] <- NULL
 ```
 
+```{r remove-clusters, eval=goodQ && !is.na(rm_clust), results="asis"}
+cat("# Removal of the selected clusters\n")
+
+cat(paste0("Removing the following clusters: ", paste(rm_clust, collapse = ', '), "\n"))
+
+remove_clusters <- function(SO, scenario){
+    SO@meta.data <- merge(SO@meta.data, clusters[clustOfInterest], by = 'row.names')
+    SO@meta.data <- tibble::column_to_rownames(SO@meta.data, "Row.names")
+    cells_to_keep <- which(!unlist(SO@meta.data[clustOfInterest]) %in% rm_clust)
+
+    cat(paste0("\nRemoved ", length(Cells(SO)) - length(cells_to_keep), " cells from scenario ", scenario, "\n"))
+
+    # If a non existent cluster name is in the list, it will just be silently ignored.
+    SO <- SO[,cells_to_keep]
+    SO@meta.data[clustOfInterest] <- NULL
+    return(SO)
+}
+SO.list <- mapply(remove_clusters, SO.list, names(SO.list), SIMPLIFY = FALSE)
+```
+
 # Preprocessing workflow
 
 The preprocessing workflow consists in the steps of
@@ -195,7 +215,6 @@ The preprocessing workflow consists in the steps of
 # By default, we don't scale the data and just use the centering property of ScaleData
 if (combinedD) {
     SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
-
 } else if (!goodQ) {
     SO <- NormalizeData(SO, normalization.method = norm_meth, verbose=FALSE)
     SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
@@ -220,7 +239,6 @@ var.feats.list <- VariableFeatures(SO)
 ```{r preprocess-2, eval=hvg_meth == "mvp", echo=hvg_meth == "mvp", message=TRUE}
 if (combinedD) {
     SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
-
 } else if (!goodQ) {
 SO <- NormalizeData(SO, normalization.method = norm_meth, verbose=FALSE)
 SO <- ScaleData(SO, features=rownames(SO), do.scale=do_scale, verbose=FALSE)
