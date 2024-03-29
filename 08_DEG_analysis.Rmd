@@ -192,7 +192,6 @@ for a collection of gene sets. P-value estimation is based on an adaptive multi-
 Threshold of padj < 0.01 is used to filter the pathways.
 
 ```{r perform_fgsea, include = FALSE}
-
 file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
 
 # Define the path to the folder containing the input files
@@ -207,11 +206,16 @@ databases <- c("Reactome", "KEGG", "GOBP", "GOCC")
 
 # Function to perform FGSEA analysis
 perform_fgsea_analysis <- function(csv_paths) {
+    ## create output folder on name of input file
+    analyzed_cluster <- str_extract(basename(csv_paths), "cluster_[0-9]+")
+    output_folder <- file.path(output_parent_folder, analyzed_cluster)
+    if (!dir.exists(output_folder)) { dir.create(output_folder) }
+
   ## Reading dea results
   deseq2Results <- read.csv(csv_paths, header = TRUE)
 
   ## Ranking vector
-  rankings <- sign(deseq2Results$log_fc) * (-log10(deseq2Results$pvalue))
+  rankings <- sign(deseq2Results$log_fc) * (-log10(deseq2Results$pvalue)) # pvalue or padj is the same as it is only for ordering, not for selecting
   names(rankings) <- deseq2Results$feature
 
   # Adjust rankings to avoid inf values
@@ -221,15 +225,12 @@ perform_fgsea_analysis <- function(csv_paths) {
   rankings <- replace(rankings, rankings < min_ranking, min_ranking * 10)
   rankings <- sort(rankings, decreasing = TRUE)
 
+    # msigdbr_species()
+    # msigdbr_collections()
+
   # Iterate through databases
   for (db in databases) {
-    output_folder <- file.path(output_parent_folder, db)
-    if (!dir.exists(output_folder)) { dir.create(output_folder) }
-
     ### Run FGSEA ###
-    msigdbr_species()
-    msigdbr_collections()
-    
     switch(db,
     Reactome = {
         gene_sets <- msigdbr(
@@ -269,16 +270,16 @@ perform_fgsea_analysis <- function(csv_paths) {
     fgseaRes <- fgsea(
       pathways = gene_sets,
       stats = rankings,
-      minSize = 15,
+      minSize = 1,
       maxSize = 500
     )
 
     ## Results table
     fgseaRes <- fgseaRes[fgseaRes$padj < 0.01 & !is.na(fgseaRes$padj), ]
-
+    
     ## Save results to output folder
     output_file <- file.path(output_folder, paste0("fgseaRes_", tools::file_path_sans_ext(basename(csv_paths)), "_", db, ".csv"))
-    fwrite(fgseaRes, file = output_file, sep = "\t", sep2 = c("", " ", ""))
+    fwrite(fgseaRes, file = output_file, sep = ",", sep2 = c("", " ", ""))
   }
 }
 
