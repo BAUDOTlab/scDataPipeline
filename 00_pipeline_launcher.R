@@ -663,7 +663,7 @@ if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea", "ctrl", "da")){
 }
 
 if(!exists("PATH_MANUAL_ANNOTATION") && args[1] %in% c("da")){
-    print(paste("The provided path for the manual annotation table:", PATH_MANUAL_ANNOTATION, "is not valid. Some parts of the report will not be generated."))
+    print(paste("No manual annotation was provided. Some parts of the report will not be generated."))
     manAnn <- FALSE
 } else {
     manAnn <- TRUE
@@ -741,9 +741,10 @@ switch(args[1],
        "process" = {
            if (goodQ) {
               lapply(scenarios, function(scenario){
+               print(paste0("Processing scenario ", scenario, " on cleaned data."))
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = file.path(PATH_OUT_HTML, paste0("05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html"))
+                   output_file = file.path(PATH_OUT_HTML, paste0("05_process_", DATASET, "_goodQualityCells_scenario_", scenario, "_", Sys.Date(), ".html"))
                )
               })
            } else if (combinedD) {
@@ -756,7 +757,6 @@ switch(args[1],
                })
                
            } else {
-              scenario = "1" # rubberband fix
               rmarkdown::render(
                 "02_process_pipeline.Rmd",
                 output_file = file.path(PATH_OUT_HTML, paste0("02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html"))

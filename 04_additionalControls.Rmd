@@ -352,11 +352,11 @@ rm(doubletsNb)
 invisible(gc())
 ```
 
-```{r scenarios-2-3-title, results='asis'}
+```{r scenarios-2-3-title, echo=FALSE, results='asis'}
 if(scenarios==c("1")){
   cat("# NOT RELEVANT")
 } else {
-  cat("# Cell cycle regressions - scenarios 2 and 3")
+  cat("# Cell cycle regressions scenarios 2 and 3")
 }
 ```
 We start the scenarios 2 and 3 with the singlet cells, that still contains the
@@ -464,8 +464,8 @@ p1 +
 ```
 
 
-```{r regression-global, eval="2" %in% scenarios}
-cat("## Global regression - scenario 2
+```{r regression-global, echo="2" %in% scenarios, eval="2" %in% scenarios, results='asis'}
+cat("## Global regression: scenario 2
 
 After regression on phases score, we observe mixed cells independently of the
 cell cycle.")
@@ -493,8 +493,8 @@ invisible(gc())
 ```
 
 
-```{r regression-cycling, eval="3" %in% scenarios, fig.show='hold'}
-cat("## Cycling regression - scenario 3
+```{r regression-cycling, echo="3" %in% scenarios, eval="3" %in% scenarios, results='asis', fig.show='hold'}
+cat("## Cycling regression: scenario 3
 
 After regression on cycling cells, G2/M and S cells mix together, which is not
 the case for the G1 cells.
@@ -540,7 +540,7 @@ without blindly removing all cells with a somatic expression of its marker gene.
 The umap plots are based on the umap coordinates of the scenario 1 (ie. not regressed data).
 
 ## Feature Plots of focused genes {.tabset .tabset-pills .tabset-fade}
-```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
+```{r observe-genes-umap, results='asis', fig.align='default', fig.size='50%'}
 corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
 ### Define available genes at the beginning
@@ -551,7 +551,7 @@ invisible(lapply(obs_list, function(gene_name){
   if (gene_name %in% available_genes) {
     cells_gene_pos <- which(GetAssayData(fltd, slot = "data")[gene_name, ] > 0)
 
-    cat("### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution\n")
+    cat(paste0("### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution\n"))
 
     Idents(fltd) <- clustOfInterest
     print(FeaturePlot(fltd, features=gene_name, order=T))
