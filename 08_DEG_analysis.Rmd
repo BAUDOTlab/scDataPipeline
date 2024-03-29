@@ -189,7 +189,7 @@ for a collection of gene sets. P-value estimation is based on an adaptive multi-
 <a href="https://www.biorxiv.org/content/10.1101/060012v3">Preprint available here.</a>
 
 
-Threshold of padj < 0.001 is used to filter the pathways.
+Threshold of padj < 0.01 is used to filter the pathways.
 
 ```{r perform_fgsea, include = FALSE}
 
@@ -206,8 +206,8 @@ if (!dir.exists(output_parent_folder)) { dir.create(output_parent_folder) }
 databases <- c("Reactome", "KEGG", "GOBP", "GOCC")
 
 # Function to perform FGSEA analysis
-perform_fgsea_analysis <- function(csv_paths, database) {
-  # Reading dea results
+perform_fgsea_analysis <- function(csv_paths) {
+  ## Reading dea results
   deseq2Results <- read.csv(csv_paths, header = TRUE)
 
   ## Ranking vector
@@ -230,40 +230,40 @@ perform_fgsea_analysis <- function(csv_paths, database) {
     msigdbr_species()
     msigdbr_collections()
     
-    if (db == "Reactome") {
-      gene_sets = msigdbr(
+    switch(db,
+    Reactome = {
+        gene_sets <- msigdbr(
         species = "Mus musculus",
         category = "C2",
         subcategory = "CP:REACTOME"
-      )
-    } else if (db == "KEGG") {
-      gene_sets = msigdbr(
+      )},
+      "KEGG" = {
+      gene_sets <- msigdbr(
         species = "Mus musculus",
         category = "C2",
         subcategory = "CP:KEGG"
-      )
-    } else if (db == "GOBP") {
-      gene_sets = msigdbr(
+      )},
+      "GOBP" = {
+      gene_sets <- msigdbr(
         species = "Mus musculus",
         category = "C5",
         subcategory = "GO:BP"
-      )
-    } else if (db == "GOCC") {
-      gene_sets = msigdbr(
+      )},
+      "GOCC" = {
+          gene_sets <- msigdbr(
         species = "Mus musculus",
         category = "C5",
         subcategory = "GO:CC"
-      )
-    }
+      )}
+    )
 
     ## remove duplicates and change to a list
-    gene_sets = gene_sets %>% 
-    dplyr::distinct(gs_name, ensembl_gene) %>% 
-    as.data.frame()
-    gene_sets = split(x = gene_sets$ensembl_gene, f = gene_sets$gs_name)
+    gene_sets <- gene_sets %>%
+        dplyr::distinct(gs_name, ensembl_gene) %>%
+        as.data.frame()
+    gene_sets <- split(x = gene_sets$ensembl_gene, f = gene_sets$gs_name)
 
-    # Run fgsea
-    general_seed <- 17
+    ## Run fgsea
     set.seed(general_seed)
 
     fgseaRes <- fgsea(
@@ -276,16 +276,14 @@ perform_fgsea_analysis <- function(csv_paths, database) {
     ## Results table
     fgseaRes <- fgseaRes[fgseaRes$padj < 0.01 & !is.na(fgseaRes$padj), ]
 
-    # Save results to output folder
+    ## Save results to output folder
     output_file <- file.path(output_folder, paste0("fgseaRes_", tools::file_path_sans_ext(basename(csv_paths)), "_", db, ".csv"))
     fwrite(fgseaRes, file = output_file, sep = "\t", sep2 = c("", " ", ""))
   }
 }
 
 # Apply the analysis to each file
-for (csv_paths in file_names) {
-  perform_fgsea_analysis(csv_paths)
-}
+invisible(lapply(file_names, perform_fgsea_analysis))
 ```
 
 # SessionInfo
