@@ -377,7 +377,7 @@ undetected_genes <- goiList[!goiList$ENSid %in% available_genes, "GeneName"]
 # Print the undetected genes in the report 
 if(length(undetected_genes) > 0) {
     cat("#### Undetected Genes of Interest\n")
-    cat("The following genes prensent in the provided file were not detected in the dataset:\n")
+    cat("The following genes present in the provided file were not detected in the dataset:\n")
     cat(paste(undetected_genes, collapse = ", "), "\n\n")
 }
 
