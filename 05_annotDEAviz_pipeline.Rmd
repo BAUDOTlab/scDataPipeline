@@ -370,6 +370,20 @@ makeFeaturePlot <- function(geneOI){
 
 }
 
+# Check if the genes of interrest are indeed in the filtered data
+available_genes <- rownames(fltd@assays$RNA@data)
+undetected_genes <- goiList[!goiList$ENSid %in% available_genes, "GeneName"]
+
+# Print the undetected genes in the report 
+if(length(undetected_genes) > 0) {
+    cat("#### Undetected Genes of Interest\n")
+    cat("The following genes present in the provided file were not detected in the dataset:\n")
+    cat(paste(undetected_genes, collapse = ", "), "\n\n")
+}
+
+# Filter the genes of interrest list to the detected ones
+goiList <- goiList[goiList$ENSid %in% available_genes, ]
+
 # FeaturePlot the genes of interest
 invisible(apply(goiList, 1, makeFeaturePlot))
 ```
