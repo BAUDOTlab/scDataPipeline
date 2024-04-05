@@ -161,19 +161,26 @@ perform_deg <- function(clust) {
         top_logFC <- filter(de_results, log_fc != 0) %>%
             filter(dense_rank(log_fc) <= 10 | dense_rank(desc(log_fc)) <= 10)
 
+        upreg <- filter(de_results, log_fc > 0)
+        downreg <- filter(de_results, log_fc < 0)
+
         p <- ggplot(de_results, aes(log_fc, -log10(padj))) +
             geom_point(shape = 16, alpha = 0.2) +
+            geom_point(data = upreg, shape = 16, size = 2, color = 'red') +
+            geom_point(data = downreg, shape = 16, size = 2, color = 'blue') +
             geom_point(data = top_DE, shape = 16, size = 2, color = 'deeppink') +
             geom_point(data = top_logFC, shape = 16, size = 2, color = 'darkorchid1') +
             # geom_text_repel(data = top_DE, aes(label = corr_table$GeneName[match(feature, corr_table$ENSid)])) +
             # geom_text_repel(data = top_DE, aes(label = feature)) +
             geom_text_repel(data = top_DE, aes(label = gene_name)) +
             geom_text_repel(data = top_logFC, aes(label = gene_name)) +
+            scale_y_log10() + 
             ggtitle(paste0(levels(de_results$group1), " vs ", levels(de_results$group2), " for cluster ", clust)) +
 	        theme(plot.title = element_text(hjust = 0.5, size = 24),
 	        	  plot.subtitle = element_text(hjust = 0.5, size = 20),
 	        	  axis.title = element_text(size = 20))
 
+        print(p)
         cat("**Top 20 genes in term of p-value (pink)** :
         ",
         paste(top_DE$gene_name, collapse = "\t"),
