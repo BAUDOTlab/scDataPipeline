@@ -116,7 +116,7 @@ if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 # check file existence
 checkPath(PATH_CLUSTER_TABLE)
 checkPath(PATH_RDS_FILE)
-checkPath(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"))
+#checkPath(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"))
 
 if (atlas) {
     PATH_LABEL_TRANSFER <- paste0(PATH_ROOT, "/08_combineData/transferAnnotation_combinedData_", DATASET, "_scenario_", scenario, ".csv")
