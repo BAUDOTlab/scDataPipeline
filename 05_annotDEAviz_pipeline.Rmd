@@ -138,7 +138,7 @@ PATH_CLUSTER_TABLE <- paste0(PATH_ROOT, "/08_combineData/clustering_", DATASET, 
 PATH_RDS_FILE <- paste0(PATH_RDS_OBJECTS, "/07_preprocessed_", DATASET, "_scenario.", scenario, ".rds")
 PATH_OUT_ANALYSIS <- file.path(PATH_ROOT, "08_combineData")
 if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
-feature_file <- file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz"))
+feature_file <- file.path(PATH_ROOT, "00_rawdata", paste0("combined_", DATASET, "_features.tsv.gz"))
 
 # check file existence
 checkPath(PATH_CLUSTER_TABLE)
