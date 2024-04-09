@@ -141,7 +141,7 @@ if (goodQ) {
 
 # Load `r DATASET` data
 
-```{r load-data-1, eval=!goodQ & !combinedD, echo=!goodQ & !combinedD}
+```{r load-data-1, eval=!goodQ && !combinedD, echo=!goodQ && !combinedD}
 SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/01_qc_", DATASET, "_", FILTER, ".rds"))
 ```
 
@@ -292,26 +292,23 @@ We export the list of highly variable features and the PCA and UMAP coordinates
 of the dataset. We also save the clustering information as a csv file.
 
 ```{r exports}
-# variable features
-saveHVG <- function(var.feats.dataset) {
-    if (!goodQ) {
-        write.table(
-            var.feats.dataset,
-            file = file.path(
-                PATH_OUT_ANALYSIS,
-                paste0("varFeatures_meth.", hvg_meth, "_nb.", hvg_num, "_", DATASET, "_", ifelse(!goodQ & !combinedD, FILTER, paste0("scenario.", scenario)), ".txt")),
-            row.names = FALSE,
-            col.names = FALSE
-        )
-    }
+# variable feature
+if (!goodQ) {
+    write.table(
+        var.feats.dataset,
+        file = file.path(
+            PATH_OUT_ANALYSIS,
+            paste0("varFeatures_meth.", hvg_meth, "_nb.", hvg_num, "_", DATASET, "_", ifelse(!goodQ && !combinedD, FILTER, paste0("scenario.", scenario)), ".txt")),
+        row.names = FALSE,
+        col.names = FALSE
+    )
 }
 
-invisible(saveHVG(var.feats.list))
 
 # PCA and UMAP tables
 
 invisible(sapply(c("pca", "umap"), function(dr) {
-    export_dimred(SO, dr, paste0("DR_", dr, "_", DATASET, "_", ifelse(!goodQ & !combinedD, FILTER, paste0("scenario.", scenario)), ".csv"))
+    export_dimred(SO, dr, paste0("DR_", dr, "_", DATASET, "_", ifelse(!goodQ && !combinedD, FILTER, paste0("scenario.", scenario)), ".csv"))
 }))
 
 
@@ -326,7 +323,7 @@ export_metadata(
     SO@meta.data,
     paste0(
         "clustering_", DATASET, "_",
-        ifelse(!goodQ & !combinedD, FILTER, paste0("scenario.", scenario)),
+        ifelse(!goodQ && !combinedD, FILTER, paste0("scenario.", scenario)),
         "_meth.", clust_meth,
         "_res.", clust_res,
         ".csv"))
