@@ -151,7 +151,13 @@ import scprep
 import sklearn
 from pathlib import Path
 np.random.seed(42)
+```
+
+```{python mpl-init, include=FALSE}
 mpl.use("agg", force = True)
+mpl.rcParams["axes.titlesize"] = 20
+mpl.rcParams["figure.titlesize"] = 24
+mpl.rcParams["legend.fontsize"] = 18
 ```
 
 ```{python load-data, include = FALSE}
