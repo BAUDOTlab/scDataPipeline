@@ -220,7 +220,7 @@ for a collection of gene sets. P-value estimation is based on an adaptive multi-
 
 Threshold of padj < 0.05 is used to filter the pathways.
 
-```{r perform_fgsea, results="asis", fig.align='default', eval=FALSE}
+```{r perform_fgsea, results="asis", fig.align='default'}
 file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
 # numort <- as.numeric(gsub("[^\\d]+", "\\1", file_names, perl = TRUE))
 # # puis suppr le premier 9 avec gsub
@@ -320,14 +320,22 @@ perform_fgsea_analysis <- function(csv_path) {
         fwrite(fgseaRes, file = output_file, sep = ",", sep2 = c("", " ", ""))
 
         fgseaRes$newx <- gsub("_", " ", fgseaRes$pathway)
-
-        print(ggplot(fgseaRes, aes(newx, size)) +
-            geom_col(aes(fill=padj)) +
-            scale_x_discrete(labels = label_wrap(50)) +
-            coord_flip() +
-            labs(x="Pathway", y="Size",
-                title=paste(db, "results")) +
-            theme_minimal()
+        fgseaRes$counts <- sapply(fgseaRes$leadingEdge, length)
+        fgseaRes$GeneRatio <- fgseaRes$counts/fgseaRes$size
+        fgseaRes <- fgseaRes %>%
+            arrange(GeneRatio) %>%
+            mutate(newx = factor(newx, levels = newx))
+        
+        print(ggplot(fgseaRes, aes(x = GeneRatio, y = newx, color = padj, size = counts)) +
+            geom_point() +
+            scale_fill_gradient(low = "red", high = "blue", aesthetics = "color") +
+            scale_y_discrete(labels = label_wrap(50)) +
+            labs( y = "Pathway", x = "Gene ratio",
+                title = paste(db, "results")) +
+	        theme(plot.title = element_text(hjust = 0.5, size = 24),
+		        plot.subtitle = element_text(hjust = 0.5, size = 20),
+		        axis.title = element_text(size = 20),
+		        axis.text = element_text(size = 12))
         )
     }
   }
