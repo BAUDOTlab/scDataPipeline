@@ -214,8 +214,9 @@ cat("# Cells annotation through label transfer from the atlas\n")
 # Perform differential expression analysis
 
 ```{r run-dea}
-#Set the maximum amount of data able to be passed to future workers at 850Mb
-options(future.globals.maxSize = 850 * 1024^2)
+# Increase the maximum amount of data able to be passed to future workers to 2GB
+options(future.globals.maxSize = 2 * 1024^3)
+
 corr_table <- as.data.frame(fread(feature_file, header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
 clustOfInterest <- grep(paste0(DefaultAssay(fltd), "_snn_res.", clust_res), names(fltd@meta.data), value = TRUE)
