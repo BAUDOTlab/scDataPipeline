@@ -142,7 +142,6 @@ if (goodQ) {
 # Load `r DATASET` data
 
 ```{r load-data-1, eval=!goodQ & !combinedD, echo=!goodQ & !combinedD}
-scenario = 1
 SO <- readRDS(paste0(PATH_RDS_OBJECTS, "/01_qc_", DATASET, "_", FILTER, ".rds"))
 ```
 
@@ -273,7 +272,7 @@ print(DimPlot(SO))
 Idents(SO) <- SO$seurat_clusters
 print(DimPlot(SO))
 
-if (goodQ & scenario != "1") {
+if (goodQ) {
     # Load cell cycle scores and phase table
     phaseTable <- read.table(paste0("../05_additionalControls/cellCycleScoresAssignation_", DATASET, "_scenario_", scenario, ".csv"), sep = ",", header = TRUE)
     phaseTable <- column_to_rownames(phaseTable, var = "cellIDs")
