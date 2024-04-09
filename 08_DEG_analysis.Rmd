@@ -328,6 +328,7 @@ perform_fgsea_analysis <- function(csv_path) {
         
         print(ggplot(fgseaRes, aes(x = GeneRatio, y = newx, color = padj, size = counts)) +
             geom_point() +
+            geom_segment(aes(x = 0, y = newx, xend = GeneRatio, yend = newx), size = 1) +
             scale_fill_gradient(low = "red", high = "blue", aesthetics = "color") +
             scale_y_discrete(labels = label_wrap(50)) +
             labs( y = "Pathway", x = "Gene ratio",
