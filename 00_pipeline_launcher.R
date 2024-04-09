@@ -795,10 +795,10 @@ switch(args[1],
            }
        },
        "ctrl" = {
-             print(paste0("Performing additionnal controls for scenarios ", scenarios))
+             print(paste0("Performing additionnal controls for scenarios ", paste(scenarios, collapse=", ")))
              rmarkdown::render(
              "04_additionalControls.Rmd",
-               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_scenarios_", paste(scenarios, sep="-"), "_", Sys.Date(), ".html"))
+               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_scenarios_", paste(scenarios, collapse="-"), "_", Sys.Date(), ".html"))
            )
        },
        "combine" = {
