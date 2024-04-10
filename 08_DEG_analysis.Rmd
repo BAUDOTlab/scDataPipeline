@@ -315,20 +315,21 @@ perform_fgsea_analysis <- function(csv_path) {
     if (nrow(fgseaRes) == 0) {
         cat(paste("No significant pathway was retrieved for the", db, "database\n\n"))
     } else {
+        fgseaRes$newx <- gsub("_", " ", fgseaRes$pathway)
+        fgseaRes$counts <- sapply(fgseaRes$leadingEdge, length)
+        fgseaRes$GeneRatio <- fgseaRes$counts/fgseaRes$size
+
         ## Save results to output folder
         output_file <- file.path(output_folder, paste0("fgseaRes_", tools::file_path_sans_ext(basename(csv_path)), "_", db, ".csv"))
         fwrite(fgseaRes, file = output_file, sep = ",", sep2 = c("", " ", ""))
 
-        fgseaRes$newx <- gsub("_", " ", fgseaRes$pathway)
-        fgseaRes$counts <- sapply(fgseaRes$leadingEdge, length)
-        fgseaRes$GeneRatio <- fgseaRes$counts/fgseaRes$size
         fgseaRes <- fgseaRes %>%
             arrange(GeneRatio) %>%
             mutate(newx = factor(newx, levels = newx))
         
-        print(ggplot(fgseaRes, aes(x = GeneRatio, y = newx, color = padj, size = counts)) +
+                print(ggplot(fgseaRes, aes(x = GeneRatio, y = newx, color = padj, size = counts)) +
             geom_point() +
-            geom_segment(aes(x = 0, y = newx, xend = GeneRatio, yend = newx), size = 1) +
+            geom_segment(aes(x = 0, y = newx, xend = GeneRatio, yend = newx), size = 0.4) +
             scale_fill_gradient(low = "red", high = "blue", aesthetics = "color") +
             scale_y_discrete(labels = label_wrap(50)) +
             labs( y = "Pathway", x = "Gene ratio",
