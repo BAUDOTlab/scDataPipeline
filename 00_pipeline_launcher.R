@@ -669,6 +669,7 @@ if(!exists("PATH_MANUAL_ANNOTATION") && pipeline_step %in% c("da")){
 
 if (TRUE){
     assign_parameter("general_seed", as.numeric(general_seed))
+    assign_parameter("scenarios", if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario)
     switch(pipeline_step,
       # qc pipeline variables ----------------------
       "qc" = {
@@ -695,6 +696,9 @@ if (TRUE){
       },
       # advanced filter pipeline variables  --------
       "filters" = {
+        assign_parameter("clust_res", if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution)
+        assign_parameter("clust_meth", if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering)
+
         manual = opt$options$manual
         if(manual){
           assign_parameter("mito_thresholds", if (!is.null(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds)) if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$mito_thresholds))))
@@ -707,6 +711,8 @@ if (TRUE){
       "dea" = {
         assign_parameter("top_markers", opt$options$markers_number)
         assign_parameter("genes_of_interest", if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL)
+        assign_parameter("clust_res", if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution)
+        assign_parameter("clust_meth", if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering)
       },
       # Additional controls ------------------------
       "ctrl" = {
@@ -715,7 +721,6 @@ if (TRUE){
         # cell cycle regression ---------------------
         assign_parameter("s_thresh", if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase)
         assign_parameter("g2m_thresh", if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase)
-        assign_parameter("scenarios", if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario)
 
         assign_parameter("obs_list", if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ",")))
       },

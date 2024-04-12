@@ -1,7 +1,7 @@
 assign_parameter <- function(variable_name, value){
     assign(variable_name, value, envir = .GlobalEnv)
 
-    .GlobalEnv[["parameters_list"]][[variable_name]] <- value
+    .GlobalEnv[["parameters_list"]][[variable_name]] <- paste(value, collapse = ", ")
 }
 
 load_parameters <- function(config_file) {
@@ -15,7 +15,6 @@ load_parameters <- function(config_file) {
     assign_parameter("DATASET",DATASET)
     assign_parameter("CONDITION", CONDITION)
     assign_parameter("ENS_ID_COLUMN", ENS_ID_COLUMN)
-    assign_parameter("REGRESSION_SCENARIO", paste(REGRESSION_SCENARIO, collapse=", "))
 
     # Parse the options in the order of the model file
     # ================================================
@@ -60,41 +59,30 @@ load_parameters <- function(config_file) {
         assignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
     }
 
-    step <- get(pipeline_step)
-
-    if(exists(pipeline_step) && is.list(step)){
-        list2env(step, envir=.GlobalEnv)
-        # lapply(seq_along(step), function(i) {
-        #     assign_parameter(names(step)[i],step[i])
-        # })
+    # parse the qc variables
+    if (exists("qc") && is.list(qc)) {
+        list2env(qc, envir=.GlobalEnv)
     }
 
-    # # parse the qc variables
-    # if (exists("qc") && is.list(qc)) {
-    #     lapply(qc, function(param) {
-    #         assign_parameter(param)
-    #     })
-    # }
+    # parse the process variables
+    if (exists("process") && is.list(process)) {
+        list2env(process, envir = .GlobalEnv)
+    }
 
-    # # parse the process variables
-    # if (exists("process") && is.list(process)) {
-    #     list2env(process, envir = .GlobalEnv)
-    # }
+    # parse the filters variables
+    if (exists("filters") && is.list(filters)) {
+        list2env(filters, envir = .GlobalEnv)
+    }
 
-    # # parse the filters variables
-    # if (exists("filters") && is.list(filters)) {
-    #     list2env(filters, envir = .GlobalEnv)
-    # }
+    # parse the ctrl variables
+    if (exists("ctrl") && is.list(ctrl)) {
+        list2env(ctrl, envir = .GlobalEnv)
+    }
 
-    # # parse the ctrl variables
-    # if (exists("ctrl") && is.list(ctrl)) {
-    #     list2env(ctrl, envir = .GlobalEnv)
-    # }
-
-    # #parse the combine variables
-    # if (exists("combine") && is.list(combine)) {
-    #     list2env(combine, envir = .GlobalEnv)
-    # }
+    #parse the combine variables
+    if (exists("combine") && is.list(combine)) {
+        list2env(combine, envir = .GlobalEnv)
+    }
 
     rm(paramsList)
 }
