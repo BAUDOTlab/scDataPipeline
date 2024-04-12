@@ -526,8 +526,11 @@ invisible(gc())
 ## Conclusion
 
 We assigned a cell cycle score to each cell, which is tagged either G1, G2/M or S. 
-`r if(any(c("2","3") %in% scenarios)){
-  cat(paste0("Furthermore, we applied ", sum(c("2","3") %in% scenarios), " cell cycle regression."))}`
+```{r, include=FALSE}
+if(any(c("2","3") %in% scenarios)){
+  cat(paste0("Furthermore, we applied ", sum(c("2","3") %in% scenarios), " cell cycle regression."))
+}
+```
 
 
 # Preliminary study of focused genes 
