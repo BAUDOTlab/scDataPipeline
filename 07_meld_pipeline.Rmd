@@ -116,7 +116,6 @@ if (!dir.exists(PATH_OUT_ANALYSIS)) { dir.create(PATH_OUT_ANALYSIS) }
 # check file existence
 checkPath(PATH_CLUSTER_TABLE)
 checkPath(PATH_RDS_FILE)
-checkPath(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"))
 
 if (atlas) {
     PATH_LABEL_TRANSFER <- paste0(PATH_ROOT, "/08_combineData/transferAnnotation_combinedData_", DATASET, "_scenario_", scenario, ".csv")
@@ -155,9 +154,11 @@ np.random.seed(42)
 
 ```{python mpl-init, include=FALSE}
 mpl.use("agg", force = True)
-mpl.rcParams["axes.titlesize"] = 20
-mpl.rcParams["figure.titlesize"] = 24
-mpl.rcParams["legend.fontsize"] = 18
+plt.rc("axes", titlesize=20, labelsize=20)
+plt.rc("ytick", labelsize=18)
+plt.rc("xtick", labelsize=18)
+plt.rc("figure", titlesize=26)
+plt.rc("legend", fontsize=18)
 ```
 
 ```{python load-data, include = FALSE}
@@ -333,6 +334,7 @@ include_graphics(paste0(PATH_OUT_FIG, "/06_annotDEAviz_scenario_", scenario, "_c
 
 ```{python plot-confidence-interval-func, include=FALSE}
 # Function adapted from https://stackoverflow.com/a/70949996
+
 def plot_confidence_interval(y, values, z=1.96, thresholds=[0.5,0.5], colors=["green", 'blue', "red"], vertical_line_width=0.35):
     mean = np.mean(values)
     stdev = np.std(values)
@@ -396,6 +398,9 @@ elif r.manAnn:
     clustering_type = ["manualAnnot"]
 else:
     clustering_type = ["clusters"]
+plt.figure(figsize=(18,10), dpi=120)
+
+
 
 for clustering in clustering_type:
   clusters, counts = np.unique(metadata[clustering], return_counts=True)
@@ -410,11 +415,11 @@ for clustering in clustering_type:
   plt.xlim(0,1)
 
   ylabel = [f"{clust} ({counts[list(clusters).index(clust)]})" for clust in metadata.set_index(f"{clustering}ID")[clustering].drop_duplicates()]
-  plt.yticks(metadata[f"{clustering}ID"].drop_duplicates(), ylabel)
+  plt.yticks(metadata[f"{clustering}ID"].drop_duplicates(), ylabel, fontsize=14)
 
   plt.title(f"Likelihood of the {'cluster' if clustering == 'clusters' else 'celltype'} cells enrichment in {conditions[0]} condition")
 
-  plt.legend(legend_lines,legend_labels, loc="center right",fontsize="large")
+  plt.legend(legend_lines,legend_labels, loc="center right")
   plt.tight_layout()
   plt.show()
 
