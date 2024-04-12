@@ -41,6 +41,16 @@ export_dimred <- function(SO, dr, file_name) {
 }
 
 
+# Get sorted groups for manual filter
+get_sorted_groups <- function(df){
+res <- sort(unique(df))
+empty_groups <- setdiff(levels(df), res)
+if(length(empty_groups) != 0){
+	stop(paste0("Error: the following groups are empty: ",paste(empty_groups, collapse=", ", sep=", "), ". Change your group thresholds."))
+}
+return(res)
+}
+
 # Function to extract top features
 extract_top_features <- function(df, topn = 20) {
 	# if "group1" is in the column names, sort by group1, then sort by padj
