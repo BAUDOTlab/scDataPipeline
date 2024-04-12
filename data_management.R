@@ -42,13 +42,13 @@ export_dimred <- function(SO, dr, file_name) {
 
 
 # Get sorted groups for manual filter
-get_sorted_groups <- function(df){
-res <- sort(unique(df))
-empty_groups <- setdiff(levels(df), res)
-if(length(empty_groups) != 0){
-	stop(paste0("Error: the following groups are empty: ",paste(empty_groups, collapse=", ", sep=", "), ". Change your group thresholds."))
-}
-return(res)
+check_empty_groups <- function(df, groups){
+	empty_groups <- setdiff(levels(df), groups)
+	if(length(empty_groups) != 0){
+		stop(paste0("Error: the following groups are empty: ",paste(empty_groups, collapse=", ", sep=", "), ". Change your group thresholds."))
+	}
+	
+	return(res)
 }
 
 # Function to extract top features
