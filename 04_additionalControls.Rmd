@@ -609,8 +609,5 @@ remove some clusters before going on with the pipeline, we have to input them at
 Here, we finished the preparation of the dataset. We can go through the standard
 pipeline for single cell RNA-sequencing data analysis.
 
-# SessionInfo
-
-```{r sessionInfo}
-sessionInfo()
+```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```

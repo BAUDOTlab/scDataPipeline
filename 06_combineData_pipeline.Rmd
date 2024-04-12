@@ -190,8 +190,5 @@ saveRDS(SO, file=file.path(PATH_RDS_OBJECTS, paste0("06_combine_", DATASET, "_sc
 invisible(gc())
 ```
 
-# SessionInfo
-
-```{r sessionInfo}
-sessionInfo()
+```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```

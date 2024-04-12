@@ -1,3 +1,9 @@
+assign_parameter <- function(variable_name, value){
+    assign(variable_name, value, envir = .GlobalEnv)
+
+    .GlobalEnv[["parameters_list"]][[variable_name]] <- value
+}
+
 load_parameters <- function(config_file) {
     # Parse the TOML file
     paramsList <- parseToml(config_file)
@@ -5,15 +11,21 @@ load_parameters <- function(config_file) {
     # Retrieve the values from the TOML file directly accessible
     list2env(paramsList, envir = .GlobalEnv)
     
+    # reassign some variables to avoid messing with the lists
+    assign_parameter("DATASET",DATASET)
+    assign_parameter("CONDITION", CONDITION)
+    assign_parameter("ENS_ID_COLUMN", ENS_ID_COLUMN)
+    assign_parameter("REGRESSION_SCENARIO", paste(REGRESSION_SCENARIO, collapse=", "))
+
     # Parse the options in the order of the model file
     # ================================================
     # parse the paths variables
 
     # If the environment variable SCDP_PATH_ROOT exists, we are in a docker env and use it as the root
     if (Sys.getenv("SCDP_PATH_ROOT") != "") {
-        assign("PATH_ROOT", Sys.getenv("SCDP_PATH_ROOT"), envir = .GlobalEnv)
+        assign("PATH_ROOT", Sys.getenv("SCDP_PATH_ROOT"), envir=.GlobalEnv)
     } else {
-        assign("PATH_ROOT", path$PATH_ROOT, envir = .GlobalEnv)
+        assign("PATH_ROOT", path$PATH_ROOT, envir=.GlobalEnv)
     }
     normalizePath(PATH_ROOT, mustWork = TRUE)
 
@@ -27,7 +39,7 @@ load_parameters <- function(config_file) {
             } else {
                 fullPath <- pathValue
             }
-            assign(pathName, fullPath, envir = .GlobalEnv)
+            assign(pathName, fullPath, envir=.GlobalEnv)
             #cat(paste("Realpath of", pathName, ":", normalizePath(fullPath), "\n"))
             return(TRUE)
         } else {
@@ -48,30 +60,41 @@ load_parameters <- function(config_file) {
         assignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
     }
 
-    # parse the qc variables
-    if (exists("qc") && is.list(qc)) {
-        list2env(qc, envir = .GlobalEnv)
+    step <- get(pipeline_step)
+
+    if(exists(pipeline_step) && is.list(step)){
+        list2env(step, envir=.GlobalEnv)
+        # lapply(seq_along(step), function(i) {
+        #     assign_parameter(names(step)[i],step[i])
+        # })
     }
 
-    # parse the process variables
-    if (exists("process") && is.list(process)) {
-        list2env(process, envir = .GlobalEnv)
-    }
+    # # parse the qc variables
+    # if (exists("qc") && is.list(qc)) {
+    #     lapply(qc, function(param) {
+    #         assign_parameter(param)
+    #     })
+    # }
 
-    # parse the filters variables
-    if (exists("filters") && is.list(filters)) {
-        list2env(filters, envir = .GlobalEnv)
-    }
+    # # parse the process variables
+    # if (exists("process") && is.list(process)) {
+    #     list2env(process, envir = .GlobalEnv)
+    # }
 
-    # parse the ctrl variables
-    if (exists("ctrl") && is.list(ctrl)) {
-        list2env(ctrl, envir = .GlobalEnv)
-    }
+    # # parse the filters variables
+    # if (exists("filters") && is.list(filters)) {
+    #     list2env(filters, envir = .GlobalEnv)
+    # }
 
-    #parse the combine variables
-    if (exists("combine") && is.list(combine)) {
-        list2env(combine, envir = .GlobalEnv)
-    }
+    # # parse the ctrl variables
+    # if (exists("ctrl") && is.list(ctrl)) {
+    #     list2env(ctrl, envir = .GlobalEnv)
+    # }
+
+    # #parse the combine variables
+    # if (exists("combine") && is.list(combine)) {
+    #     list2env(combine, envir = .GlobalEnv)
+    # }
 
     rm(paramsList)
 }

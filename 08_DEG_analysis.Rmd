@@ -288,8 +288,5 @@ for (csv_paths in file_names) {
 }
 ```
 
-# SessionInfo
-
-```{r sessionInfo}
-sessionInfo()
+```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```
