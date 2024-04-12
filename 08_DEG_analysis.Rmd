@@ -222,9 +222,9 @@ Threshold of padj < 0.05 is used to filter the pathways.
 
 ```{r perform_fgsea, results="asis", fig.align='default'}
 file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
-# numort <- as.numeric(gsub("[^\\d]+", "\\1", file_names, perl = TRUE))
-# # puis suppr le premier 9 avec gsub
-# numort
+
+# Order the files according to the order of the clusters
+file_names <- file_names[order(as.integer(gsub("[^\\d]+", "\\1", file_names, perl = TRUE)))]
 
 # Define the path to the folder containing the input files
 input_folder <- PATH_OUT_ANALYSIS
