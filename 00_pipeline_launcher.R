@@ -662,7 +662,7 @@ if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea", "ctrl", "da")){
 }
 
 if(!exists("PATH_MANUAL_ANNOTATION") && args[1] %in% c("da")){
-    print(paste("The provided path for the manual annotation table:", PATH_MANUAL_ANNOTATION, "is not valid. Some parts of the report will not be generated."))
+    print(paste("No manual annotation was provided. Some parts of the report will not be generated."))
     manAnn <- FALSE
 } else {
     manAnn <- TRUE
