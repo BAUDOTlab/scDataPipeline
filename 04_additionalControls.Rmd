@@ -91,7 +91,7 @@ knitr::opts_chunk$set(
   out.width = "50%",
   fig.width = 12,
   fig.height = 12,
-  fig.align = "center"       # should be tuned to grey in multiple plots chunk
+  fig.align = "center"       # should be tuned to default in multiple plots chunk
 )
 ```
 
@@ -255,7 +255,7 @@ if("1" %in% scenarios){
 }
 ```
 
-```{r plot-DF, fig.show='hold', fig.align='grey', out.width="33%"}
+```{r plot-DF, fig.show='hold', fig.align='default', out.width="33%"}
 # PLOTS
 # SINGLETS
 DimPlot(fltd,
@@ -341,7 +341,6 @@ singlets <- fltd
 singlets@meta.data[grep("DF.classifications", colnames(singlets@meta.data))] <- NULL
 singlets@meta.data[grep("pANN", colnames(singlets@meta.data))] <- NULL
 ``` 
-
 ## Conclusion - Scenario 1
 
 We removed the **`r doubletsNb`** doublet cells and observed some genes we want to focus on.
@@ -352,8 +351,7 @@ rm(doubletsNb)
 invisible(gc())
 ```
 
-
-# Cell cycle regressions
+# Cell-cycle scores assignation
 
 We start with the singlet cells, that still contains the
 unwanted cells. As considered as good quality cells, we want to keep them for
@@ -373,7 +371,7 @@ s.genes <- gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", ta
 g2m.genes = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
 ```
 
-## Assign cell-cycle scores
+## Estimate cell-cycle scores
 
 ```{r try-stop-message, echo=FALSE, message=TRUE}
 try(if(table(s.genes %in% rownames(singlets))[[1]] != length(s.genes)) stop("s phase genes list is not covered by the data", call. = FALSE))
@@ -388,7 +386,7 @@ FeatureScatter(singlets, "S.Score", "G2M.Score") +
     theme(plot.title = element_text(hjust = 0.5, size = 24))
 ```
 
-The grey phase thresholds are set to 0. Any cell having a `S.Score > 0` is
+The default phase thresholds are set to 0. Any cell having a `S.Score > 0` is
 estimated to be in the S phase. Similarly, cells with a value of `G2M.Score > 0`
 is estimated to be in G2M phase. All the other cells are estimated to be in G1
 phase.  
@@ -461,6 +459,9 @@ p1 +
 export_metadata(singlets@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
 ```
 
+```{r, echo=if(any(c("2","3") %in% scenarios))}
+cat("# Regression on cell cycle\n\n")
+```
 
 ```{r regression-global, echo="2" %in% scenarios, eval="2" %in% scenarios, results='asis'}
 cat("## Global regression: scenario 2
