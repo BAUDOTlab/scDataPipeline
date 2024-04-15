@@ -150,6 +150,7 @@ plot2
 Groups' size:
 ```{r groups-size-mito}
 mito_groups <- sort(unique(cplt$mito_groups))
+check_empty_groups(cplt$mito_groups, mito_groups)
 table(cplt@meta.data$mito_groups)
 ```
 
@@ -213,6 +214,7 @@ VlnPlot(cplt, features = c("percent.ribo")) +
 Groups' size:
 ```{r groups-size-ribo}
 ribo_groups <- sort(unique(cplt$ribo_groups))
+check_empty_groups(cplt$ribo_groups, ribo_groups)
 table(cplt@meta.data$ribo_groups)
 ```
 
@@ -277,6 +279,7 @@ VlnPlot(cplt, features = c("nCount_RNA")) +
 Groups' size:
 ```{r groups-size-UMI}
 umi_groups <- sort(unique(cplt$umi_groups))
+check_empty_groups(cplt$umi_groups, umi_groups)
 table(cplt@meta.data$umi_groups)
 ```
 
@@ -342,6 +345,7 @@ VlnPlot(cplt, features = c("nFeature_RNA")) +
 Groups' size:
 ```{r groups-size-feature}
 feature_groups <- sort(unique(cplt$feature_groups))
+check_empty_groups(cplt$feature_groups, feature_groups)
 table(cplt@meta.data$feature_groups)
 ```
 
