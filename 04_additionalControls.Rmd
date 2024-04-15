@@ -85,13 +85,13 @@ knitr::opts_chunk$set(
   attr.output='.numberLines',
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, "/04_additionalControls_scenario_", scenario, "_"),
+  fig.path = paste0(PATH_OUT_FIG, "/04_additionalControls_scenarios_", paste(scenarios,"-"), "_"),
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c('png', 'pdf'),
   out.width = "50%",
   fig.width = 12,
   fig.height = 12,
-  fig.align = "center"       # should be tuned to grey in multiple plots chunk
+  fig.align = "center"       # should be tuned to default in multiple plots chunk
 )
 ```
 
@@ -249,10 +249,13 @@ fltd <- doubletFinder_v3(fltd,
 # SAVE THE OBJECT
 col_dblts <- grep("DF.classifications", colnames(fltd@meta.data), value=TRUE)
 Idents(fltd) <- col_dblts
-export_rds(fltd, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+
+if("1" %in% scenarios){
+  export_rds(fltd, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+}
 ```
 
-```{r plot-DF, fig.show='hold', fig.align='grey', out.width="33%"}
+```{r plot-DF, fig.show='hold', fig.align='default', out.width="33%"}
 # PLOTS
 # SINGLETS
 DimPlot(fltd,
@@ -338,7 +341,6 @@ singlets <- fltd
 singlets@meta.data[grep("DF.classifications", colnames(singlets@meta.data))] <- NULL
 singlets@meta.data[grep("pANN", colnames(singlets@meta.data))] <- NULL
 ``` 
-
 ## Conclusion - Scenario 1
 
 We removed the **`r doubletsNb`** doublet cells and observed some genes we want to focus on.
@@ -349,14 +351,14 @@ rm(doubletsNb)
 invisible(gc())
 ```
 
-# Cell cycle regressions - scenarios 2 and 3
+# Cell-cycle scores assignation
 
-We start the scenarios 2 and 3 with the singlet cells, that still contains the
+We start with the singlet cells, that still contains the
 unwanted cells. As considered as good quality cells, we want to keep them for
 the cell cycle regression. We will remove the unwanted cells after the cell
 cycle regression.
 
-## Cell cycle markers - scenarios 2 and 3
+## Cell cycle markers
 
 Cell cycle gene list has been updated in 2019 (REF). Cell cycle markers are only
 for the cycling phases, G2/M and S. If cells have few chance to be in those
@@ -369,7 +371,7 @@ s.genes <- gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", ta
 g2m.genes = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
 ```
 
-## Assign cell-cycle scores - scenarios 2 and 3
+## Estimate cell-cycle scores
 
 ```{r try-stop-message, echo=FALSE, message=TRUE}
 try(if(table(s.genes %in% rownames(singlets))[[1]] != length(s.genes)) stop("s phase genes list is not covered by the data", call. = FALSE))
@@ -384,7 +386,7 @@ FeatureScatter(singlets, "S.Score", "G2M.Score") +
     theme(plot.title = element_text(hjust = 0.5, size = 24))
 ```
 
-The grey phase thresholds are set to 0. Any cell having a `S.Score > 0` is
+The default phase thresholds are set to 0. Any cell having a `S.Score > 0` is
 estimated to be in the S phase. Similarly, cells with a value of `G2M.Score > 0`
 is estimated to be in G2M phase. All the other cells are estimated to be in G1
 phase.  
@@ -453,14 +455,20 @@ p1 +
                       plot.subtitle = element_text(hjust = 0.5, size = 20),
                       axis.title = element_text(size = 20))
     )
+
+export_metadata(singlets@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
 ```
 
-## Global regression - scenario 2
+```{r, echo=if(any(c("2","3") %in% scenarios))}
+cat("# Regression on cell cycle\n\n")
+```
+
+```{r regression-global, echo="2" %in% scenarios, eval="2" %in% scenarios, results='asis'}
+cat("## Global regression: scenario 2
 
 After regression on phases score, we observe mixed cells independently of the
-cell cycle.
+cell cycle.")
 
-```{r regression-global}
 # PIPELINE
 STEP_ID <- "2"
 
@@ -484,12 +492,13 @@ invisible(gc())
 ```
 
 
-## Cycling regression - scenario 3
+```{r regression-cycling, echo="3" %in% scenarios, eval="3" %in% scenarios, results='asis', fig.show='hold'}
+cat("## Cycling regression: scenario 3
 
-After regression on cycling cells, G2/M and S cells mix together, what is not
+After regression on cycling cells, G2/M and S cells mix together, which is not
 the case for the G1 cells.
+")
 
-```{r regression-cycling, fig.show='hold'}
 # PIPELINE
 STEP_ID <- "3"
 
@@ -515,10 +524,14 @@ rm(singlets)
 invisible(gc())
 ```
 
-## Conclusion - scenarios 2 and 3
+## Conclusion
 
-After deleting the doublets (see scenario 1), we applied 2 cell cycle regression
-strategies.
+We assigned a cell cycle score to each cell, which is tagged either G1, G2/M or S. 
+```{r, echo=FALSE}
+if(any(c("2","3") %in% scenarios)){
+  cat(paste0("Furthermore, we applied ", sum(c("2","3") %in% scenarios), " cell cycle regression."))
+}
+```
 
 
 # Preliminary study of focused genes 
@@ -530,7 +543,7 @@ without blindly removing all cells with a somatic expression of its marker gene.
 The umap plots are based on the umap coordinates of the scenario 1 (ie. not regressed data).
 
 ## Feature Plots of focused genes {.tabset .tabset-pills .tabset-fade}
-```{r observe-genes-umap, result='asis', fig.align='default', fig.size='50%'}
+```{r observe-genes-umap, results='asis', fig.align='default', fig.size='50%'}
 corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
 ### Define available genes at the beginning
@@ -541,7 +554,7 @@ invisible(lapply(obs_list, function(gene_name){
   if (gene_name %in% available_genes) {
     cells_gene_pos <- which(GetAssayData(fltd, slot = "data")[gene_name, ] > 0)
 
-    cat("### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution\n")
+    cat(paste0("### ", corr_table$GeneName[match(gene_name, corr_table$ENSid)], " distribution\n"))
 
     Idents(fltd) <- clustOfInterest
     print(FeaturePlot(fltd, features=gene_name, order=T))

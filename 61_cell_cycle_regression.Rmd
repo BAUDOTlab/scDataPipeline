@@ -1,0 +1,182 @@
+---
+output:
+    rmdformats::material:
+        use_bookdown: true
+        thumbnails: false
+        df_print: kable
+        code_folding: hide
+        number_sections: yes
+---
+
+# Cell cycle regressions scenarios 2 and 3
+
+We start the scenarios 2 and 3 with the singlet cells, that still contains the
+unwanted cells. As considered as good quality cells, we want to keep them for
+the cell cycle regression. We will remove the unwanted cells after the cell
+cycle regression.
+
+## Cell cycle markers - scenarios 2 and 3
+
+Cell cycle gene list has been updated in 2019 (REF). Cell cycle markers are only
+for the cycling phases, G2/M and S. If cells have few chance to be in those
+cycling phases, they are estimated to be in the G1 phase.
+
+Below, you can see the lists of gene markers for the G2/M and S phases.
+
+```{r load-cc-genes, results='hold'}
+s.genes <- gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
+g2m.genes = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
+```
+
+## Assign cell-cycle scores - scenarios 2 and 3
+
+```{r try-stop-message, echo=FALSE, message=TRUE}
+try(if(table(s.genes %in% rownames(singlets))[[1]] != length(s.genes)) stop("s phase genes list is not covered by the data", call. = FALSE))
+try(if(table(g2m.genes %in% rownames(singlets))[[1]] != length(g2m.genes)) stop("g2/m phases genes list is not covered by the data", call. = FALSE))
+```
+
+```{r cc-assign-score, fig.show='hold'}
+# ASSIGN CELL CYCLE SCORES AND PHASE
+singlets <- CellCycleScoring(singlets, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+FeatureScatter(singlets, "S.Score", "G2M.Score") +
+    ggtitle("CC. phase assignation by Seurat") +
+    theme(plot.title = element_text(hjust = 0.5, size = 24))
+```
+
+The grey phase thresholds are set to 0. Any cell having a `S.Score > 0` is
+estimated to be in the S phase. Similarly, cells with a value of `G2M.Score > 0`
+is estimated to be in G2M phase. All the other cells are estimated to be in G1
+phase.  
+However, by looking at the scatter plot, one can identify other gap in the
+scores that should better represent the gap between phases. It is possible to
+set up new thresholds to determine the limit between S and G1 phase and G2M and 
+G1 phase.
+
+```{r cc-assign-score-2, fig.show='hold'}
+# MANUAL PHASE ASSIGNATION BASED ON SCORES THRESHOLDS
+# inspired from https://github.com/satijalab/seurat/issues/2277#issuecomment-1117245430
+if (!(is.null(s_thresh) & is.null(g2m_thresh))) {
+    # STORE OLD PHASE
+    singlets@meta.data$Phase.old <- singlets@meta.data$Phase
+    singlets@meta.data$Phase <- NULL
+    
+    # CREATE NEW PHASE ASSIGNMENTS
+    cc.scores <- singlets@meta.data[, c("S.Score", "G2M.Score")]
+    assignments <- apply(
+        X = cc.scores,
+        MARGIN = 1,
+        FUN = function(scores, first = "S", second = "G2M", null = "G1") {
+            
+            if (scores["S.Score"] <= s_thresh & scores["G2M.Score"] <= g2m_thresh) {
+                return(null)
+            } else {
+                
+                return(c(first, second)[
+                    which(
+                        c(scores["S.Score"] - s_thresh, scores["G2M.Score"] - g2m_thresh) == max(
+                            scores["S.Score"] - s_thresh,
+                            scores["G2M.Score"] - g2m_thresh))]
+                )
+            }
+        }
+    )
+    
+    # MERGE NEW ASSIGNMENTS TO METADATA TABLE
+    cc.scores <- merge(x = cc.scores, y = data.frame(assignments), by = 0)
+    colnames(x = cc.scores) <- c('rownames', 'S.Score', 'G2M.Score', 'Phase')
+    rownames(x = cc.scores) <- cc.scores$rownames
+    cc.scores <- cc.scores[, c('S.Score', 'G2M.Score', 'Phase')]
+    singlets[[colnames(x = cc.scores)]] <- cc.scores
+    
+    # PLOT THE RESULT
+    Idents(singlets) <- "Phase"
+    print(FeatureScatter(singlets, "S.Score", "G2M.Score") +
+              ggtitle("CC. phase manual assignation") +
+              theme(plot.title = element_text(hjust = 0.5, size = 24)))
+}
+```
+
+
+By performing PCA on the cell cycle genes, cells segregate according to the
+estimated cell cycle phase.
+
+```{r cc-PCA}
+singlets <- RunPCA(singlets, features = c(s.genes, g2m.genes), seed.use = general_seed, verbose=TRUE)
+
+p1 <- DimPlot(singlets, reduction = "pca")
+p1 +
+    plot_annotation(
+        title = "Before cell cycle regression",
+        subtitle = "Using cell cycle genes for PCA",
+        theme = theme(plot.title = element_text(hjust = 0.5, size = 24),
+                      plot.subtitle = element_text(hjust = 0.5, size = 20),
+                      axis.title = element_text(size = 20))
+    )
+```
+
+
+```{r regression-global, echo="2" %in% scenarios, eval="2" %in% scenarios, results='asis'}
+cat("## Global regression: scenario 2
+
+After regression on phases score, we observe mixed cells independently of the
+cell cycle.")
+
+# PIPELINE
+STEP_ID <- "2"
+
+globalReg <- ScaleData(singlets, vars.to.regress = c("S.Score", "G2M.Score"), features = rownames(singlets), do.scale = FALSE)
+globalReg <- RunPCA(globalReg, features = c(s.genes, g2m.genes), seed.use = general_seed, verbose=TRUE)
+
+p2 <- DimPlot(globalReg, reduction = "pca")
+p2 +
+    plot_annotation(
+        title = "After global cell cycle regression",
+        subtitle = "Using cell cycle genes for PCA",
+        theme = theme(plot.title = element_text(hjust = 0.5, size = 24),
+                      plot.subtitle = element_text(hjust = 0.5, size = 20),
+                      axis.title = element_text(size = 20))
+    )
+
+# Call the export functions for the globalReg dataset
+export_metadata(globalReg@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
+export_rds(globalReg, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+invisible(gc())
+```
+
+
+```{r regression-cycling, echo="3" %in% scenarios, eval="3" %in% scenarios, results='asis', fig.show='hold'}
+cat("## Cycling regression: scenario 3
+
+After regression on cycling cells, G2/M and S cells mix together, which is not
+the case for the G1 cells.
+")
+
+# PIPELINE
+STEP_ID <- "3"
+
+singlets$cc.difference <- singlets$S.Score - singlets$G2M.Score
+
+cyclingReg <- ScaleData(singlets, vars.to.regress = "cc.difference", features = rownames(singlets), do.scale = FALSE)
+cyclingReg <- RunPCA(cyclingReg, features = c(s.genes, g2m.genes), seed.use = general_seed, verbose=TRUE)
+
+p3 <- DimPlot(cyclingReg, reduction = "pca")
+p3 +
+    plot_annotation(
+        title = "After cycling phases cell cycle regression",
+        subtitle = "Using cell cycle genes for PCA",
+        theme = theme(plot.title = element_text(hjust = 0.5, size = 24),
+                      plot.subtitle = element_text(hjust = 0.5, size = 20),
+                      axis.title = element_text(size = 20))
+    )
+
+# Call the export functions for the cyclingReg dataset
+export_metadata(cyclingReg@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
+export_rds(cyclingReg, paste0("04_", STEP_ID, "_goodQualityCells_", DATASET, ".rds"))
+rm(singlets)
+invisible(gc())
+```
+
+## Conclusion - scenarios 2 and 3
+
+After deleting the doublets (see scenario 1), we applied 2 cell cycle regression
+strategies.
