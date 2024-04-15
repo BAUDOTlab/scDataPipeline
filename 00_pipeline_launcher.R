@@ -11,6 +11,7 @@ source("data_management.R")
 args <- commandArgs(trailingOnly = TRUE)
 #args <- ""
 pipeline_step <- args[1]
+# Explicitly create the variable in the global scope
 parameters_list <<- list()
 
 # Main help message

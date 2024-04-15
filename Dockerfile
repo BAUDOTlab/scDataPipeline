@@ -48,7 +48,7 @@ remotes::install_version('Matrix', upgrade='never', version='1.6.3'); \
 remotes::install_version('tidyr', upgrade='never', version='1.3.0'); \
 remotes::install_version('RColorBrewer', upgrade='never', version='1.1.3'); \
 remotes::install_version('ggplot2', upgrade='never', version='3.4.4'); \
-remotes::install_version('reticulate', upgrade='never', version='1.28'); \
+remotes::install_version('reticulate', upgrade='never', version='1.35'); \
 remotes::install_version('gprofiler2', upgrade='never', version='0.2.1'); \
 remotes::install_version('data.table', upgrade='never', version='1.14.8'); \
 remotes::install_version('knitr', upgrade='never', version='1.42'); \
