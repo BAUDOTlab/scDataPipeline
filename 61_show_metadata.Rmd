@@ -12,6 +12,8 @@ output:
 
 ## Parameters
 ```{r show-params}
+library(kableExtra)
+
 ul <- unlist(parameters_list)
 df <- data.frame(keyName=names(ul), value=ul, row.names=NULL)
 names(df) <- c('Parameters', 'Values')

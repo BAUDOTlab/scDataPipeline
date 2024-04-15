@@ -618,7 +618,7 @@ switch(pipeline_step,
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-opt$options$input_dataset <- "highDiet"
+# opt$options$input_dataset <- "highDiet"
 # opt$options$input_list <- ""
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
@@ -670,7 +670,7 @@ if(!exists("PATH_MANUAL_ANNOTATION") && pipeline_step %in% c("da")){
 if (TRUE){
     # unclassified variables ---------------------
     assign_parameter("combinedD", if (exists("COMBINED")) COMBINED else if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE)
-    assign_parameter("goodQ",opt$options$good_quality)
+    assign_parameter("goodQ",if(!is.null(opt$options$good_quality)) opt$options$good_quality else FALSE)
     assign_parameter("general_seed", as.numeric(general_seed))
     assign_parameter("scenarios", if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario)
     switch(pipeline_step,
@@ -694,14 +694,11 @@ if (TRUE){
         assign_parameter("pca_npcs", if (exists("PCA_NPCS")) as.integer(PCA_NPCS) else opt$options$pca_npcs)
         assign_parameter("pca_print", if (exists("PCA_PRINT")) as.integer(PCA_PRINT) else opt$options$pca_print)
         assign_parameter("top_pcs", if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs)
-        assign_parameter("clust_res", if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution)
-        assign_parameter("clust_meth", if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering)
         if (!is.null(goodQ) && goodQ) assign_parameter("rm_clust",unlist(strsplit(opt$options$rm_clust, ",")))
+        if(combinedD) assign_parameter("combine_meth", if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod)
       },
       # advanced filter pipeline variables  --------
       "filters" = {
-        assign_parameter("clust_res", if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution)
-        assign_parameter("clust_meth", if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering)
 
         manual = opt$options$manual
         if(manual){
@@ -714,12 +711,11 @@ if (TRUE){
       # deg pipeline variables ---------------------
       "dea" = {
         assign_parameter("top_markers", opt$options$markers_number)
-        assign_parameter("genes_of_interest", if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL)
-        assign_parameter("clust_res", if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution)
-        assign_parameter("clust_meth", if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering)
+        assign("genes_of_interest", if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL)
       },
       # Additional controls ------------------------
       "ctrl" = {
+        assign_parameter("top_pcs", if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs)
         # doublets removal --------------------------
         assign_parameter("doublets_rate", if (exists("DOUBLETS_RATE")) as.numeric(DOUBLETS_RATE) else opt$options$doublets_rate)
         # cell cycle regression ---------------------
@@ -730,7 +726,6 @@ if (TRUE){
       },
       # combining multiple datasets -----------------
       "combine" = {
-        assign_parameter("combine_meth", if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod)
       },
       # da variables --------------------------------
       "da" = {
@@ -741,13 +736,18 @@ if (TRUE){
       }
       )
 
+      if(!pipeline_step %in% c("qc","combine")){
+        assign_parameter("clust_res", if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution)
+        assign_parameter("clust_meth", if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering)
+      }
+
       if (combinedD) {
         assign_parameter("FILTER", "filtered")
+        assign_parameter("combine_meth", if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod)
       }
 }
 
 # combinedD <- TRUE
-
 
 checkDirHierarchy()
 
