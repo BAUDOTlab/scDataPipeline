@@ -67,7 +67,7 @@ merge_features <- function(dataset_list) {
 	library(data.table)
 
 	outfile.path <- file.path(PATH_ROOT, "00_rawdata", paste0("combined_", DATASET, "_features.tsv.gz"))
-	if(exists(outfile.path)) return()
+	if(file.exists(outfile.path)) return()
 
 	features.list <- lapply(dataset_list, function(dataset) {
 		config <- parseToml(paste0(PATH_REQUIREMENTS, "globalParameters_", dataset,".toml"))

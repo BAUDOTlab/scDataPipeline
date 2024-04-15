@@ -668,6 +668,9 @@ if(!exists("PATH_MANUAL_ANNOTATION") && pipeline_step %in% c("da")){
 
 
 if (TRUE){
+    # unclassified variables ---------------------
+    assign_parameter("combinedD", if (exists("COMBINED")) COMBINED else if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE)
+    assign_parameter("goodQ",opt$options$good_quality)
     assign_parameter("general_seed", as.numeric(general_seed))
     assign_parameter("scenarios", if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario)
     switch(pipeline_step,
@@ -693,6 +696,7 @@ if (TRUE){
         assign_parameter("top_pcs", if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs)
         assign_parameter("clust_res", if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution)
         assign_parameter("clust_meth", if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering)
+        if (!is.null(goodQ) && goodQ) assign_parameter("rm_clust",unlist(strsplit(opt$options$rm_clust, ",")))
       },
       # advanced filter pipeline variables  --------
       "filters" = {
@@ -736,9 +740,6 @@ if (TRUE){
         }
       }
       )
-      # unclassified variables ---------------------
-      assign_parameter("combinedD", if (exists("COMBINED")) COMBINED else if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE)
-      assign_parameter("goodQ",opt$options$good_quality)
 
       if (combinedD) {
         assign_parameter("FILTER", "filtered")
