@@ -31,7 +31,11 @@ if (!combinedD) {
                     "dea" = "combinedData_")
 }
 
-filename <- paste0("transferAnnotation_", prefix, DATASET, "_scenario_", scenario, ".csv")
+# There are no scenario for ctrl step
+filename <- switch(args[1],
+                    "ctrl" = paste0("transferAnnotation_", prefix, DATASET, ".csv"),
+                    "dea" = paste0("transferAnnotation_", prefix, DATASET, "_scenario_", scenario, ".csv"))
+
 prediction_file <- file.path(PATH_OUT_ANALYSIS, filename)
 
 if(!file.exists(prediction_file)){

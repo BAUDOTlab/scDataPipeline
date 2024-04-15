@@ -248,8 +248,8 @@ markers.sign <- markers.sign[ , c(12, 11, 3, 7, 8, 5, 6, 1)]
 
 # Export the table
 write.table(x = markers.sign, file = file.path(PATH_OUT_ANALYSIS,
-                                               paste0("DESeq2_markers_min_fc_", fc_threshold, "_pad_", padj_threshold, "_", 
-                                                      DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+paste0("DESeq2_markers_min_fc_", fc_threshold, "_pad_", padj_threshold, "_", 
+DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 
 # Display top markers
 markers.sign$cluster <- as.numeric(markers.sign$cluster)
@@ -259,7 +259,7 @@ datatable(topNmarkers, rownames = FALSE, filter = "top", options = list(pageLeng
 # write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
 #                                               paste0("top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
-                                              paste0("DESeq2_top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
+paste0("DESeq2_top_", top_markers, "_markers_", DATASET, "_scenario.", scenario, "_res.", clust_res, ".csv")), sep = ",", row.names = F, col.names = T)
 ```
 
 # Additional Plots
@@ -269,8 +269,9 @@ write.table(x = topNmarkers, file = file.path(PATH_OUT_ANALYSIS,
 goi <- readLines(genes_of_interest)
 goiList <- data.frame(GeneName = goi, ENSid = corr_table$ENSid[match(goi, corr_table$GeneName)])
 
-# get gene_name that do not match ensembl id
-genesToRemove <- goiList$GeneName[is.na(goiList$ENSid)]
+# gene_name that do not match ensembl id will be <NA>
+# get genes that are not in the dataset: <NA> and removed features
+genesToRemove <- goiList$GeneName[!(goiList$ENSid %in% rownames(fltd))]
 
 if (length(genesToRemove) == dim(goiList)[1]){
 	cat("None of the genes of interest are in the dataset")
@@ -279,7 +280,7 @@ if (length(genesToRemove) == dim(goiList)[1]){
     cat(paste0("One or more genes of interest are not in the dataset (maybe because of the case):\n\t",
                paste(genesToRemove, collapse = ", "), "\nThe listed genes will not be plotted.
                "))
-	goiList <- na.omit(goiList) # remove the unknown genes
+    goiList <- goiList[goiList$ENSid %in% rownames(fltd), ] # remove the unknown genes
 }
 ```
 
@@ -340,20 +341,20 @@ invisible( lapply( names( topMarkers), function(clusterName)
 {
   cat("#### Cl. <span style='border-radius: 3px border: 3px solid ", clustersColor[clusterName], " padding:0px 2px'>", clusterName, "</span>\n")
   
-  # Highlight cells of current cluster on a dimreduc plot
-  highlightClusterPlot(clusterName, seuratObject = fltd, reduction = ifelse( exists("useReduction"), useReduction, "umap"))
+# Highlight cells of current cluster on a dimreduc plot
+highlightClusterPlot(clusterName, seuratObject = fltd, reduction = ifelse( exists("useReduction"), useReduction, "umap"))
   
-  # Plots expression on projected cells
-  invisible( lapply( topMarkers[[clusterName]][["feature"]], function(featureName)
-  {
+# Plots expression on projected cells
+invisible( lapply( topMarkers[[clusterName]][["feature"]], function(featureName)
+{
     print( FeaturePlot( fltd, features = featureName, reduction = ifelse( exists("useReduction"), useReduction, "umap"), order = TRUE) +
-            theme( axis.title.x = element_blank(),
-                    axis.title.y = element_blank(),
-                    legend.position = "none") +
-    labs(title = topMarkers[[clusterName]][[featureName, "gene_name"]]))
-  }))
+theme( axis.title.x = element_blank(),
+axis.title.y = element_blank(),
+legend.position = "none") +
+labs(title = topMarkers[[clusterName]][[featureName, "gene_name"]]))
+}))
   
-  cat(" \n \n") # Required for '.tabset'
+cat(" \n \n") # Required for '.tabset'
 }))
 ```
 
@@ -408,6 +409,21 @@ invisible( lapply( names( topMarkers), function(clusterName)
 }))
 ```
 
+```{r clusters-VlnPlot-goi, out.width='20%', fig.align='default', eval=exists("goiList"), echo=exists("goiList"), results='asis'}
+cat("### ViolinPlots of the genes of interest
+")
+
+makeViolinPlot <- function(geneOI){
+    print(violinFeatureByCluster(seuratObject = fltd,
+    currentFeature = geneOI[["ENSid"]],
+    clustersColor = clustersColor)
+    )
+}
+
+invisible(apply(goiList, 1, makeViolinPlot))
+```
+
+
 ```{r set-celltype-identity, eval=atlas, results='asis'}
 cat("## Celltype identity {.tabset .tabset-pills .tabset-fade}")
 Idents(fltd) <- factor(fltd@meta.data[, colname], levels = sort(levels(as.factor(fltd@meta.data[, colname]))))
@@ -460,14 +476,10 @@ cat("### DotPlot of the markers on celltype identity")
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
 ```
 
-```{r celltype-DotPlot-goi, eval=atlas, results='asis'}
+```{r celltype-DotPlot-goi, eval=atlas && exists("goiList"), echo=atlas && exists("goiList"), results='asis'}
 cat("### DotPlot of the genes of interest on celltype identity")
-if(!is.null(genes_of_interest)){
 ## DotPlot the genes of interest
 create_dot_plot(fltd, goiList, title = "Genes of interest in celltypes")
-} else {
-  cat("These are not the droids you are looking for.")
-}
 ```
 
 ```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}

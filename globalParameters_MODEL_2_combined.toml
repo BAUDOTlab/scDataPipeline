@@ -43,7 +43,7 @@ PATH_OUT_FIG		= "52_figures"		# create path PATH_ROOT/PATH_OUT_FIG/DATASET
 [process]
 NORM_METH = "LogNormalize"			# LogNormalize or SCTransform
 HVG_METH = "mvp"					# mvp, vst or disp
-HVG_NUM = false						# mvp doesn't need HVG_NUM, vst and disp does	
+HVG_NUM = false						# default is false for mvp method, MUST BE a number for vst or disp
 DO_SCALE = false
 PCA_NPCS = 50
 PCA_PRINT = 20

@@ -762,9 +762,10 @@ switch(pipeline_step,
        "process" = {
            if (goodQ) {
               lapply(scenarios, function(scenario){
+               print(paste0("Processing scenario ", scenario, " on cleaned data."))
                rmarkdown::render(
                    "02_process_pipeline.Rmd",
-                   output_file = file.path(PATH_OUT_HTML, paste0("05_process_", DATASET, "_goodQualityCells_", Sys.Date(), ".html"))
+                   output_file = file.path(PATH_OUT_HTML, paste0("05_process_", DATASET, "_goodQualityCells_scenario_", scenario, "_", Sys.Date(), ".html"))
                )
               })
            } else if (combinedD) {
@@ -777,9 +778,9 @@ switch(pipeline_step,
                })
                
            } else {
-               rmarkdown::render(
-                   "02_process_pipeline.Rmd",
-                   output_file = file.path(PATH_OUT_HTML, paste0("02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html"))
+              rmarkdown::render(
+                "02_process_pipeline.Rmd",
+                output_file = file.path(PATH_OUT_HTML, paste0("02_process_", DATASET, "_", FILTER, "_", Sys.Date(), ".html"))
                )
            }
        },
@@ -816,13 +817,11 @@ switch(pipeline_step,
            }
        },
        "ctrl" = {
-           lapply(scenarios, function(scenario){
-             print(paste0("Regressing cell cycles with scenario ", scenario))
+             print(paste0("Performing additionnal controls for scenarios ", paste(scenarios, collapse=", ")))
              rmarkdown::render(
              "04_additionalControls.Rmd",
-               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+               output_file = file.path(PATH_OUT_HTML, paste0("04_additionalControls_", DATASET, "_scenarios_", paste(scenarios, collapse="-"), "_", Sys.Date(), ".html"))
            )
-        })
        },
        "combine" = {
           lapply(scenarios, function(scenario){

@@ -80,7 +80,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, "/06_annotDEAviz_scenario_", scenario, "_"),
+  fig.path = paste0(PATH_OUT_FIG, "/08_GSEA_scenario_", scenario, "_"),
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   out.width = "50%",
@@ -101,6 +101,7 @@ library(knitr)
 library(fgsea)
 library(msigdbr)
 library(data.table)
+library(scales)
 
 source("./plotting_functions.R", local = TRUE)
 source("./data_management.R", local = TRUE)
@@ -138,7 +139,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 DT::datatable(matrix())
 ```
 
-```{r perform-deg, results='asis', out.width='100%'}
+```{r perform-deg, results='asis', out.width='50%'}
 perform_deg <- function(clust) {
     cat(paste0("## Cluster ", clust, "\n"))
     cells <- which(fltd@meta.data[clustOfInterest] == clust)
@@ -148,23 +149,49 @@ perform_deg <- function(clust) {
     # For DESeq2 to work properly, the cluster must be big enough to have cells from both conditions in a sufficient amount, as they
     # will be split in 3 subgroups. 30 is a very lax threshold, and results from clusters barely passing the check may not be trustworthy
     if (length(table(cluster_data$orig.ident)) > 1 & as.integer(table(cluster_data$orig.ident)[1]) >= 30 & as.integer(table(cluster_data$orig.ident)[2]) >= 30) {
+
+        set.seed(general_seed)
         de_results <- findDE(object = cluster_data, method = "deseq")
         de_results <- de_results[complete.cases(de_results[, 3:7]), ]
+        de_results$gene_name <- corr_table$GeneName[match(de_results$feature, corr_table$ENSid)]
     
         top_DE <- filter(de_results, log_fc != 0) %>%
             group_by(sign(log_fc)) %>%
-            slice_head(n = 5)
-        p = ggplot(de_results, aes(log_fc, -log10(padj))) +
+            slice_head(n = 10)
+        top_logFC <- filter(de_results, log_fc != 0) %>%
+            filter(dense_rank(log_fc) <= 10 | dense_rank(desc(log_fc)) <= 10)
+
+        upreg <- filter(de_results, log_fc > 0)
+        downreg <- filter(de_results, log_fc < 0)
+
+        p <- ggplot(de_results, aes(log_fc, -log10(padj))) +
             geom_point(shape = 16, alpha = 0.2) +
+            geom_point(data = upreg, shape = 16, size = 2, color = 'red') +
+            geom_point(data = downreg, shape = 16, size = 2, color = 'blue') +
             geom_point(data = top_DE, shape = 16, size = 2, color = 'deeppink') +
-            geom_text_repel(data = top_DE, aes(label = feature)) +
-            ggtitle(paste0(levels(de_results$group1), " vs ", levels(de_results$group2), " for cluster ", clust))
+            geom_point(data = top_logFC, shape = 16, size = 2, color = 'darkorchid1') +
+            # geom_text_repel(data = top_DE, aes(label = corr_table$GeneName[match(feature, corr_table$ENSid)])) +
+            # geom_text_repel(data = top_DE, aes(label = feature)) +
+            geom_text_repel(data = top_DE, aes(label = gene_name)) +
+            geom_text_repel(data = top_logFC, aes(label = gene_name)) +
+            scale_y_log10() + 
+            ggtitle(paste0(levels(de_results$group1), " vs ", levels(de_results$group2), " for cluster ", clust)) +
+	        theme(plot.title = element_text(hjust = 0.5, size = 24),
+	        	  plot.subtitle = element_text(hjust = 0.5, size = 20),
+	        	  axis.title = element_text(size = 20))
 
         print(p)
+        cat("**Top 20 genes in term of p-value (pink)** :
+        ",
+        paste(top_DE$gene_name, collapse = "\t"),
+        "
+        **Top 20 genes in term of logFC (purple)** :
+        ",
+        paste(top_logFC$gene_name, collapse = "\t"), sep = "\n\n")
+
+        datatable(de_results[c(1:201), c(11, seq(2,10), 1)], rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
     
-        print(datatable(de_results[c(1:201),], rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T)))
-    
-        invisible(write.table(de_results, file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ","))
+        invisible(write.table(de_results[, c(11, seq(2,10), 1)], file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ","))
 
     } else if (length(table(cluster_data$orig.ident)) > 1 & (as.integer(table(cluster_data$orig.ident)[1]) < 30 | as.integer(table(cluster_data$orig.ident)[2]) < 30)) {
         cat(paste0("Too few cells (< 30) in at least one group to perform cell aggregates: cluster ", clust))
@@ -177,6 +204,8 @@ perform_deg <- function(clust) {
     cat(" \n \n")
 }
 
+corr_table <- as.data.frame(fread(file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz")),
+    header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 htmltools::tagList(invisible(mapply(perform_deg, sort(unique(fltd@meta.data[,clustOfInterest])), SIMPLIFY = FALSE)))
 ```
 
@@ -189,11 +218,13 @@ for a collection of gene sets. P-value estimation is based on an adaptive multi-
 <a href="https://www.biorxiv.org/content/10.1101/060012v3">Preprint available here.</a>
 
 
-Threshold of padj < 0.001 is used to filter the pathways.
+Threshold of padj < 0.05 is used to filter the pathways.
 
-```{r perform_fgsea, include = FALSE}
-
+```{r perform_fgsea, results="asis", fig.align='default'}
 file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
+
+# Order the files according to the order of the clusters
+file_names <- file_names[order(as.integer(gsub("[^\\d]+", "\\1", file_names, perl = TRUE)))]
 
 # Define the path to the folder containing the input files
 input_folder <- PATH_OUT_ANALYSIS
@@ -206,12 +237,21 @@ if (!dir.exists(output_parent_folder)) { dir.create(output_parent_folder) }
 databases <- c("Reactome", "KEGG", "GOBP", "GOCC")
 
 # Function to perform FGSEA analysis
-perform_fgsea_analysis <- function(csv_paths, database) {
-  # Reading dea results
-  deseq2Results <- read.csv(csv_paths, header = TRUE)
+perform_fgsea_analysis <- function(csv_path) {
+    ## create output folder on name of input file
+    analyzed_cluster <- str_extract(basename(csv_path), "cluster_[0-9]+")
+    output_folder <- file.path(output_parent_folder, analyzed_cluster)
+    if (!dir.exists(output_folder)) { dir.create(output_folder) }
+
+    # Identify cluster number
+    clust <- str_extract(analyzed_cluster, "[0-9]+$")
+    cat(paste0("## Cluster ", clust, "\n"))
+
+  ## Reading dea results
+  deseq2Results <- read.csv(csv_path, header = TRUE)
 
   ## Ranking vector
-  rankings <- sign(deseq2Results$log_fc) * (-log10(deseq2Results$pvalue))
+  rankings <- sign(deseq2Results$log_fc) * (-log10(deseq2Results$pvalue)) # pvalue or padj is the same as it is only for ordering, not for selecting
   names(rankings) <- deseq2Results$feature
 
   # Adjust rankings to avoid inf values
@@ -221,71 +261,92 @@ perform_fgsea_analysis <- function(csv_paths, database) {
   rankings <- replace(rankings, rankings < min_ranking, min_ranking * 10)
   rankings <- sort(rankings, decreasing = TRUE)
 
+    # msigdbr_species()
+    # msigdbr_collections()
+
   # Iterate through databases
   for (db in databases) {
-    output_folder <- file.path(output_parent_folder, db)
-    if (!dir.exists(output_folder)) { dir.create(output_folder) }
-
     ### Run FGSEA ###
-    msigdbr_species()
-    msigdbr_collections()
-    
-    if (db == "Reactome") {
-      gene_sets = msigdbr(
+    switch(db,
+      "Reactome" = {
+        gene_sets <- msigdbr(
         species = "Mus musculus",
         category = "C2",
         subcategory = "CP:REACTOME"
-      )
-    } else if (db == "KEGG") {
-      gene_sets = msigdbr(
+      )},
+      "KEGG" = {
+      gene_sets <- msigdbr(
         species = "Mus musculus",
         category = "C2",
         subcategory = "CP:KEGG"
-      )
-    } else if (db == "GOBP") {
-      gene_sets = msigdbr(
+      )},
+      "GOBP" = {
+      gene_sets <- msigdbr(
         species = "Mus musculus",
         category = "C5",
         subcategory = "GO:BP"
-      )
-    } else if (db == "GOCC") {
-      gene_sets = msigdbr(
+      )},
+      "GOCC" = {
+          gene_sets <- msigdbr(
         species = "Mus musculus",
         category = "C5",
         subcategory = "GO:CC"
-      )
-    }
+      )}
+    )
 
     ## remove duplicates and change to a list
-    gene_sets = gene_sets %>% 
-    dplyr::distinct(gs_name, ensembl_gene) %>% 
-    as.data.frame()
-    gene_sets = split(x = gene_sets$ensembl_gene, f = gene_sets$gs_name)
+    gene_sets <- gene_sets %>%
+        dplyr::distinct(gs_name, ensembl_gene, gene_symbol) %>%
+        as.data.frame()
+    gene_sets <- split(x = gene_sets$ensembl_gene, f = gene_sets$gs_name)
 
-    # Run fgsea
-    general_seed <- 17
+    ## Run fgsea
     set.seed(general_seed)
-
     fgseaRes <- fgsea(
       pathways = gene_sets,
       stats = rankings,
-      minSize = 15,
+      minSize = 1,
       maxSize = 500
     )
 
     ## Results table
-    fgseaRes <- fgseaRes[fgseaRes$padj < 0.01 & !is.na(fgseaRes$padj), ]
+    fgseaRes <- fgseaRes[fgseaRes$padj < 0.05 & !is.na(fgseaRes$padj), ]
 
-    # Save results to output folder
-    output_file <- file.path(output_folder, paste0("fgseaRes_", tools::file_path_sans_ext(basename(csv_paths)), "_", db, ".csv"))
-    fwrite(fgseaRes, file = output_file, sep = "\t", sep2 = c("", " ", ""))
+    if (nrow(fgseaRes) == 0) {
+        cat(paste("No significant pathway was retrieved for the", db, "database\n\n"))
+    } else {
+        fgseaRes$newx <- gsub("_", " ", fgseaRes$pathway)
+        fgseaRes$counts <- sapply(fgseaRes$leadingEdge, length)
+        fgseaRes$GeneRatio <- fgseaRes$counts/fgseaRes$size
+
+        ## Save results to output folder
+        output_file <- file.path(output_folder, paste0("fgseaRes_", tools::file_path_sans_ext(basename(csv_path)), "_", db, ".csv"))
+        fwrite(fgseaRes, file = output_file, sep = ",", sep2 = c("", " ", ""))
+
+        fgseaRes <- fgseaRes %>%
+            arrange(GeneRatio) %>%
+            mutate(newx = factor(newx, levels = newx))
+        
+                print(ggplot(fgseaRes, aes(x = GeneRatio, y = newx, color = padj, size = counts)) +
+            geom_point() +
+            geom_segment(aes(x = 0, y = newx, xend = GeneRatio, yend = newx), size = 0.4) +
+            scale_fill_gradient(low = "red", high = "blue", aesthetics = "color") +
+            scale_y_discrete(labels = label_wrap(50)) +
+            labs( y = "Pathway", x = "Gene ratio",
+                title = paste(db, "results")) +
+	        theme(plot.title = element_text(hjust = 0.5, size = 24),
+		        plot.subtitle = element_text(hjust = 0.5, size = 20),
+		        axis.title = element_text(size = 20),
+		        axis.text = element_text(size = 12))
+        )
+    }
   }
+  cat(" \n \n")
 }
 
 # Apply the analysis to each file
-for (csv_paths in file_names) {
-  perform_fgsea_analysis(csv_paths)
-}
+corr_table <- as.data.frame(fread(file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz")), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
+invisible(lapply(file_names, perform_fgsea_analysis))
 ```
 
 ```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
