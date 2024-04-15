@@ -47,8 +47,6 @@ check_empty_groups <- function(df, groups){
 	if(length(empty_groups) != 0){
 		stop(paste0("Error: the following groups are empty: ",paste(empty_groups, collapse=", ", sep=", "), ". Change your group thresholds."))
 	}
-	
-	return(groups)
 }
 
 # Function to extract top features
