@@ -482,33 +482,5 @@ cat("### DotPlot of the genes of interest on celltype identity")
 create_dot_plot(fltd, goiList, title = "Genes of interest in celltypes")
 ```
 
-
-<!-- ## Personal exploration -->
-
-<!-- List of genes obtained from the CHD-RF-KB (A knowledgebase for non-syndromic -->
-<!-- congenital heart disease associated risk factors). -->
-
-<!-- ```{r} -->
-<!-- # Load list of genes of interest -->
-<!-- goi <- read.table(file.path(PATH_REQUIREMENTS, "geneList_CHD-RF-KB.txt")) -->
-<!-- goiList <- goi$V1 -->
-<!-- goiList <- str_to_title(goiList) -->
-
-<!-- genesToRemove <- goiList[!(goiList %in% rownames(fltd))] -->
-<!-- if (length(genesToRemove) >= 1){ -->
-<!--   cat(paste0("One or more genes of interest are not in the dataset (maybe because of the case):\n\t", -->
-<!--              paste(genesToRemove, collapse = ", "), "\nThe listed genes will not be plotted")) -->
-<!-- } -->
-
-<!-- goiList <- goiList[goiList %in% rownames(fltd)] # remove the unknown genes -->
-
-<!-- Idents(fltd) <- factor(fltd@meta.data[,clustOfInterest], levels = sort(as.numeric(levels(as.factor(fltd@meta.data[,clustOfInterest]))))) -->
-<!-- dotPlotsGoi(fltd, goiList, title="Genes of CHD-RF-KB database") -->
-<!-- ``` -->
-
-
-# SessionInfo
-
-```{r sessionInfo}
-sessionInfo()
+```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```

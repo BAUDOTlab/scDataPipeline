@@ -4,12 +4,15 @@ library(optparse)
 library(stringr)
 library(RcppTOML)
 
-source("load_parameters.R")
+source("load_parameters.R", local=TRUE)
 source("checkDirHierarchy.R")
 source("data_management.R")
 
 args <- commandArgs(trailingOnly = TRUE)
 #args <- ""
+pipeline_step <- args[1]
+# Explicitly create the variable in the global scope
+parameters_list <<- list()
 
 # Main help message
 main_help <- "
@@ -45,30 +48,26 @@ Rscript pipeline_launcher.R <pipelineName> --help
 "
 
 # make the call to the main help working:
-# Rscript pipeline_launcher.R -h         # -h takes the place of args[1] -_-'
-if (!is.na(args[1]) && grepl("^-", args[1])) {
-  args[1] <- NA
+# Rscript pipeline_launcher.R -h         # -h takes the place of pipeline_step -_-'
+if (!is.na(pipeline_step) && grepl("^-", pipeline_step)) {
+  pipeline_step <- NA
 }
 
 # handle the multiple pipelineName input call main help:
 # Rscript pipeline_launcher.R qc process
-if (length(args) > 1 && !grepl("^-", args[1]) && !grepl("^-", args[2])) {
+if (length(args) > 1 && !grepl("^-", pipeline_step) && !grepl("^-", args[2])) {
   cat(main_help)
   quit(status = 1)
 }
 
 # call main help message when user call unknown pipelineName:
-if (!args[1] %in% c("NA", "qc", "process", "filters", "dea", "ctrl", "combine", "da", "deg")) {
+if (!pipeline_step %in% c("qc", "process", "filters", "dea", "ctrl", "combine", "da", "deg")) {
   cat(main_help)
   quit(status = 1)
 }
 
 # defines the parameters to show in the displayed help menu
-switch(args[1],
-  "NA" = {
-    cat(main_help)
-    quit(status = 1)
-  },
+switch(pipeline_step,
   "qc" = {
     option_list1 <- list(
         make_option(
@@ -654,83 +653,105 @@ if (grepl("\\s+", DATASET)) {
 }
 
 
-if(!file.exists(PATH_ATLAS_FILE) && args[1] %in% c("dea", "ctrl", "da")){
+if(!file.exists(PATH_ATLAS_FILE) && pipeline_step %in% c("dea", "ctrl", "da")){
   print(paste("The provided path of the atlas file:", PATH_ATLAS_FILE, "is not valid. Some parts of the report will not be generated."))
-  atlas <- FALSE
+  assign_parameter("atlas", FALSE)
 } else {
-  atlas <- TRUE
+  assign_parameter("atlas", TRUE)
 }
 
-if(!exists("PATH_MANUAL_ANNOTATION") && args[1] %in% c("da")){
+if(!exists("PATH_MANUAL_ANNOTATION") && pipeline_step %in% c("da")){
     print(paste("No manual annotation was provided. Some parts of the report will not be generated."))
-    manAnn <- FALSE
+    assign_parameter("manAnn", FALSE)
 } else {
-    manAnn <- TRUE
+    assign_parameter("manAnn", TRUE)
 }
 
 
 if (TRUE){
-    general_seed = as.numeric(general_seed)
-    # qc pipeline variables ----------------------
-    mito_high = if (exists("MITO_HIGH")) as.numeric(MITO_HIGH) else opt$options$mito_high
-    mito_low = if (exists("MITO_LOW")) as.numeric(MITO_LOW) else opt$options$mito_low
-    ribo_low = if (exists("RIBO_LOW")) as.numeric(RIBO_LOW) else opt$options$ribo_low
-    min_feat = if (exists("MIN_FEAT")) as.numeric(MIN_FEAT) else opt$options$min_feat
-    min_cells = if (exists("MIN_CELLS")) as.numeric(MIN_CELLS) else opt$options$min_cells
-    min_counts = if (exists("MIN_COUNTS")) as.numeric(MIN_COUNTS) else opt$options$min_counts
-    max_counts = if (exists("MAX_COUNTS")) as.numeric(MAX_COUNTS) else opt$options$max_counts
-    # process pipeline variables -----------------
-    FILTER = if (exists("FILTER")) FILTER else opt$options$filter
-    norm_meth = if (exists("NORM_METH")) NORM_METH else opt$options$norm_method
-    hvg_meth = if (exists("HVG_METH")) HVG_METH else opt$options$hvg_method
-    hvg_num = if (exists("HVG_NUM")) as.integer(HVG_NUM) else opt$options$hvg_number
-    do_scale = if (exists("DO_SCALE")) as.logical(DO_SCALE) else opt$options$do_scaling
-    pca_npcs = if (exists("PCA_NPCS")) as.integer(PCA_NPCS) else opt$options$pca_npcs
-    pca_print = if (exists("PCA_PRINT")) as.integer(PCA_PRINT) else opt$options$pca_print
-    top_pcs = if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs
-    clust_res = if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution
-    clust_meth = if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering
-    # advanced filter pipeline variables  --------
-    mito_thresholds = if (!is.null(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds)) if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$mito_thresholds)))
-    ribo_thresholds = if (!is.null(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds)) if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$ribo_thresholds, ",")))
-    umi_thresholds = if (!is.null(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds)) if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else as.integer(unlist(strsplit(opt$options$umi_thresholds, ",")))
-    feature_thresholds = if (!is.null(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds)) if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else as.integer(unlist(strsplit(opt$options$feature_thresholds, ",")))
-    # deg pipeline variables ---------------------
-    top_markers = opt$options$markers_number
-    genes_of_interest = if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL
-    # doublets removal ---------------------------
-    doublets_rate = if (exists("DOUBLETS_RATE")) as.numeric(DOUBLETS_RATE) else opt$options$doublets_rate
-    # cell cycle regression ----------------------
-    s_thresh = if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase
-    g2m_thresh = if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase
-    scenarios = if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario         # Maybe define it into globalParams => param to be eval in step ctrl if set to 1 (ie not interested in CC regression)
-    # combining multiple datasets
-    combine_meth = if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod
-    # da variables --------------------------------
-    da_meth = if (exists("DA_METH")) DA_METH else opt$options$daMethod
-    if(!is.null(da_meth) && da_meth == "all") {
-      da_meth = list("meld")
-    }
     # unclassified variables ---------------------
-    manual = opt$options$manual
-    combinedD = if (exists("COMBINED")) COMBINED else if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE
-    goodQ = opt$options$good_quality
-    gn_col = if (exists("GENE_NAME_COLUMN")) as.numeric(GENE_NAME_COLUMN) else opt$options$gene_name_col
-    obs_list = if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ","))
-    rm_clust = if (!is.null(goodQ) && goodQ) unlist(strsplit(opt$options$rm_clust, ","))
+    assign_parameter("combinedD", if (exists("COMBINED")) COMBINED else if(!is.null(opt$options$combinedData)) opt$options$combinedData else FALSE)
+    assign_parameter("goodQ",if(!is.null(opt$options$good_quality)) opt$options$good_quality else FALSE)
+    assign_parameter("general_seed", as.numeric(general_seed))
+    assign_parameter("scenarios", if (exists("REGRESSION_SCENARIO")) REGRESSION_SCENARIO else opt$options$scenario)
+    switch(pipeline_step,
+      # qc pipeline variables ----------------------
+      "qc" = {
+        assign_parameter("mito_high", if (exists("MITO_HIGH")) as.numeric(MITO_HIGH) else opt$options$mito_high)
+        assign_parameter("mito_low", if (exists("MITO_LOW")) as.numeric(MITO_LOW) else opt$options$mito_low)
+        assign_parameter("ribo_low", if (exists("RIBO_LOW")) as.numeric(RIBO_LOW) else opt$options$ribo_low)
+        assign_parameter("min_feat", if (exists("MIN_FEAT")) as.numeric(MIN_FEAT) else opt$options$min_feat)
+        assign_parameter("min_cells", if (exists("MIN_CELLS")) as.numeric(MIN_CELLS) else opt$options$min_cells)
+        assign_parameter("min_counts", if (exists("MIN_COUNTS")) as.numeric(MIN_COUNTS) else opt$options$min_counts)
+        assign_parameter("max_counts", if (exists("MAX_COUNTS")) as.numeric(MAX_COUNTS) else opt$options$max_counts)
+      },
+      # process pipeline variables -----------------
+      "process" = {
+        assign_parameter("FILTER", if (exists("FILTER")) FILTER else opt$options$filter)
+        assign_parameter("norm_meth", if (exists("NORM_METH")) NORM_METH else opt$options$norm_method)
+        assign_parameter("hvg_meth", if (exists("HVG_METH")) HVG_METH else opt$options$hvg_method)
+        assign_parameter("hvg_num", if (exists("HVG_NUM")) as.integer(HVG_NUM) else opt$options$hvg_number)
+        assign_parameter("do_scale", if (exists("DO_SCALE")) as.logical(DO_SCALE) else opt$options$do_scaling)
+        assign_parameter("pca_npcs", if (exists("PCA_NPCS")) as.integer(PCA_NPCS) else opt$options$pca_npcs)
+        assign_parameter("pca_print", if (exists("PCA_PRINT")) as.integer(PCA_PRINT) else opt$options$pca_print)
+        assign_parameter("top_pcs", if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs)
+        if (!is.null(goodQ) && goodQ) assign_parameter("rm_clust",unlist(strsplit(opt$options$rm_clust, ",")))
+        if(combinedD) assign_parameter("combine_meth", if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod)
+      },
+      # advanced filter pipeline variables  --------
+      "filters" = {
+
+        manual = opt$options$manual
+        if(manual){
+          assign_parameter("mito_thresholds", if (!is.null(if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else opt$options$mito_thresholds)) if (exists("MITO_THRESHOLDS")) MITO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$mito_thresholds))))
+          assign_parameter("ribo_thresholds", if (!is.null(if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else opt$options$ribo_thresholds)) if (exists("RIBO_THRESHOLDS")) RIBO_THRESHOLDS else as.numeric(unlist(strsplit(opt$options$ribo_thresholds, ","))))
+          assign_parameter("umi_thresholds", if (!is.null(if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else opt$options$umi_thresholds)) if (exists("UMI_THRESHOLDS")) UMI_THRESHOLDS else as.integer(unlist(strsplit(opt$options$umi_thresholds, ","))))
+          assign_parameter("feature_thresholds", if (!is.null(if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else opt$options$feature_thresholds)) if (exists("FEATURE_THRESHOLDS")) FEATURE_THRESHOLDS else as.integer(unlist(strsplit(opt$options$feature_thresholds, ","))))
+        }
+      },
+      # deg pipeline variables ---------------------
+      "dea" = {
+        assign_parameter("top_markers", opt$options$markers_number)
+        assign("genes_of_interest", if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL)
+      },
+      # Additional controls ------------------------
+      "ctrl" = {
+        assign_parameter("top_pcs", if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs)
+        # doublets removal --------------------------
+        assign_parameter("doublets_rate", if (exists("DOUBLETS_RATE")) as.numeric(DOUBLETS_RATE) else opt$options$doublets_rate)
+        # cell cycle regression ---------------------
+        assign_parameter("s_thresh", if (exists("S_PHASE")) as.numeric(S_PHASE) else opt$options$s_phase)
+        assign_parameter("g2m_thresh", if (exists("G2M_PHASE")) as.numeric(G2M_PHASE) else opt$options$g2m_phase)
+
+        assign_parameter("obs_list", if (!is.null(if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else opt$options$observe_features)) if (exists("OBSERVE_FEATURES")) OBSERVE_FEATURES else unlist(strsplit(opt$options$observe_features, ",")))
+      },
+      # combining multiple datasets -----------------
+      "combine" = {
+      },
+      # da variables --------------------------------
+      "da" = {
+        assign_parameter("da_meth", if (exists("DA_METH")) DA_METH else opt$options$daMethod)
+        if(!is.null(da_meth) && da_meth == "all") {
+          assign_parameter("da_meth", list("meld"))
+        }
+      }
+      )
+
+      if(!pipeline_step %in% c("qc","combine")){
+        assign_parameter("clust_res", if (exists("CLUST_RES")) as.numeric(CLUST_RES) else opt$options$selected_resolution)
+        assign_parameter("clust_meth", if (exists("CLUST_METH")) as.integer(CLUST_METH) else opt$options$algo_clustering)
+      }
+
+      if (combinedD) {
+        assign_parameter("FILTER", "filtered")
+        assign_parameter("combine_meth", if (exists("COMB_METH")) COMB_METH else opt$options$combineMethod)
+      }
 }
-
-# combinedD <- TRUE
-
-if (combinedD) {
-	FILTER = "filtered"
-}
-
 
 checkDirHierarchy()
 
 
-switch(args[1],
+switch(pipeline_step,
        "qc" = {
            rmarkdown::render(
                "01_qc_pipeline.Rmd",

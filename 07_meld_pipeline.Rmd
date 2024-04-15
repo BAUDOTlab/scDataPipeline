@@ -450,8 +450,5 @@ plt.show()
 plt.clf()
 ```
 
-# SessionInfo
-
-```{r sessionInfo}
-sessionInfo()
+```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```

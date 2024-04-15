@@ -1,3 +1,12 @@
+assign_parameter <- function(variable_name, value){
+    # Assign the parameter variable to the global environment
+    assign(variable_name, value, envir = .GlobalEnv)
+
+    # Update the parameters_list variable in the global env because it would update in the function scope otherwise
+    # values are pasted to add only one entry to the list in case the value itself is a list.
+    .GlobalEnv[["parameters_list"]][[variable_name]] <- paste(value, collapse = ", ")
+}
+
 load_parameters <- function(config_file) {
     # Parse the TOML file
     paramsList <- parseToml(config_file)
@@ -5,15 +14,20 @@ load_parameters <- function(config_file) {
     # Retrieve the values from the TOML file directly accessible
     list2env(paramsList, envir = .GlobalEnv)
     
+    # reassign some variables to avoid messing with the lists
+    assign_parameter("DATASET",DATASET)
+    if(exists("CONDITION")) assign_parameter("CONDITION", CONDITION)
+    assign_parameter("ENS_ID_COLUMN", ENS_ID_COLUMN)
+
     # Parse the options in the order of the model file
     # ================================================
     # parse the paths variables
 
     # If the environment variable SCDP_PATH_ROOT exists, we are in a docker env and use it as the root
     if (Sys.getenv("SCDP_PATH_ROOT") != "") {
-        assign("PATH_ROOT", Sys.getenv("SCDP_PATH_ROOT"), envir = .GlobalEnv)
+        assign("PATH_ROOT", Sys.getenv("SCDP_PATH_ROOT"), envir=.GlobalEnv)
     } else {
-        assign("PATH_ROOT", path$PATH_ROOT, envir = .GlobalEnv)
+        assign("PATH_ROOT", path$PATH_ROOT, envir=.GlobalEnv)
     }
     normalizePath(PATH_ROOT, mustWork = TRUE)
 
@@ -27,7 +41,7 @@ load_parameters <- function(config_file) {
             } else {
                 fullPath <- pathValue
             }
-            assign(pathName, fullPath, envir = .GlobalEnv)
+            assign(pathName, fullPath, envir=.GlobalEnv)
             #cat(paste("Realpath of", pathName, ":", normalizePath(fullPath), "\n"))
             return(TRUE)
         } else {
@@ -50,7 +64,7 @@ load_parameters <- function(config_file) {
 
     # parse the qc variables
     if (exists("qc") && is.list(qc)) {
-        list2env(qc, envir = .GlobalEnv)
+        list2env(qc, envir=.GlobalEnv)
     }
 
     # parse the process variables

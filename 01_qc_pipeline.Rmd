@@ -485,8 +485,5 @@ export_rds(SO_subset, paste0("01_qc_", DATASET, "_filtered.rds"))
 invisible(gc())
 ```
 
-# SessionInfo
-
-```{r sessionInfo}
-sessionInfo()
+```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```

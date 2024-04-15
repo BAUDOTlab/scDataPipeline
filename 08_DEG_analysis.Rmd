@@ -349,8 +349,5 @@ corr_table <- as.data.frame(fread(file.path(PATH_ROOT, "00_rawData", paste0("com
 invisible(lapply(file_names, perform_fgsea_analysis))
 ```
 
-# SessionInfo
-
-```{r sessionInfo}
-sessionInfo()
+```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```

@@ -333,8 +333,5 @@ invisible(gc())
 ```
 
 
-# SessionInfo
-
-```{r sessionInfo}
-sessionInfo()
+```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```
