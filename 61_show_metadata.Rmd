@@ -8,9 +8,9 @@ output:
         number_sections: yes
 ---
 
-# Metadata
+# Analysis reproducibility
 
-## Parameters
+## Analysis parameters
 ```{r show-params}
 library(kableExtra)
 
@@ -35,7 +35,7 @@ list(df1, df2, df3) %>%
                 full_width = FALSE)
 ```
 
-## R Session Info
+## R Session info
 
 ```{r sessionInfo}
 sessionInfo()

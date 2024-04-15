@@ -618,7 +618,7 @@ switch(pipeline_step,
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "highDiet"
+# opt$options$input_dataset <- ""
 # opt$options$input_list <- ""
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
@@ -747,8 +747,6 @@ if (TRUE){
       }
 }
 
-# combinedD <- TRUE
-
 checkDirHierarchy()
 
 
@@ -857,9 +855,3 @@ switch(pipeline_step,
         })
        }
 )
-
-
-
-
-
-
