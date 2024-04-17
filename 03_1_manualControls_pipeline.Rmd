@@ -1,5 +1,5 @@
 ---
-author: "CC"
+author: "Systems Biomedicine Team"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
     rmdformats::material:
