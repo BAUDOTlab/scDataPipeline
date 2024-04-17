@@ -1,6 +1,9 @@
 assign_parameter <- function(variable_name, value){
+    # Assign the parameter variable to the global environment
     assign(variable_name, value, envir = .GlobalEnv)
 
+    # Update the parameters_list variable in the global env because it would update in the function scope otherwise
+    # values are pasted to add only one entry to the list in case the value itself is a list.
     .GlobalEnv[["parameters_list"]][[variable_name]] <- paste(value, collapse = ", ")
 }
 
