@@ -51,7 +51,7 @@ remotes::install_version('ggplot2', upgrade='never', version='3.4.4'); \
 remotes::install_version('reticulate', upgrade='never', version='1.35'); \
 remotes::install_version('gprofiler2', upgrade='never', version='0.2.1'); \
 remotes::install_version('data.table', upgrade='never', version='1.14.8'); \
-remotes::install_version('knitr', upgrade='never', version='1.42'); \
+remotes::install_version('knitr', upgrade='never', version='1.43'); \
 remotes::install_version('rmdformats', upgrade='never', version='1.0.3'); \
 remotes::install_version('R.utils', upgrade='never', version='2.12.2'); \
 remotes::install_version('gghighlight', upgrade='never', version='0.4.0'); \
