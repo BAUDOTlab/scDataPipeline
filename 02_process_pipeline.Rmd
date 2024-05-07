@@ -295,7 +295,7 @@ of the dataset. We also save the clustering information as a csv file.
 # variable feature
 if (!goodQ) {
     write.table(
-        var.feats.dataset,
+        var.feats.list,
         file = file.path(
             PATH_OUT_ANALYSIS,
             paste0("varFeatures_meth.", hvg_meth, "_nb.", hvg_num, "_", DATASET, "_", ifelse(!goodQ && !combinedD, FILTER, paste0("scenario.", scenario)), ".txt")),
