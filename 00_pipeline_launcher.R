@@ -620,7 +620,7 @@ switch(pipeline_step,
 
 opt <- parse_args(parsed, positional_arguments = TRUE)
 
-# opt$options$input_dataset <- "highDiet"
+# opt$options$input_dataset <- ""
 # opt$options$input_list <- ""
 # opt$options$filter <- "filtered"
 # opt$options$good_quality <- TRUE
@@ -712,6 +712,7 @@ if (TRUE){
       },
       # deg pipeline variables ---------------------
       "dea" = {
+        assign_parameter("top_pcs", if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs)
         assign_parameter("top_markers", opt$options$markers_number)
         assign("genes_of_interest", if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL)
       },
