@@ -17,7 +17,7 @@ load_parameters <- function(config_file) {
     # reassign some variables to avoid messing with the lists
     assign_parameter("DATASET",DATASET)
     if(exists("CONDITION")) assign_parameter("CONDITION", CONDITION)
-    assign_parameter("ENS_ID_COLUMN", ENS_ID_COLUMN)
+    if(is.null(opt$options$input_list) && !COMBINED) assign_parameter("ENS_ID_COLUMN", ENS_ID_COLUMN)
 
     # Parse the options in the order of the model file
     # ================================================
