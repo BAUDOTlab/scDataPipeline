@@ -255,7 +255,8 @@ SO <- FindClusters(
     resolution = clust_res,
     algorithm = clust_meth,
     random.seed = general_seed,
-    verbose=FALSE
+    verbose = FALSE,
+    method = ifelse(length(colnames(SO)) <= 40000, "matrix", "igraph")
 )
 ```
 
