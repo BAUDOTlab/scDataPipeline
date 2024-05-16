@@ -660,7 +660,7 @@ if(!file.exists(PATH_ATLAS_FILE) && pipeline_step %in% c("dea", "ctrl", "da")){
   assign_parameter("atlas", TRUE)
 }
 
-if(!exists("PATH_MANUAL_ANNOTATION") && pipeline_step %in% c("da")){
+if(!exists("PATH_MANUAL_ANNOTATION") && pipeline_step %in% c("da","deg")){
     print(paste("No manual annotation was provided. Some parts of the report will not be generated."))
     assign_parameter("manAnn", FALSE)
 } else {

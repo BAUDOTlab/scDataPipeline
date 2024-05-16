@@ -58,9 +58,7 @@ load_parameters <- function(config_file) {
     assignPath("PATH_OUT_HTML", path$output$PATH_OUT_HTML)
     assignPath("PATH_OUT_FIG", file.path(path$output$PATH_OUT_FIG, DATASET))
     assignPath("PATH_GENES_OF_INTEREST", path$input$PATH_GENES_OF_INTEREST)
-    if (exists("PATH_MANUAL_ANNOTATION")) {
-        assignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
-    }
+    assignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
 
     # parse the qc variables
     if (exists("qc") && is.list(qc)) {
