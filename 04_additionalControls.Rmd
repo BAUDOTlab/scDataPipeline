@@ -2,7 +2,7 @@
 title: |
     | Step 4: Doublets removal, cell cycle regression
     | and gene overview -- `r DATASET`
-author: "Céline Chevalier and Anaı̈s Baudot"
+author: "Systems Biomedicine Team"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 # bibliography: ../requirements/references.bib
 output:
