@@ -459,15 +459,18 @@ p1 +
 export_metadata(singlets@meta.data, paste0("cellCycleScoresAssignation_", DATASET, "_scenario_", STEP_ID, ".csv"))
 ```
 
-```{r, echo=if(any(c("2","3") %in% scenarios))}
-cat("# Regression on cell cycle\n\n")
+```{r, echo=any(c("2","3") %in% scenarios)}
+cat("# Regression on cell cycle
+
+")
 ```
 
 ```{r regression-global, echo="2" %in% scenarios, eval="2" %in% scenarios, results='asis'}
 cat("## Global regression: scenario 2
 
 After regression on phases score, we observe mixed cells independently of the
-cell cycle.")
+cell cycle.
+")
 
 # PIPELINE
 STEP_ID <- "2"

@@ -11,6 +11,7 @@ source("data_management.R")
 args <- commandArgs(trailingOnly = TRUE)
 #args <- ""
 pipeline_step <- args[1]
+
 # Explicitly create the variable in the global scope
 parameters_list <<- list()
 
@@ -711,6 +712,7 @@ if (TRUE){
       },
       # deg pipeline variables ---------------------
       "dea" = {
+        assign_parameter("top_pcs", if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs)
         assign_parameter("top_markers", opt$options$markers_number)
         assign("genes_of_interest", if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL)
       },

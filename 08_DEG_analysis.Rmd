@@ -204,7 +204,7 @@ perform_deg <- function(clust) {
     cat(" \n \n")
 }
 
-corr_table <- as.data.frame(fread(file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz")),
+corr_table <- as.data.frame(fread(file.path(PATH_ROOT, "00_rawdata", paste0("combined_", DATASET, "_features.tsv.gz")),
     header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 htmltools::tagList(invisible(mapply(perform_deg, sort(unique(fltd@meta.data[,clustOfInterest])), SIMPLIFY = FALSE)))
 ```
@@ -221,7 +221,8 @@ for a collection of gene sets. P-value estimation is based on an adaptive multi-
 Threshold of padj < 0.05 is used to filter the pathways.
 
 ```{r perform_fgsea, results="asis", fig.align='default'}
-file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = "^cluster_(\\d+)_DEG_.*\\.csv$", full.names = TRUE)
+file_pattern <- paste(unique(fltd@meta.data$orig.ident), collapse='|')
+file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = file_pattern, full.names = TRUE)
 
 # Order the files according to the order of the clusters
 file_names <- file_names[order(as.integer(gsub("[^\\d]+", "\\1", file_names, perl = TRUE)))]
@@ -345,7 +346,7 @@ perform_fgsea_analysis <- function(csv_path) {
 }
 
 # Apply the analysis to each file
-corr_table <- as.data.frame(fread(file.path(PATH_ROOT, "00_rawData", paste0("combined_", DATASET, "_features.tsv.gz")), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
+corr_table <- as.data.frame(fread(file.path(PATH_ROOT, "00_rawdata", paste0("combined_", DATASET, "_features.tsv.gz")), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 invisible(lapply(file_names, perform_fgsea_analysis))
 ```
 
