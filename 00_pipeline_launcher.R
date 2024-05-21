@@ -712,6 +712,7 @@ if (TRUE){
       },
       # deg pipeline variables ---------------------
       "dea" = {
+        assign_parameter("top_pcs", if (exists("TOP_PCS")) as.integer(TOP_PCS) else opt$options$top_pcs)
         assign_parameter("top_markers", opt$options$markers_number)
         assign("genes_of_interest", if (exists("PATH_GENES_OF_INTEREST")) PATH_GENES_OF_INTEREST else NULL)
       },

@@ -395,7 +395,7 @@ if r.atlas and r.manAnn:
 elif r.atlas:
     clustering_type = ["clusters", "prediction"]
 elif r.manAnn:
-    clustering_type = ["manualAnnot"]
+    clustering_type = ["clusters", "manualAnnot"]
 else:
     clustering_type = ["clusters"]
 plt.figure(figsize=(18,10), dpi=120)
@@ -423,24 +423,20 @@ for clustering in clustering_type:
   plt.tight_layout()
   plt.show()
 
-if r.manAnn:
-    clustLabels = "manualAnnot"
-else:
-    clustLabels = "clusters"
 
-scprep.plot.scatter2d(umap, c=metadata["clustersID"], cmap=likelihood_cmap[clustLabels],
-                      title='Cluster likelihoods', ticks=False, legend=False)
-for cluster in metadata["clusters"]:
-  plt.annotate(cluster, 
-    umap[metadata['clusters']==cluster].mean(axis=0),
-    horizontalalignment='center',
-    verticalalignment='center',
-    size=10, weight='bold',
-    color="black", backgroundcolor="white")
+  scprep.plot.scatter2d(umap, c=metadata[f"{clustering}ID"], cmap=likelihood_cmap[clustering],
+                        title=f'{clustering} likelihoods', ticks=False, legend=False)
+  for cluster in metadata[clustering]:
+    plt.annotate(cluster, 
+      umap[metadata[clustering]==cluster].mean(axis=0),
+      horizontalalignment='center',
+      verticalalignment='center',
+      size=10, weight='bold',
+      color="black", backgroundcolor="white")
 
-plt.legend(legend_scatter,legend_labels, loc="upper right",fontsize="large")
-plt.tight_layout()
-plt.show()
+  plt.legend(legend_scatter,legend_labels, loc="upper right",fontsize="large")
+  plt.tight_layout()
+  plt.show()
 
 scprep.plot.scatter2d(umap, c=metadata["orig.ident"], cmap=mpl.colormaps["tab10"](range(len(conditions))),
                       title='Cell distribution by conditions', ticks=False, legend=True)

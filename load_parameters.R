@@ -17,7 +17,7 @@ load_parameters <- function(config_file) {
     # reassign some variables to avoid messing with the lists
     assign_parameter("DATASET",DATASET)
     if(exists("CONDITION")) assign_parameter("CONDITION", CONDITION)
-    assign_parameter("ENS_ID_COLUMN", ENS_ID_COLUMN)
+    if(is.null(opt$options$input_list) && !COMBINED) assign_parameter("ENS_ID_COLUMN", ENS_ID_COLUMN)
 
     # Parse the options in the order of the model file
     # ================================================
@@ -58,9 +58,7 @@ load_parameters <- function(config_file) {
     assignPath("PATH_OUT_HTML", path$output$PATH_OUT_HTML)
     assignPath("PATH_OUT_FIG", file.path(path$output$PATH_OUT_FIG, DATASET))
     assignPath("PATH_GENES_OF_INTEREST", path$input$PATH_GENES_OF_INTEREST)
-    if (exists("PATH_MANUAL_ANNOTATION")) {
-        assignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
-    }
+    assignPath("PATH_MANUAL_ANNOTATION", path$input$PATH_MANUAL_ANNOTATION)
 
     # parse the qc variables
     if (exists("qc") && is.list(qc)) {
