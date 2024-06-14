@@ -52,7 +52,7 @@ CLUST_RES = 1.0
 CLUST_METH = 4					# 1: Louvain, 2: Louvain multilevel refinement, 3: SLM or 4: Leiden
 
 [combine]
-COMB_METH = "blkS"				# Select on of "merge" or "blks" or "seqS"
+COMB_METH = "blkS"				# Select on of "merge" or "blkS" or "seqS"
 
 
 
