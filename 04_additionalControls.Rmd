@@ -360,7 +360,7 @@ cycle regression.
 
 ## Cell cycle markers
 
-Cell cycle gene list has been updated in 2019 (REF). Cell cycle markers are only
+Cell cycle gene list has been updated in 2019 [Tirosh et al., Science, 2016](https://www.science.org/doi/abs/10.1126/science.aad0501). Cell cycle markers are only
 for the cycling phases, G2/M and S. If cells have few chance to be in those
 cycling phases, they are estimated to be in the G1 phase.
 
