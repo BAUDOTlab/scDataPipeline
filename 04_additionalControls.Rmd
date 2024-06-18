@@ -386,7 +386,7 @@ try(if(table(g2m.genes %in% rownames(singlets))[[1]] != length(g2m.genes)) stop(
 # ASSIGN CELL CYCLE SCORES AND PHASE
 singlets <- CellCycleScoring(singlets, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
 FeatureScatter(singlets, "S.Score", "G2M.Score") +
-    ggtitle("CC. phase assignation by Seurat") +
+    ggtitle("Default: CC. phase assignation by Seurat") +
     theme(plot.title = element_text(hjust = 0.5, size = 24))
 ```
 
