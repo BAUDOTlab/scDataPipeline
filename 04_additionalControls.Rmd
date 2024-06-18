@@ -369,6 +369,10 @@ Below, you can see the lists of gene markers for the G2/M and S phases.
 ```{r load-cc-genes, results='hold'}
 s.genes <- gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
 g2m.genes = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
+cat(
+s.genes
+g2m.genes
+)
 ```
 
 ## Estimate cell-cycle scores
