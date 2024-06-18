@@ -179,13 +179,13 @@ SO.list <- mapply(remove_clusters, SO.list, names(SO.list), SIMPLIFY = FALSE)
 
 The preprocessing workflow consists in the steps of
 
-- data normalization,
+- data normalization
 
-- data centering,
+- data centering
 
-- highly variable genes identification,
+- highly variable genes identification
 
-- principal components analysis (PCA),
+- principal components analysis (PCA)
 
 - non-linear dimension reduction for visualization, and
 
