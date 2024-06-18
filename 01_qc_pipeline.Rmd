@@ -185,7 +185,7 @@ Number of unique cell identifiers: `r length(unique(colnames(SO)))`
 
 # Quality control
 
-## Percentage of mitochondrial reads & threshold
+## Percentage of mitochondrial reads & thresholds
 
 ```{r vln-mitoPercentage, fig.align = "default", out.width = "35%", fig.show = "hold"}
 SO <- Add_Mito_Ribo_Seurat(SO, species = "mouse", mito_name = "percent.mito", ribo_name = "percent.ribo", ensembl_ids = TRUE)
