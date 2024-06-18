@@ -177,19 +177,19 @@ SO.list <- mapply(remove_clusters, SO.list, names(SO.list), SIMPLIFY = FALSE)
 
 # Preprocessing workflow
 
-The preprocessing workflow consists in the steps of
+The preprocessing workflow contains several steps:
 
 - data normalization,
 
 - data centering,
 
-- highly variable genes identification,
+- highly variable genes/features identification,
 
-- principal components analysis (PCA),
+- principal components analysis (PCA)
 
-- non-linear dimension reduction for visualization, and
+- non-linear dimension reduction for visualization
 
-- clustering.
+- clustering
 
 ```{r preprocess-1, eval=hvg_meth != "mvp", echo=hvg_meth != "mvp", message=TRUE}
 # Normalization is done at the cell level, so we only need to do it once on individual datasets
@@ -262,6 +262,8 @@ SO <- FindClusters(
 
 # Visualization
 
+Visualization of cells with non-linear dimensionality reduction UMAP. Colors correspond to clusters.
+
 ```{r dimplot-cluster-cplt, eval=FILTER == "complete", echo=FILTER == "complete"}
 invisible(Idents(SO) <- SO$seurat_clusters)
 print(DimPlot(SO))
@@ -289,8 +291,8 @@ if (goodQ) {
 
 # Exports
 
-We export the list of highly variable features and the PCA and UMAP coordinates
-of the dataset. We also save the clustering information as a csv file.
+We export the list of highly variable features as well as the PCA and UMAP coordinates
+of the dataset. We also save the clustering information as a .csv file.
 
 ```{r exports}
 # variable feature
