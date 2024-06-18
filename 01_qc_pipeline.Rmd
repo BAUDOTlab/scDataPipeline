@@ -172,6 +172,7 @@ SO <- RenameCells(SO, new.names = cellnames)
 
 head(colnames(SO), 4)
 ```
+Cells are renamed based on metadata to track the origin and avoid duplicated barcodes when merging datasets.
 
 Below, we can see that there are as many unique cell identifiers as the number of cells.
 
@@ -224,7 +225,7 @@ write.table(
 
 Only cells with mitochondrial gene expression between `r mito_low`% and
 `r mito_high`% are retained.  
-We will remove `r table(SO$outlier.mito)["TRUE"]` cells identified having a too 
+We will remove `r table(SO$outlier.mito)["TRUE"]` cells identified as having a too 
 low or too high mitochondrial gene expression.
 
 
@@ -252,7 +253,7 @@ write.table(
 )
 ```
 
-We will remove `r table(SO$outlier.ribo)["TRUE"]` cells identified having a high
+We will remove `r table(SO$outlier.ribo)["TRUE"]` cells identified as having a high
 ribosomal gene expression.  
 The threshold upon the ribosomal gene expression is set at `r ribo_low`%.
 
