@@ -462,12 +462,12 @@ Please note that in these tables, samples correspond to cells.
 
 # Exports
 
-We save all the metadata information in a .csv file for the complete dataset and
-the filtered dataset as well. The metadata dataframe contains information about
-the cells with their percentage of mitochondrial and ribosomal expressions, and
-also their outlier statues regarding the different estimated characteristics.  
+We save all the quality control information as additional metadata in a .csv dataframe, for both the complete and
+the filtered datasets. The metadata dataframe contains information about
+the cells percentage of mitochondrial and ribosomal gene expressions, and
+also the information regarding their filtering out or in status depending on the different quality control steps.  
 
-2 .rds files are saved for the complete and the filtered datasets.
+Two .rds files are saved, one for the complete and one for the filtered datasets.
 
 ```{r exports}
 defaultMDnames <- c("orig.ident", "nCount_RNA", "nFeature_RNA")
