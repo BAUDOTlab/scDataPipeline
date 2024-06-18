@@ -255,7 +255,7 @@ write.table(
 
 We will remove `r table(SO$outlier.ribo)["TRUE"]` cells identified as having a high
 ribosomal gene expression.  
-The threshold upon the ribosomal gene expression is set at `r ribo_low`%.
+The threshold of ribosomal gene expression is set at `r ribo_low`%.
 
 
 ## UMI read counts thresholds
@@ -290,9 +290,9 @@ write.table(
 )
 ```
 
-We will remove `r table(SO$outlier.nCount)["TRUE"]` cells identified having an
+We will remove `r table(SO$outlier.nCount)["TRUE"]` cells identified as having an
 UMI read counts out of a range.  
-The range upon the UMI read counts is set at `r min_counts` minimum UMI read 
+The range of UMI read counts is set at `r min_counts` minimum UMI read 
 counts and `r as.character(max_counts)` maximum UMI read counts.
 
 ## Feature counts threshold
@@ -320,15 +320,14 @@ write.table(
 )
 ```
 
-We will remove `r table(SO$outlier.nFeature)["TRUE"]` cells identified having a
+We will remove `r table(SO$outlier.nFeature)["TRUE"]` cells identified as having a
 low number of feature counts.  
-The threshold upon the feature counts is set at `r min_feat`.
+The threshold of feature counts is set at `r min_feat`.
 
 
 ## Repartition of detected features
 
-Features that are detected in `r min_cells` cells or fewer will be removed from the analysis.
-Among the `r dim(SO)[1]` features mentioned after loading, some of them were never detected.
+
 
 ```{r histo-gene-repartition}
 # Create dataframe
@@ -366,8 +365,8 @@ The reference genome used for the sequencing alignment has `r dim(SO)[1]`
 different feature genes. However, some of them were never detected. They are
 many as `r table(df$Nbr_of_cells ==  0)["TRUE"]`.
 
-In addition, some feature genes were too fewly detected. Those feature genes
-detected in `r min_cells` or less will also be removed. It involves
+Feature genes that are detected in `r min_cells` cells or fewer will be removed from the analysis.
+This corresponds to
 `r table(df_non0$Nbr_of_cells <=  min_cells)["TRUE"]` feature genes.
 
 In total, `r table(df$Nbr_of_cells <=  min_cells)["TRUE"]` feature genes will be
@@ -418,7 +417,7 @@ invisible(apply(combn(qc_param, 2), 2, function(x) {
 }))
 ```
 
-The number of cells removed by the application of all the filters is `r dim(SO@meta.data[SO@meta.data$percent.mito > mito_high | SO@meta.data$percent.mito < mito_low | SO@meta.data$percent.ribo < ribo_low | SO@meta.data$nCount_RNA < min_counts | SO@meta.data$nCount_RNA > max_counts | SO@meta.data$nFeature_RNA < min_feat, ])[1]`.
+The number of cells removed by the joint application of all the filters is `r dim(SO@meta.data[SO@meta.data$percent.mito > mito_high | SO@meta.data$percent.mito < mito_low | SO@meta.data$percent.ribo < ribo_low | SO@meta.data$nCount_RNA < min_counts | SO@meta.data$nCount_RNA > max_counts | SO@meta.data$nFeature_RNA < min_feat, ])[1]`.
 
 ```{r filter-qc, results='asis'}
 write.table(
@@ -458,6 +457,7 @@ After filtering, the dataset cleaned from the low quality cells is as follows:
 ```{r print-SO-filtered, echo=FALSE}
 SO_subset
 ```
+Please note that in these tables, samples correspond to cells.
 
 
 # Exports
