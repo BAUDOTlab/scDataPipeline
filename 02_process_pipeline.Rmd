@@ -274,6 +274,8 @@ Idents(SO) <- SO$seurat_clusters
 print(DimPlot(SO))
 
 if (goodQ) {
+    cat("In the second plot, colors correspond to cell cycle phases.")
+
     # Load cell cycle scores and phase table
     phaseTable <- read.table(paste0("../05_additionalControls/cellCycleScoresAssignation_", DATASET, "_scenario_", scenario, ".csv"), sep = ",", header = TRUE)
     phaseTable <- column_to_rownames(phaseTable, var = "cellIDs")
