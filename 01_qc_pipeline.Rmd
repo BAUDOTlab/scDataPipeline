@@ -406,12 +406,13 @@ invisible(apply(combn(qc_param, 2), 2, function(x) {
                   axis.title = element_text(size = 16),
                   axis.text = element_text(size = 14)) +
             guides(color = guide_legend(override.aes = list(size = 4))) +
-            geom_ysidedensity(
-                aes(x = after_stat(density),
-                    orientation = "y")) +
-            geom_xsidedensity(
-                aes(y = after_stat(density),
-                    orientation = "x")) +
+            # For some reason, ggplot 3.4.4 calls a function of ggplot 3.5.1, breaking the geom_sidedensity
+            # geom_ysidedensity(
+            #     aes(x = after_stat(density),
+            #         orientation = "y")) +
+            # geom_xsidedensity(
+            #     aes(y = after_stat(density),
+            #         orientation = "x")) +
             scale_ysidex_continuous(guide = guide_axis(angle = 90))
         )
 }))
