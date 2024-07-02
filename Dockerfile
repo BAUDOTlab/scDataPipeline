@@ -75,7 +75,7 @@ RUN ln -s /usr/local/bin/pip3 /usr/bin/pip
 RUN pip install pandas numpy meld scanpy matplotlib scprep scikit-learn leidenalg
 
 
-RUN chgrp -R 998 /usr /var && chmod -R g=u /usr /var
+RUN chgrp -R 998 /usr /var /home && chmod -R g=u /usr /var /home
 
 CMD ["/bin/bash"]
 
