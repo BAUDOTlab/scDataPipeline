@@ -234,7 +234,7 @@ output_parent_folder <- file.path(PATH_ROOT, "10_fgsea_analysis")
 if (!dir.exists(output_parent_folder)) { dir.create(output_parent_folder) }
 
 # Define databases and corresponding subfolders
-databases <- c("Reactome")#, "KEGG", "GOBP", "GOCC")
+databases <- c("Reactome", "KEGG", "GOBP", "GOCC")
 
 # Function to perform FGSEA analysis
 perform_fgsea_analysis <- function(csv_path) {
