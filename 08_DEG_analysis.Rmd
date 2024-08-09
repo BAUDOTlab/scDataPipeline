@@ -102,6 +102,7 @@ library(fgsea)
 library(msigdbr)
 library(data.table)
 library(scales)
+library(tidyr)
 
 source("./plotting_functions.R", local = TRUE)
 source("./data_management.R", local = TRUE)
@@ -184,9 +185,7 @@ perform_deg <- function(clust) {
         cat("**Top 20 genes in term of p-value (pink)** :
         ",
         paste(top_DE$gene_name, collapse = "\t"),
-        "
-        **Top 20 genes in term of logFC (purple)** :
-        ",
+        "**Top 20 genes in term of logFC (purple)** :",
         paste(top_logFC$gene_name, collapse = "\t"), sep = "\n\n")
 
         datatable(de_results[c(1:201), c(11, seq(2,10), 1)], rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
@@ -316,7 +315,9 @@ perform_fgsea_analysis <- function(csv_path) {
     if (nrow(fgseaRes) == 0) {
         cat(paste("No significant pathway was retrieved for the", db, "database\n\n"))
     } else {
-        fgseaRes$newx <- gsub("_", " ", fgseaRes$pathway)
+        fgseaRes <- fgseaRes %>% 
+                    separate(pathway, c("database","newx"), sep="_", remove=F, extra="merge")
+        fgseaRes$newx <- gsub("_", " ", fgseaRes$newx)
         fgseaRes$counts <- sapply(fgseaRes$leadingEdge, length)
         fgseaRes$GeneRatio <- fgseaRes$counts/fgseaRes$size
 
@@ -325,21 +326,30 @@ perform_fgsea_analysis <- function(csv_path) {
         fwrite(fgseaRes, file = output_file, sep = ",", sep2 = c("", " ", ""))
 
         fgseaRes <- fgseaRes %>%
-            arrange(GeneRatio) %>%
-            mutate(newx = factor(newx, levels = newx))
+            # arrange(abs(NES)) %>%
+            # top_n(n = 20, wt = -padj) %>%
+            arrange(NES) %>%
+            mutate(newx = factor(newx, levels = newx)) %>%
+            mutate(upreg = ifelse(NES > 0,"1","0"))
         
-                print(ggplot(fgseaRes, aes(x = GeneRatio, y = newx, color = padj, size = counts)) +
-            geom_point() +
-            geom_segment(aes(x = 0, y = newx, xend = GeneRatio, yend = newx), size = 0.4) +
-            scale_fill_gradient(low = "red", high = "blue", aesthetics = "color") +
+        print(ggplot(fgseaRes, aes(x = NES, y = newx, color = upreg, size = GeneRatio)) +
+            geom_point(aesthetics = "size") +
+            geom_segment(aes(x = 0, y = newx, xend = NES, yend = newx), size = 0.4) +
+            scale_fill_manual(values = c("1"="red","0"="blue"), aesthetics = "color") +
+            scale_size_continuous(range = c(3,13)) +
             scale_y_discrete(labels = label_wrap(50)) +
-            labs( y = "Pathway", x = "Gene ratio",
+            guides(
+              color = "none",
+              size = guide_legend(position = c(0.25,0.87))
+              ) +
+            labs(y = "Pathways", x = "Normalized Enrichment Score",
                 title = paste(db, "results")) +
 	        theme(plot.title = element_text(hjust = 0.5, size = 24),
 		        plot.subtitle = element_text(hjust = 0.5, size = 20),
 		        axis.title = element_text(size = 20),
-		        axis.text = element_text(size = 12))
-        )
+		        axis.text = element_text(size = 12),
+            axis.title.y=element_blank(),
+        ))
     }
   }
   cat(" \n \n")
