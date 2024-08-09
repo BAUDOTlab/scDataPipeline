@@ -80,7 +80,7 @@ knitr::opts_chunk$set(
   attr.output = ".numberLines",
 
   # plots
-  fig.path = paste0(PATH_OUT_FIG, "/08_GSEA_scenario_", scenario, "_"),
+  fig.path = paste0(PATH_OUT_FIG, "/copy_08_GSEA_scenario_", scenario, "_"),
   fig.show = "asis",         # tuned to "hold" in multiple plots chunk
   dev = c("png", "pdf"),
   out.width = "50%",
@@ -93,7 +93,7 @@ knitr::opts_chunk$set(
 ```{r load-libraries, include = FALSE}
 library(Seurat)
 library(ggplot2)
-library(DElegate)
+# library(DElegate)
 library(ggrepel)
 library(DT)
 library(dplyr)
@@ -102,6 +102,10 @@ library(fgsea)
 library(msigdbr)
 library(data.table)
 library(scales)
+install.packages("devtools")
+library(devtools)
+devtools::install_local("../01_requirements/DElegate-main.zip")
+library(DElegate)
 
 source("./plotting_functions.R", local = TRUE)
 source("./data_management.R", local = TRUE)
@@ -149,9 +153,14 @@ perform_deg <- function(clust) {
     # For DESeq2 to work properly, the cluster must be big enough to have cells from both conditions in a sufficient amount, as they
     # will be split in 3 subgroups. 30 is a very lax threshold, and results from clusters barely passing the check may not be trustworthy
     if (length(table(cluster_data$orig.ident)) > 1 & as.integer(table(cluster_data$orig.ident)[1]) >= 30 & as.integer(table(cluster_data$orig.ident)[2]) >= 30) {
-
+        
+        options(future.globals.maxSize = 3.5*1024*1000000)
         set.seed(general_seed)
-        de_results <- findDE(object = cluster_data, method = "deseq")
+        de_results <- findDE(object = cluster_data, method = "deseq", cluster = clust)
+        
+
+
+
         de_results <- de_results[complete.cases(de_results[, 3:7]), ]
         de_results$gene_name <- corr_table$GeneName[match(de_results$feature, corr_table$ENSid)]
     
@@ -191,7 +200,7 @@ perform_deg <- function(clust) {
 
         datatable(de_results[c(1:201), c(11, seq(2,10), 1)], rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX=T))
     
-        invisible(write.table(de_results[, c(11, seq(2,10), 1)], file =file.path(PATH_OUT_ANALYSIS, paste0("cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ","))
+        invisible(write.table(de_results[, c(11, seq(2,10), 1)], file =file.path(PATH_OUT_ANALYSIS, paste0("copy_cluster_", clust, "_DEG_", levels(de_results$group1), "_vs_", levels(de_results$group2), ".csv")), col.names = TRUE, row.names = FALSE, sep = ","))
 
     } else if (length(table(cluster_data$orig.ident)) > 1 & (as.integer(table(cluster_data$orig.ident)[1]) < 30 | as.integer(table(cluster_data$orig.ident)[2]) < 30)) {
         cat(paste0("Too few cells (< 30) in at least one group to perform cell aggregates: cluster ", clust))
@@ -223,6 +232,9 @@ Threshold of padj < 0.05 is used to filter the pathways.
 ```{r perform_fgsea, results="asis", fig.align='default'}
 file_pattern <- paste(unique(fltd@meta.data$orig.ident), collapse='|')
 file_names <- list.files(path = PATH_OUT_ANALYSIS, pattern = file_pattern, full.names = TRUE)
+
+# Get only files starting with "copy"
+file_names <- file_names[grep("copy", file_names)]
 
 # Order the files according to the order of the clusters
 file_names <- file_names[order(as.integer(gsub("[^\\d]+", "\\1", file_names, perl = TRUE)))]
@@ -321,7 +333,7 @@ perform_fgsea_analysis <- function(csv_path) {
         fgseaRes$GeneRatio <- fgseaRes$counts/fgseaRes$size
 
         ## Save results to output folder
-        output_file <- file.path(output_folder, paste0("fgseaRes_", tools::file_path_sans_ext(basename(csv_path)), "_", db, ".csv"))
+        output_file <- file.path(output_folder, paste0("copy_fgseaRes_", tools::file_path_sans_ext(basename(csv_path)), "_", db, ".csv"))
         fwrite(fgseaRes, file = output_file, sep = ",", sep2 = c("", " ", ""))
 
         fgseaRes <- fgseaRes %>%

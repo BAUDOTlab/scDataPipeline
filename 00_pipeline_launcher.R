@@ -852,7 +852,7 @@ switch(pipeline_step,
               if(file.exists(paste0("08_DEG_analysis.Rmd"))){
                 rmarkdown::render(
                   paste0("08_DEG_analysis.Rmd"),
-                  output_file = file.path(PATH_OUT_HTML, paste0("11_DEGanalysis_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
+                  output_file = file.path(PATH_OUT_HTML, paste0("11_copy_DEGanalysis_", DATASET, "_scenario_", scenario, "_", Sys.Date(), ".html"))
                 )
               }
         })
