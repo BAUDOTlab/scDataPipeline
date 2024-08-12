@@ -180,7 +180,8 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
 ```{r, eval=atlas, echo=FALSE, results="asis"}
-cat("# Cells annotation through label transfer from the atlas\n")
+cat("# Cell annotations through label transfer from the atlas\n")
+cat("Each cell has been annotated through label transfer from the atlas\n")
 ```
 
 ```{r mapping-atlas, eval=atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
@@ -212,6 +213,9 @@ cat("# Cells annotation through label transfer from the atlas\n")
 <!-- ``` -->
 
 # Perform differential expression analysis
+
+The goal here is to compute the differential expression between a given cluster and all but this given cluster remaining clusters (each versus rest). This will allow identifying the features significantly over or under expressed in a given cluster. The top x most significant features will be considered as biomarkers (top 5 to top 20 depending on the analyses). These significantly deregulated features can then be used as cluster biomarkers for the manual annotation of cluster type.
+To perform DEA, we implemented pseudo-bulking of pseudo-replicates. Three pseudo-replicates are computed from the given cluster and the rest of the clusters. DESeq2 is then applied on these 3 versus 3 pseudo-bulk datasets. Top 20 most differentially expressed features are given for each cluster.
 
 ```{r run-dea}
 # Increase the maximum amount of data able to be passed to future workers to 2GB
@@ -295,7 +299,7 @@ topNgenes <- unique(topNmarkers$feature)
 Idents(fltd) <- factor(fltd@meta.data[,clustOfInterest], levels = sort(as.numeric(levels(as.factor(fltd@meta.data[,clustOfInterest])))))
 ```
 
-### DimPlot of the cluster identity
+### UMAP of the cluster identity
 ```{r cluster-DimPlot-markers, out.width="50%"}
 p <- DimPlot(fltd, reduction = "umap", pt.size = 0.8,
              label = FALSE) +
@@ -305,7 +309,7 @@ p <- DimPlot(fltd, reduction = "umap", pt.size = 0.8,
 LabelClusters(p, id = "ident",  fontface = "bold", size = 5)
 ```
 
-### DotPlot of the markers on cluster identity
+### DotPlot of the biomarkers on cluster identity
 
 ```{r cluster-DotPlot-markers}
 topNgenes <- data.frame(ENSid = topNgenes, GeneName = corr_table$GeneName[match(topNgenes, corr_table$ENSid)])
@@ -319,7 +323,7 @@ cat("### DotPlot of the genes of interest on cluster identity
 create_dot_plot(fltd, goiList, title = "Genes of interest in clusters")
 ```
 
-### FeaturePlots of the markers {.tabset .tabset-pills .tabset-fade}
+### FeaturePlots of the biomarkers {.tabset .tabset-pills .tabset-fade}
 
 ```{r cluster-FeaturePlots-markers, results='asis', out.width='20%', fig.align='default'}
 # code with the courtesy of Lionel Spinelli and Romain Fenouil
@@ -390,7 +394,7 @@ goiList <- goiList[goiList$ENSid %in% available_genes, ]
 invisible(apply(goiList, 1, makeFeaturePlot))
 ```
 
-### ViolinPlots of the markers {.tabset .tabset-pills .tabset-fade}
+### ViolinPlots of the biomarkers {.tabset .tabset-pills .tabset-fade}
 
 ```{r clusters-VlnPlots-markers, results='asis', out.width='20%', fig.align='default'}
 # with courtesy of Lionel Spinelli and Romain Fenouil
@@ -426,12 +430,13 @@ invisible(apply(goiList, 1, makeViolinPlot))
 
 ```{r set-celltype-identity, eval=atlas, results='asis'}
 cat("## Celltype identity {.tabset .tabset-pills .tabset-fade}")
+cat("Cells have been annotated through label transfer from the atlas")
 Idents(fltd) <- factor(fltd@meta.data[, colname], levels = sort(levels(as.factor(fltd@meta.data[, colname]))))
 ```
 
 ```{r celltype-DimPlot, eval=atlas, results='asis', out.width="50%", results='asis'}
-cat("### DimPlot of the celltype identity {.tabset .tabset-pills .tabset-fade}")
-## DimPlot the celltype
+cat("### UMAP of the celltype identity {.tabset .tabset-pills .tabset-fade}")
+## UMAP the celltype
 DimPlot(fltd,
 		reduction = "umap",
         pt.size = 1,
@@ -471,13 +476,13 @@ invisible(sapply(levels(as.factor(fltd@meta.data[, colname])), function(act)
 ```
 
 ```{r celltype-DotPlot-markers, eval=atlas, results='asis'}
-cat("### DotPlot of the markers on celltype identity")
+cat("### DotPlot of the biomarkers in celltypes")
 ## DotPlot the n-top markers of each celltype
 create_dot_plot(fltd, topNgenes, title=paste0("Top ", ntop, " markers of each cluster in celltypes"))
 ```
 
 ```{r celltype-DotPlot-goi, eval=atlas && exists("goiList"), echo=atlas && exists("goiList"), results='asis'}
-cat("### DotPlot of the genes of interest on celltype identity")
+cat("### DotPlot of the genes of interest in celltypes")
 ## DotPlot the genes of interest
 create_dot_plot(fltd, goiList, title = "Genes of interest in celltypes")
 ```

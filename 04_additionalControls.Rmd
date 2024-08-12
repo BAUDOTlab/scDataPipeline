@@ -1,4 +1,4 @@
----
+de---
 title: |
     | Step 4: Doublets removal, cell cycle regression
     | and gene overview -- `r DATASET`
@@ -137,27 +137,27 @@ checkPath(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"))
 
 # Introduction
 
-After quality control, we still have to perform doublets removal and elucidate
-if we have to regress out the cell cycle effect or not. There are 2 cell cycle
+After quality control, we still have to perform doublets removal and decide
+if we want to regress out the cell cycle effect. We propose two cell cycle
 regression strategies:
 
-1. a regression across all the cell cycle phases, that we further call
+1. a regression across all the cell cycle phases, that we call
 *global regression*, and
 
-2. a regression applied only between cycling cells (ie. G2/M and S phases), what
-results in the conserved signal between cycling and non-cycling cells, called as
+2. a regression applied only to cycling cells (ie. G2/M and S phases), which
+allows keeping the cycling and non-cycling signal. We call this strategy
 *cycling regression*.
 
-It means that we will go through 3 scenarios
+Overall, we have now the possibility to use 3 scenarii:
 
 - scenario 1: remove doublets only
 
-- scenario 2: remove doublets and global regression
+- scenario 2: remove doublets and apply global regression
 
-- scenario 3: remove doublets and cycling regression
+- scenario 3: remove doublets and apply cycling regression
 
 As the scenario 1 corresponds to the first step of the scenarios 2 and 3, we
-simply reuse the output from the scenario 1 to perform cell cycle regressions
+simply reuse the output from the scenario 1 to perform the cell cycle regressions
 (scenarios 2 and 3).
 
 # Remove doublets - scenarios 1, 2 and 3
@@ -179,7 +179,7 @@ fltd@meta.data <- tibble::column_to_rownames(fltd@meta.data, "Row.names")
 ```
 
 ```{r, eval=atlas, echo=FALSE, results="asis"}
-cat("## Cells annotation through label transfer from the atlas \n")
+cat("## Cell annotations through label transfer from the atlas \n")
 ```
 
 ```{r mapping-atlas, eval=atlas, child="60_cellTypeAnnotationTransfer.Rmd"}
@@ -232,10 +232,9 @@ ggplot(bcmvn_fltd, aes(x = pK, y = BCmetric, group = 1)) +
 According to the above plot, the value of the `pK` parameter is set to
 **`r pK_max$pK`**.
 
-## Doublets identification - DoubletFinder run
+## Doublet identifications - DoubletFinder run
 
-It is possible to corroborate the identification of doublets with a high number of UMIs.
-The plots below allow us to compare these 2 information.
+We next compared the identified doublets with UMI counts.
 
 ```{r run-DF, results='hide'}
 # RUN DOUBLET FINDER
@@ -290,8 +289,7 @@ FeaturePlot(fltd, "nCount_RNA",
           legend.key.size = unit(0.8, 'cm'))
 ```
 
-To explore the repartition of the identified doublets among the dataset, we also
-show the number of doublets within cell types or clusters.
+To further explore the repartition of the identified doublets, we provide the number of doublets identified in each cluster or each cell type. Note that cell types are obtained here from label transfer from the atlas. 
 
 ```{r doublets-table, results='asis'}
 if(atlas){
@@ -341,9 +339,9 @@ singlets <- fltd
 singlets@meta.data[grep("DF.classifications", colnames(singlets@meta.data))] <- NULL
 singlets@meta.data[grep("pANN", colnames(singlets@meta.data))] <- NULL
 ``` 
-## Conclusion - Scenario 1
+## Conclusion
 
-We removed the **`r doubletsNb`** doublet cells and observed some genes we want to focus on.
+We removed the **`r doubletsNb`** doublet cells.
 
 ```{r cleaning, include=FALSE}
 singlets@meta.data[clustOfInterest] <- NULL
@@ -351,18 +349,14 @@ rm(doubletsNb)
 invisible(gc())
 ```
 
-# Cell-cycle scores assignation
+# Cell cycle score assignations
 
-We start with the singlet cells, that still contains the
-unwanted cells. As considered as good quality cells, we want to keep them for
-the cell cycle regression. We will remove the unwanted cells after the cell
-cycle regression.
 
 ## Cell cycle markers
 
-Cell cycle gene list has been updated in 2019 (REF). Cell cycle markers are only
+Cell cycle genes list has been updated in 2019 (REF). Cell cycle markers are only
 for the cycling phases, G2/M and S. If cells have few chance to be in those
-cycling phases, they are estimated to be in the G1 phase.
+cycling phases based on the markers, they are considered to be in the G1 phase.
 
 Below, you can see the lists of gene markers for the G2/M and S phases.
 
@@ -371,7 +365,7 @@ s.genes <- gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", ta
 g2m.genes = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
 ```
 
-## Estimate cell-cycle scores
+## Estimate cell cycle scores
 
 ```{r try-stop-message, echo=FALSE, message=TRUE}
 try(if(table(s.genes %in% rownames(singlets))[[1]] != length(s.genes)) stop("s phase genes list is not covered by the data", call. = FALSE))
@@ -387,16 +381,15 @@ FeatureScatter(singlets, "S.Score", "G2M.Score") +
 ```
 
 The default phase thresholds are set to 0. Any cell having a `S.Score > 0` is
-estimated to be in the S phase. Similarly, cells with a value of `G2M.Score > 0`
-is estimated to be in G2M phase. All the other cells are estimated to be in G1
+estimated to be in the S phase. Subsequently, any cell having a value of `G2M.Score > 0`
+is estimated to be in the G2M phase. All the other cells are estimated to be in the G1
 phase.  
-However, by looking at the scatter plot, one can identify other gap in the
-scores that should better represent the gap between phases. It is possible to
-set up new thresholds to determine the limit between S and G1 phase and G2M and 
+However, depending on the datasets, the default thresholds might not be adapted. It is possible to
+set up new thresholds manually to determine the limits between S and G1 phase and G2M and 
 G1 phase.
 
 ```{r cc-assign-score-2, fig.show='hold'}
-# MANUAL PHASE ASSIGNATION BASED ON SCORES THRESHOLDS
+# MANUAL PHASE ASSIGNATION BASED ON SCORE THRESHOLDS
 # inspired from https://github.com/satijalab/seurat/issues/2277#issuecomment-1117245430
 if (!(is.null(s_thresh) & is.null(g2m_thresh))) {
     # STORE OLD PHASE
@@ -440,8 +433,7 @@ if (!(is.null(s_thresh) & is.null(g2m_thresh))) {
 ```
 
 
-By performing PCA on the cell cycle genes, cells segregate according to the
-estimated cell cycle phase.
+Next, to visualize cell variability according to the cell cycle phases (before cell cycle regression), we apply PCA using only the cell cycle genes. The cells here segregate according to their estimated cell cycle phase.
 
 ```{r cc-PCA}
 singlets <- RunPCA(singlets, features = c(s.genes, g2m.genes), seed.use = general_seed, verbose=TRUE)
@@ -468,8 +460,7 @@ cat("# Regression on cell cycle
 ```{r regression-global, echo="2" %in% scenarios, eval="2" %in% scenarios, results='asis'}
 cat("## Global regression: scenario 2
 
-After regression on phases score, we observe mixed cells independently of the
-cell cycle.
+We apply regression of cell cycle (using phase scores) following the scenario number 2. After regression, the cells do not seeggregate according to the cell cycle in a PCA using cell cycle genes.
 ")
 
 # PIPELINE
@@ -498,8 +489,7 @@ invisible(gc())
 ```{r regression-cycling, echo="3" %in% scenarios, eval="3" %in% scenarios, results='asis', fig.show='hold'}
 cat("## Cycling regression: scenario 3
 
-After regression on cycling cells, G2/M and S cells mix together, which is not
-the case for the G1 cells.
+We apply regression of cell cycle (using phase scores of cycling cells) following the scenario number 3. After regression, the cycling cells (G2/M and S cells) do not seggregate in a PCA using cell cycle genes, but these cells are separated from G1 cells.
 ")
 
 # PIPELINE
@@ -529,7 +519,6 @@ invisible(gc())
 
 ## Conclusion
 
-We assigned a cell cycle score to each cell, which is tagged either G1, G2/M or S. 
 ```{r, echo=FALSE}
 if(any(c("2","3") %in% scenarios)){
   cat(paste0("Furthermore, we applied ", sum(c("2","3") %in% scenarios), " cell cycle regression."))
@@ -537,15 +526,19 @@ if(any(c("2","3") %in% scenarios)){
 ```
 
 
-# Preliminary study of focused genes 
+# Preliminary study of a few number of selected genes
 
-For each gene, you will be presented both a feature plot of its expression as well as all cells expressing it. 
-This is designed to remove specific cell type that you may want to remove from analysis (such as Red Blood Cells cluster) 
-without blindly removing all cells with a somatic expression of its marker gene.
+In order to have a first exploration of the dataset, we provide here the code to visualize the expression of a few number of selected genes. For each gene is presented both a feature plot of its expression as well as all cells expressing it. 
+For instance, this could be used to remove some clusters based on the expression of one specific gene in the cells of the cluster.
+
+If we want to remove some clusters based on the analysis done below, the clusters to be removed will need to be specified before the re-application of the preprocessing pipeline, to be done after this step 4 "doublet removal, cell cycle regression and gene overview" 
+
+
+
+## Feature Plots of specific genes {.tabset .tabset-pills .tabset-fade}
 
 The umap plots are based on the umap coordinates of the scenario 1 (ie. not regressed data).
 
-## Feature Plots of focused genes {.tabset .tabset-pills .tabset-fade}
 ```{r observe-genes-umap, results='asis', fig.align='default', fig.size='50%'}
 corr_table <- as.data.frame(fread(file.path(PATH_INPUT_LABDATA, "features.tsv.gz"), header = FALSE, sep = "\t", col.names = c("ENSid", "GeneName", "Type")))
 
@@ -579,7 +572,8 @@ invisible(lapply(obs_list, function(gene_name){
 )
 ```
 
-## Cluster composition of focused genes
+## Presence of specific genes in the cluster cells
+
 ```{r observe-genes-table}
 sorted_clust_list <- sort(as.list(unique(fltd@meta.data[clustOfInterest]))[[1]])
 df_obs <- data.frame("cluster" = sorted_clust_list)
@@ -602,28 +596,13 @@ df_obs$total_cells <- sapply(sorted_clust_list, function(clust) {
   length(which(fltd@meta.data[clustOfInterest] == clust))
 })
 
-knitr::kable(df_obs, caption = "Number of cells expressing the genes of interest in each cluster") %>%
+knitr::kable(df_obs, caption = "Number of cells expressing the specific gene in each cluster") %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
-A cell can express multiple, or even all, these genes.
-
 # Next step
 
-For a single dataset, we get 3 objects to process:
-
-- object 1, where only doublets were removed,
-
-- object 2, where doublets were removed and a global regression was applied, and
-
-- object 3, where doublets were removed and a regression on cycling cells was
-applied.
-
-We also observed the distribution of genes that we want to focus on. If we want to
-remove some clusters before going on with the pipeline, we have to input them at the next step.
-
-Here, we finished the preparation of the dataset. We can go through the standard
-pipeline for single cell RNA-sequencing data analysis.
+Here, we finished the preparation of the dataset.
 
 ```{r metadata, echo=FALSE, child="61_show_metadata.Rmd"}
 ```
