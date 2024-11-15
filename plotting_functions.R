@@ -36,7 +36,7 @@ generate_outlier_plot <- function(outlier_type) {
 	scale_color_manual(values = c("TRUE" = "#FF0000AA", "FALSE" = "#44444444")) +
 	# NoLegend() +
 	theme_nothing() +
-	ggtitle(paste0(DATASET, "\n", table(cellsData$Outliers)["TRUE"], " ", outlier_type, " outlier cells")) +
+	ggtitle(paste0(DATASET, "\n", table(cellsData$Outliers)["TRUE"], " ", outlier_type, " filtered out cells")) +
 	CenterTitle() +
 	theme(plot.title = element_text(size = 30),
 		  axis.text = element_blank(),

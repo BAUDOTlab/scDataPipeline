@@ -360,7 +360,7 @@ cycle regression.
 
 ## Cell cycle markers
 
-Cell cycle gene list has been updated in 2019 (REF). Cell cycle markers are only
+Cell cycle gene list has been updated in 2019 [Tirosh et al., Science, 2016](https://www.science.org/doi/abs/10.1126/science.aad0501). Cell cycle markers are only
 for the cycling phases, G2/M and S. If cells have few chance to be in those
 cycling phases, they are estimated to be in the G1 phase.
 
@@ -369,6 +369,10 @@ Below, you can see the lists of gene markers for the G2/M and S phases.
 ```{r load-cc-genes, results='hold'}
 s.genes <- gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
 g2m.genes = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_ensg
+cat(
+s.genes
+g2m.genes
+)
 ```
 
 ## Estimate cell-cycle scores
@@ -382,7 +386,7 @@ try(if(table(g2m.genes %in% rownames(singlets))[[1]] != length(g2m.genes)) stop(
 # ASSIGN CELL CYCLE SCORES AND PHASE
 singlets <- CellCycleScoring(singlets, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
 FeatureScatter(singlets, "S.Score", "G2M.Score") +
-    ggtitle("CC. phase assignation by Seurat") +
+    ggtitle("Default: CC. phase assignation by Seurat") +
     theme(plot.title = element_text(hjust = 0.5, size = 24))
 ```
 
